@@ -1,0 +1,20 @@
+# editor and OS junk
+.idea
+**/.DS_Store
+
+# nix symlink to the build output
+result
+
+.direnv
+.envrc
+
+# Rust stuff
+target
+**/*.rs.bk
+
+# fastn test
+
+/**/.packages
+
+.env
+.env.swp
