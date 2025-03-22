@@ -1,0 +1,11 @@
+[package]
+name = "ftnet"
+version = "0.1.0"
+edition.workspace = true
+publish.workspace = true
+description = "FTNet: FifthTry Network"
+
+
+[dependencies]
+clap.workspace = true
+tokio.workspace = true
