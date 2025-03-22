@@ -9,4 +9,7 @@ description = "FTN: FifthTry Network"
 
 [dependencies]
 clap.workspace = true
+directories.workspace = true
+thiserror.workspace = true
+file-guard.workspace = true
 tokio.workspace = true
