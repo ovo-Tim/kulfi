@@ -5,9 +5,10 @@
 extern crate self as ftn;
 
 mod cli;
-pub mod dotftn;
+mod config;
 mod identity;
 mod start;
 
 pub use cli::{Cli, Command};
+pub use config::{Config, ReadError};
 pub use start::start;
