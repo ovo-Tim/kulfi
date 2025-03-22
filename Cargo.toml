@@ -1,5 +1,5 @@
 [workspace]
-members = ["ftnet"]
+members = ["ftn"]
 resolver = "2"
 
 [workspace.package]
@@ -7,11 +7,11 @@ authors = [
     "Amit Upadhyay <upadhyay@gmail.com>",
 ]
 edition = "2024"
-description = "FTNet: FifthTry Network"
+description = "FTN: FifthTry Network"
 license = "UPL"
-repository = "https://github.com/FifthTry/ftnet"
-homepage = "https://www.fifthtry.com/ftnet/"
-publish = false
+repository = "https://github.com/FifthTry/ftn"
+homepage = "https://www.fifthtry.com/ftn/"
+publish = true
 rust-version = "1.85"
 
 [profile.release]
