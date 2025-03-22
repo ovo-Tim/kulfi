@@ -7,8 +7,12 @@ pub struct Cli {
 
 #[derive(clap::Subcommand, Debug)]
 pub enum Command {
-    #[clap(about = "Start the ftnet service.")]
+    #[clap(about = "Start the ftn service.")]
     Start,
-    #[clap(about = "Connect to a remote ftnet service.")]
-    Proxy { id: String },
+    #[clap(about = "Proxy TCP server to a remote ftn service.")]
+    TcpProxy {
+        id: String,
+        #[arg(default_value_t = 2345)]
+        port: u16,
+    },
 }
