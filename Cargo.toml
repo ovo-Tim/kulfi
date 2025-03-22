@@ -8,7 +8,7 @@ authors = [
 ]
 edition = "2024"
 description = "FTN: FifthTry Network"
-license = "UPL"
+license = "UPL-1.0"
 repository = "https://github.com/FifthTry/ftn"
 homepage = "https://www.fifthtry.com/ftn/"
 publish = true
