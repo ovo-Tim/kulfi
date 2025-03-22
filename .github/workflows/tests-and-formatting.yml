@@ -1,0 +1,61 @@
+name: Tests and Formatting
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      # Order matters!
+      # See https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#onpushpull_requestpull_request_targetpathspaths-ignore
+      - '**.rs'
+      - '**.ftd' # ftd/html/js/css are fbt-tests items mostly
+      - '**.html'
+      - '**.js'
+      - '**.css'
+      - 'Cargo.*'
+      - '**/Cargo.toml'
+      - '!.github/**'
+      - '.github/workflows/tests-and-formatting.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      # Order matters!
+      # See https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#onpushpull_requestpull_request_targetpathspaths-ignore
+      - '**.rs'
+      - '**.ftd' # ftd/html/js/css are fbt-tests items mostly
+      - '**.html'
+      - '**.js'
+      - '**.css'
+      - 'Cargo.*'
+      - '**/Cargo.toml'
+      - '!.github/**'
+      - '.github/workflows/tests-and-formatting.yml'
+jobs:
+  tests-and-formatting:
+    name: Rust Checks And Formatting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+      - name: Run cargo fmt
+        id: fmt
+        run: cargo fmt --all -- --check
+        continue-on-error: true
+      - name: Run cargo clippy
+        id: clippy
+        continue-on-error: true
+        run: cargo clippy --all -- -D warnings
+      - name: Run cargo test
+        id: test
+        continue-on-error: true
+        run: cargo test
+      - name: Check if code is properly formatted
+        if: steps.fmt.outcome != 'success'
+        run: exit 1
+      - name: Check if clippy is happy
+        if: steps.clippy.outcome != 'success'
+        run: exit 1
+      - name: Check if test succeeded
+        if: steps.test.outcome != 'success'
+        run: exit 1
