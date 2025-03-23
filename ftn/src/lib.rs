@@ -1,5 +1,5 @@
-// #![deny(unused_extern_crates)]
-// #![deny(unused_crate_dependencies)]
+#![deny(unused_extern_crates)]
+#![deny(unused_crate_dependencies)]
 #![deny(unsafe_code)]
 
 extern crate self as ftn;
@@ -10,5 +10,5 @@ mod identity;
 mod start;
 
 pub use cli::{Cli, Command};
-pub use config::{Config, ReadError};
+pub use config::Config;
 pub use start::start;

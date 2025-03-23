@@ -1,33 +1,18 @@
+use eyre::WrapErr;
 pub const LOCK_FILE: &str = "ftn.lock";
 
-#[derive(Debug, thiserror::Error)]
-pub enum LockFileError {
-    #[error("could not create lock file: {0}")]
-    CreateLockFile(std::io::Error),
-    #[error("could not open lock file: {0}")]
-    OpenLockFile(std::io::Error),
-    #[error("could not acquire lock: {0}")]
-    AcquireLock(std::io::Error),
-}
-
-pub fn lock_file(dir: &std::path::Path) -> Result<std::fs::File, LockFileError> {
+pub fn lock_file(dir: &std::path::Path) -> eyre::Result<std::fs::File> {
     let path = dir.join(LOCK_FILE);
-    let file = std::fs::File::create(path).map_err(LockFileError::OpenLockFile)?;
+    let file = std::fs::File::create(path).wrap_err("failed to create lock file")?;
     Ok(file)
 }
 
 pub async fn exclusive(
     lock_file: &std::fs::File,
-) -> Result<file_guard::FileGuard<&std::fs::File>, LockError> {
-    lock(lock_file, file_guard::Lock::Exclusive).await
-}
-
-#[derive(Debug, thiserror::Error)]
-pub enum LockError {
-    #[error("could not acquire lock: {0}")]
-    AcquireLock(std::io::Error),
-    #[error("lock file already locked")]
-    AlreadyLocked,
+) -> eyre::Result<file_guard::FileGuard<&std::fs::File>> {
+    lock(lock_file, file_guard::Lock::Exclusive)
+        .await
+        .wrap_err("failed to take exclusive lock")
 }
 
 /// `lock()` is used to create lock on the `ftn` directory.
@@ -35,11 +20,8 @@ pub enum LockError {
 pub async fn lock(
     lock_file: &std::fs::File,
     lock: file_guard::Lock,
-) -> Result<file_guard::FileGuard<&std::fs::File>, LockError> {
+) -> eyre::Result<file_guard::FileGuard<&std::fs::File>> {
     // check if file exists, if not create it
-    match file_guard::try_lock(lock_file, lock, 0, 10) {
-        Ok(lock) => Ok(lock),
-        Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => Err(LockError::AlreadyLocked),
-        Err(e) => Err(LockError::AcquireLock(e)),
-    }
+    file_guard::try_lock(lock_file, lock, 0, 10)
+        .wrap_err_with(|| format!("file guard try_lock failed: {lock_file:?}, {lock:?}"))
 }

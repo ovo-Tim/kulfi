@@ -1,39 +1,18 @@
-#[derive(Debug, thiserror::Error)]
-pub enum ReadError {
-    #[error("dotftn init error: {0}")]
-    DotFtnInitError(ftn::config::dotftn::InitError),
-    #[error("dotftn lock error: {0}")]
-    DotFtnLockError(ftn::config::dotftn::LockError),
-    #[error("dotftn lock file error: {0}")]
-    DotFtnLockFileError(ftn::config::dotftn::LockFileError),
-    #[error("ftn is already running")]
-    AlreadyRunning,
-}
+use eyre::WrapErr;
 
 impl ftn::Config {
-    pub async fn lock(&self) -> Result<file_guard::FileGuard<&std::fs::File>, ReadError> {
-        match ftn::config::dotftn::exclusive(&self.lock_file).await {
-            Ok(lock) => Ok(lock),
-            Err(ftn::config::dotftn::LockError::AlreadyLocked) => Err(ReadError::AlreadyRunning),
-            Err(e) => Err(ReadError::DotFtnLockError(e)),
-        }
+    pub async fn lock(&self) -> eyre::Result<file_guard::FileGuard<&std::fs::File>> {
+        ftn::config::dotftn::exclusive(&self.lock_file)
+            .await
+            .wrap_err("Config::lock(): failed to take exclusive lock")
     }
 
-    pub async fn read(dir: Option<String>) -> Result<Self, ReadError> {
-        let dir = match ftn::config::dotftn::init_if_required(dir).await {
-            Ok(dir) => dir,
-            Err(e) => {
-                return Err(ReadError::DotFtnInitError(e));
-            }
-        };
-
-        let lock_file = match ftn::config::dotftn::lock_file(&dir) {
-            Ok(file) => file,
-            Err(e) => {
-                return Err(ReadError::DotFtnLockFileError(e));
-            }
-        };
-
+    pub async fn read(dir: Option<String>) -> eyre::Result<Self> {
+        let dir = ftn::config::dotftn::init_if_required(dir)
+            .await
+            .wrap_err("Config: failed to get init directory")?;
+        let lock_file =
+            ftn::config::dotftn::lock_file(&dir).wrap_err("failed to create lock file")?;
         Ok(Self { dir, lock_file })
     }
 }
