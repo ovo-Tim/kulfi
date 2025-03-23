@@ -8,6 +8,7 @@ mod cli;
 mod config;
 mod identity;
 mod start;
+pub mod utils;
 
 pub use cli::{Cli, Command};
 pub use config::Config;

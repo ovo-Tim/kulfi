@@ -13,7 +13,7 @@
 //!
 //! The identities folder is the most interesting one, it contains one folder for every identity
 //! that exists on this machine. The content of single `identity` folder is described
-//! in `identity/read.rs`.
+//! in `identity/create.rs`.
 
 pub const LOCK_FILE: &str = "ftn.lock";
 

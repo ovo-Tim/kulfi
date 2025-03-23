@@ -19,6 +19,9 @@ pub async fn start(_fg: bool, dir: Option<String>) -> eyre::Result<()> {
         .wrap_err("looks like there is another instance of ftn running")?;
 
     println!("ftn service started: {config:?}");
+    let identities = config.identities().await?;
+    println!("identities = {identities:?}");
+
     tokio::time::sleep(tokio::time::Duration::from_secs(100)).await;
 
     Ok(())

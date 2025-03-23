@@ -1,3 +1,8 @@
+mod create;
 mod read;
 
-pub struct Identity {}
+#[derive(Debug)]
+pub struct Identity {
+    pub id: String,
+    pub fastn_port: u16,
+}

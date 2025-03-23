@@ -2,7 +2,8 @@ use eyre::WrapErr;
 
 pub fn lock_file(dir: &std::path::Path) -> eyre::Result<std::fs::File> {
     let path = dir.join(super::LOCK_FILE);
-    let file = std::fs::File::create(path).wrap_err("failed to create lock file")?;
+    let file = std::fs::File::create(&path)
+        .wrap_err_with(|| format!("failed to create lock file: {path:?}"))?;
     Ok(file)
 }
 

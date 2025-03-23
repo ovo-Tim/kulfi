@@ -36,3 +36,7 @@ eyre = "0.6"
 file-guard = "0.2.0"
 iroh = "0.34"
 tokio = { version = "1", features = ["full"] }
+# we are intentionally using an older version to be compatible with the rand
+# version used in the iroh crate
+rand = "0.8.5"
+keyring = "4.0.0-rc.1"

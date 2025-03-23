@@ -13,3 +13,6 @@ directories.workspace = true
 eyre.workspace = true
 file-guard.workspace = true
 tokio.workspace = true
+iroh.workspace = true
+rand.workspace = true
+keyring.workspace = true
