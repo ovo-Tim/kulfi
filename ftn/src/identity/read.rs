@@ -10,6 +10,9 @@ impl ftn::Identity {
                 .wrap_err_with(|| format!("failed to get secret key from keychain for {id}"));
         }
 
+        // TODO: start the http proxy service for this identity
+        // TODO: pick an available port and start fastn service
+
         Ok(Self {
             id,
             fastn_port: 8000,

@@ -12,6 +12,12 @@
 //!
 //! `package` is the folder that contains the fastn package for this identity.
 //!
+//! `package-template` is the folder that contains the original version of fastn package that was
+//! used to create the `package` folder. This is stored so if the fastn package template is updated
+//! in future, we can do three way merge and auto update the `package` folder, or show a conflict
+//! resolution screen to the user. Inside the package-template we store the version of the fastn
+//! template in a file called `version`, and the actual template in a folder called `template`.
+//!
 //! `devices` is the folder that contains the device drivers for this identity. The structure of
 //! this folder is described in `device/read.rs` (TODO).
 //!
@@ -38,6 +44,12 @@ impl ftn::Identity {
         let tmp_dir = identities_folder.join(format!("temp-{public_key}-{unixtime}"));
 
         ftn::utils::mkdir(&tmp_dir, "package")?;
+        ftn::utils::mkdir(&tmp_dir, "package-template")?;
+        // TODO: initialise the package directory with default fastn package template
+        //       which is fetched from ftn-template.fifthtry.site (zip download)
+        // TODO: let user specify the template URL, and download it from there
+        // TODO: call `fastn update` in the folder to ensure all dependencies are downloaded
+
         ftn::utils::mkdir(&tmp_dir, "devices")?;
         ftn::utils::mkdir(&tmp_dir, "logs")?;
 
@@ -46,6 +58,8 @@ impl ftn::Identity {
 
         Ok(Self {
             id: public_key.to_string(),
+            // we do not care about this port number, and it is not used. the actual port number
+            // is picked on fastn start, from the Identity::read() function.
             fastn_port: 8000,
         })
     }
