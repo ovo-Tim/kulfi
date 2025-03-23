@@ -11,4 +11,5 @@ mod start;
 
 pub use cli::{Cli, Command};
 pub use config::Config;
+pub use identity::Identity;
 pub use start::start;
