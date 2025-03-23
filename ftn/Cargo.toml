@@ -16,3 +16,4 @@ tokio.workspace = true
 iroh.workspace = true
 rand.workspace = true
 keyring.workspace = true
+ftn-tcp-proxy.workspace = true

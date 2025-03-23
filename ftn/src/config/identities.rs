@@ -5,7 +5,7 @@ impl ftn::Config {
         let mut identities = Vec::new();
         let identities_dir = self.dir.join("identities");
         for entry in std::fs::read_dir(&identities_dir)
-            .wrap_err_with(|| format!("failed to read identities folder: {identities_dir:?}"))?
+            .wrap_err_with(|| format!("failed to run identities folder: {identities_dir:?}"))?
         {
             let entry = entry?;
             let path = entry.path();
@@ -27,7 +27,7 @@ impl ftn::Config {
 
             let identity = ftn::Identity::read(&identities_dir, id)
                 .await
-                .wrap_err_with(|| format!("failed to read {path:?} as an identity folder"))?;
+                .wrap_err_with(|| format!("failed to run {path:?} as an identity folder"))?;
 
             identities.push(identity);
         }

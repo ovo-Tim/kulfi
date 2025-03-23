@@ -1,5 +1,8 @@
 [workspace]
-members = ["ftn"]
+members = [
+    "ftn",
+    "ftn-tcp-proxy"
+]
 resolver = "2"
 
 [workspace.package]
@@ -32,11 +35,14 @@ strip = true
 # using the latest dependency, and what is the plan to move to the latest version.
 clap = { version = "4", features = ["derive"] }
 directories = "6.0.0"
-eyre = "0.6"
 file-guard = "0.2.0"
 iroh = "0.34"
 tokio = { version = "1", features = ["full"] }
+keyring = "4.0.0-rc.1"
+ftn-tcp-proxy.path = "ftn-tcp-proxy"
+eyre = "0.6"
+
+[workspace.dependencies.rand]
 # we are intentionally using an older version to be compatible with the rand
 # version used in the iroh crate
-rand = "0.8.5"
-keyring = "4.0.0-rc.1"
+version = "0.8.5"

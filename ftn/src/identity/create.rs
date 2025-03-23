@@ -19,7 +19,7 @@
 //! template in a file called `version`, and the actual template in a folder called `template`.
 //!
 //! `devices` is the folder that contains the device drivers for this identity. The structure of
-//! this folder is described in `device/read.rs` (TODO).
+//! this folder is described in `device/run.rs` (TODO).
 //!
 //! `logs` is the folder that contains the logs for this identity. This contains fastn access logs
 //! and other device access logs etc.
@@ -50,17 +50,17 @@ impl ftn::Identity {
         // TODO: let user specify the template URL, and download it from there
         // TODO: call `fastn update` in the folder to ensure all dependencies are downloaded
 
+        // TODO: should we encrypt the contents of this folder to prevent tampering / snooping?
+
         ftn::utils::mkdir(&tmp_dir, "devices")?;
         ftn::utils::mkdir(&tmp_dir, "logs")?;
 
         let dir = identities_folder.join(public_key.to_string());
-        std::fs::rename(&tmp_dir, dir).wrap_err("failed to rename tmp_dir to dir")?;
+        std::fs::rename(&tmp_dir, dir)
+            .wrap_err_with(|| "failed to rename {tmp_dir:?} to {dir:?}")?;
 
         Ok(Self {
             id: public_key.to_string(),
-            // we do not care about this port number, and it is not used. the actual port number
-            // is picked on fastn start, from the Identity::read() function.
-            fastn_port: 8000,
         })
     }
 }
