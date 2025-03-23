@@ -32,14 +32,14 @@ impl ftn::Identity {
             let secret_key = iroh::SecretKey::generate(&mut rng);
             // we do not want to keep secret key in memory, only in keychain
             ftn::utils::save_secret(&secret_key)
-                .wrap_err("failed to store secret key to keychain")?;
+                .wrap_err_with(|| "failed to store secret key to keychain")?;
             secret_key.public()
         };
 
         let now = std::time::SystemTime::now();
         let unixtime = now
             .duration_since(std::time::UNIX_EPOCH)
-            .wrap_err("failed to get unix time")?
+            .wrap_err_with(|| "failed to get unix time")?
             .as_secs();
         let tmp_dir = identities_folder.join(format!("temp-{public_key}-{unixtime}"));
 

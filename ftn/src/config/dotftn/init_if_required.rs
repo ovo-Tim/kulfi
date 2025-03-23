@@ -28,7 +28,7 @@ pub async fn init_if_required(dir: Option<String>) -> eyre::Result<std::path::Pa
             .wrap_err_with(|| format!("failed to create dotftn directory: {dir:?}"))?;
         let identities = ftn::utils::mkdir(&dir, "identities")?;
         ftn::utils::mkdir(&dir, "logs")?;
-        super::lock_file(&dir).wrap_err("failed to create lock file")?;
+        super::lock_file(&dir).wrap_err_with(|| "failed to create lock file")?;
 
         // we always create the default identity
         ftn::Identity::create(&identities).await?;

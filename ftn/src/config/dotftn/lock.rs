@@ -12,7 +12,7 @@ pub async fn exclusive(
 ) -> eyre::Result<file_guard::FileGuard<&std::fs::File>> {
     lock(lock_file, file_guard::Lock::Exclusive)
         .await
-        .wrap_err("failed to take exclusive lock")
+        .wrap_err_with(|| "failed to take exclusive lock")
 }
 
 /// `lock()` is used to create lock on the `ftn` directory.

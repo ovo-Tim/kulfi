@@ -11,12 +11,12 @@ pub async fn start(_fg: bool, dir: Option<String>) -> eyre::Result<()> {
 
     let config = ftn::Config::read(dir)
         .await
-        .wrap_err("failed to run config")?;
+        .wrap_err_with(|| "failed to run config")?;
 
     let _lock = config
         .lock()
         .await
-        .wrap_err("looks like there is another instance of ftn running")?;
+        .wrap_err_with(|| "looks like there is another instance of ftn running")?;
 
     println!("ftn service started: {config:?}");
     let identities = config.identities().await?;
@@ -36,10 +36,10 @@ pub async fn start(_fg: bool, dir: Option<String>) -> eyre::Result<()> {
 
     tokio::signal::ctrl_c()
         .await
-        .wrap_err("failed to get ctrl-c signal handler")?;
+        .wrap_err_with(|| "failed to get ctrl-c signal handler")?;
     graceful_shutdown_tx
         .send(true)
-        .wrap_err("failed to send graceful shutdown signal")?;
+        .wrap_err_with(|| "failed to send graceful shutdown signal")?;
 
     let mut count = 0;
 
