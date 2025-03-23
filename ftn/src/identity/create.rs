@@ -59,8 +59,6 @@ impl ftn::Identity {
         std::fs::rename(&tmp_dir, dir)
             .wrap_err_with(|| "failed to rename {tmp_dir:?} to {dir:?}")?;
 
-        Ok(Self {
-            id: public_key.to_string(),
-        })
+        Ok(Self { public_key })
     }
 }

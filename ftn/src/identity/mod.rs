@@ -1,8 +1,9 @@
+mod bb8;
 mod create;
 mod read;
 mod run;
 
 #[derive(Debug)]
 pub struct Identity {
-    pub id: String,
+    pub public_key: iroh::PublicKey,
 }

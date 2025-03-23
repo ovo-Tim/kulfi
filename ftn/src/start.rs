@@ -26,10 +26,10 @@ pub async fn start(_fg: bool, dir: Option<String>) -> eyre::Result<()> {
     for identity in identities {
         let graceful_shutdown_rx = graceful_shutdown_rx.clone();
         tokio::spawn(async move {
-            let id = identity.id.clone();
-            println!("running: {id}");
+            let public_key = identity.public_key;
+            println!("running: {public_key}");
             if let Err(e) = identity.run(graceful_shutdown_rx).await {
-                eprintln!("failed to run identity: {id}: {e}");
+                eprintln!("failed to run identity: {public_key}: {e}");
             }
         });
     }

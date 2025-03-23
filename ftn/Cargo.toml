@@ -8,12 +8,13 @@ description = "FTN: FifthTry Network"
 
 
 [dependencies]
+bb8.workspace = true
 clap.workspace = true
 directories.workspace = true
 eyre.workspace = true
 file-guard.workspace = true
-tokio.workspace = true
-iroh.workspace = true
-rand.workspace = true
-keyring.workspace = true
 ftn-tcp-proxy.workspace = true
+iroh.workspace = true
+keyring.workspace = true
+rand.workspace = true
+tokio.workspace = true
