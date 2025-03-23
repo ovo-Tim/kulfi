@@ -35,6 +35,7 @@ jobs:
     name: Rust Checks And Formatting
     runs-on: ubuntu-latest
     steps:
+      - run: sudo apt install libdbus-1-dev pkg-config
       - name: Check out
         uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2
