@@ -9,6 +9,7 @@ extern crate self as ftn;
 use ftn_tcp_proxy;
 
 mod cli;
+mod client;
 mod config;
 mod counters;
 mod identity;

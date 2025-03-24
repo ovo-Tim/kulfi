@@ -73,10 +73,9 @@ impl bb8::ManageConnection for ftn::Identity {
 
     fn is_valid(
         &self,
-        _conn: &mut Self::Connection,
+        conn: &mut Self::Connection,
     ) -> impl Future<Output = Result<(), Self::Error>> + Send {
-        // TODO: send a ping and wait for a pong
-        Box::pin(async move { Ok(()) })
+        Box::pin(async move { ftn::client::ping(conn).await })
     }
 
     fn has_broken(&self, _conn: &mut Self::Connection) -> bool {
