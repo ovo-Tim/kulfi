@@ -28,20 +28,53 @@ async fn handle_connection(conn: iroh::endpoint::Incoming) -> eyre::Result<()> {
     loop {
         let (mut send_stream, mut recv_stream) = conn.accept_bi().await?;
         let msg = recv_stream.read_to_end(1024).await?;
-        let (proto, _residue) = match ftnet::Protocol::parse(msg) {
-            Ok((ftnet::Protocol::Quit, _)) => {
+        match ftnet::Protocol::parse(&msg) {
+            Ok((ftnet::Protocol::Quit, rest)) => {
+                if !rest.is_empty() {
+                    send_stream
+                        .write_all(b"error: quit message should not have payload\n")
+                        .await?;
+                } else {
+                    send_stream.write_all(b"see you later!\n").await?;
+                }
                 send_stream.finish()?;
                 break;
             }
-            Ok((proto, msg)) => (proto, msg),
+            Ok((ftnet::Protocol::Ping, rest)) => {
+                if !rest.is_empty() {
+                    send_stream
+                        .write_all(b"error: ping message should not have payload\n")
+                        .await?;
+                    break;
+                }
+                send_stream.write_all(ftnet::client::PONG).await?;
+            }
+            Ok((ftnet::Protocol::WhatTimeItIs, rest)) => {
+                if !rest.is_empty() {
+                    send_stream
+                        .write_all(b"error: quit message should not have payload\n")
+                        .await?;
+                } else {
+                    let d = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)?;
+
+                    send_stream
+                        .write_all(format!("{}\n", d.as_nanos()).as_bytes())
+                        .await?;
+                }
+                send_stream.finish()?;
+                break;
+            }
+            Ok((ftnet::Protocol::Identity, _)) => todo!(),
+            Ok((ftnet::Protocol::Http { .. }, _)) => todo!(),
+            Ok((ftnet::Protocol::Socks5 { .. }, _)) => todo!(),
+            Ok((ftnet::Protocol::Tcp { .. }, _)) => todo!(),
             Err(e) => {
+                eprintln!("error parsing protocol: {e}");
                 send_stream.write_all(b"error: invalid protocol\n").await?;
                 send_stream.finish()?;
-                return Err(e);
+                break;
             }
         };
-        println!("received: {proto:?}");
-        send_stream.write_all(b"hello").await?;
         send_stream.finish()?;
     }
 

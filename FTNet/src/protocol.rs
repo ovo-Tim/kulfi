@@ -80,12 +80,10 @@
 /// in future to webassembly, and JS engines have decent security sandbox. we do not allow npm/deno
 /// etc., and only run the most sandboxed, browser like JS code. fastn applications can also use
 /// webassembly compiled code, which again is sandboxed.
-#[derive(Debug)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub enum Protocol {
     /// client can send this message to check if the connection is open / healthy.
-    Ping {
-        payload: String,
-    },
+    Ping,
     /// client may not be using NTP, or may only have p2p access and no other internet access, in
     /// which case it can ask for the time from the peers and try to create a consensus.
     WhatTimeItIs,
@@ -113,12 +111,21 @@ pub enum Protocol {
 }
 
 impl Protocol {
-    pub fn parse(msg: Vec<u8>) -> eyre::Result<(Protocol, Vec<u8>)> {
-        Ok((
-            Protocol::Ping {
-                payload: "dummy".to_string(),
-            },
-            msg,
-        ))
+    pub fn parse(msg: &[u8]) -> eyre::Result<(Protocol, &[u8])> {
+        let mut i = 0;
+        for (j, &b) in msg.iter().enumerate() {
+            if b == b'\n' {
+                i = j;
+            }
+        }
+
+        if i == 0 {
+            return Err(eyre::eyre!("no newline found in the message: {msg:?}"));
+        }
+
+        let header = &msg[..i];
+        let rest = &msg[i + 1..];
+
+        Ok((serde_json::from_slice(header)?, rest))
     }
 }

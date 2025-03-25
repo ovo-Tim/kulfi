@@ -42,6 +42,8 @@ ftnet-tcp-proxy.path = "ftnet-tcp-proxy"
 iroh = "0.34"
 keyring = "4.0.0-rc.1"
 tokio = { version = "1", features = ["full"] }
+serde_json = "1.0"
+serde = "1.0"
 
 [workspace.dependencies.rand]
 # we are intentionally using an older version to be compatible with the rand
