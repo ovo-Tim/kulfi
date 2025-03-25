@@ -13,6 +13,7 @@ mod client;
 mod config;
 mod counters;
 mod identity;
+mod protocol;
 mod server;
 mod start;
 pub mod utils;
@@ -21,6 +22,7 @@ pub use cli::{Cli, Command};
 pub use config::Config;
 pub use counters::OPEN_CONNECTION_COUNT;
 pub use identity::Identity;
+pub use protocol::Protocol;
 pub use start::start;
 
 /// Iroh supports multiple protocols, and we do need multiple protocols, lets say one for proxying
