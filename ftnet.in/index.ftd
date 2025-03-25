@@ -1,12 +1,12 @@
--- ds.site-page: ftnet: FifthTry Network
+-- ds.site-page: FTNet: FifthTry Network
 
--- ds.heading-medium: `ftnet`: FifthTry Network
+-- ds.heading-medium: `FTNet`: FifthTry Network
 
-FifthTry Network, FTN, is an open source, general purpose, sovereign,
+FifthTry Network, FTNet, is an open source, general purpose, sovereign,
 decentralized (no blockchain/crypto stuff), peer to peer social network, free
 from any corporate control. Data stays with the user, and devices controlled by
 the user, and not with some central company.
 
-https://github.com/ftnet-project/ftnet
+https://github.com/FTNet-Project/FTNet
 
 -- end: ds.site-page
