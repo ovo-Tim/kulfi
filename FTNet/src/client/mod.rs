@@ -1,3 +1,3 @@
 mod ping;
 
-pub use ping::{ping, PONG};
+pub use ping::{PONG, ping};
