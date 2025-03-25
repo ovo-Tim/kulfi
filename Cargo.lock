@@ -970,7 +970,7 @@ dependencies = [
  "directories",
  "eyre",
  "file-guard",
- "ftn-tcp-proxy",
+ "ftnet-tcp-proxy",
  "iroh",
  "keyring",
  "rand 0.8.5",
@@ -978,7 +978,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "ftn-tcp-proxy"
+name = "ftnet-tcp-proxy"
 version = "0.1.0"
 
 [[package]]

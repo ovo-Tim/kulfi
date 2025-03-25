@@ -1,7 +1,7 @@
 [workspace]
 members = [
-    "ftn",
-    "ftn-tcp-proxy"
+    "ftnet",
+    "ftnet-tcp-proxy"
 ]
 resolver = "2"
 
@@ -12,8 +12,8 @@ authors = [
 edition = "2024"
 description = "FTN: FifthTry Network"
 license = "UPL-1.0"
-repository = "https://github.com/FifthTry/ftn"
-homepage = "https://www.fifthtry.com/ftn/"
+repository = "https://github.com/FifthTry/ftnet"
+homepage = "https://www.ftnet.in"
 publish = true
 rust-version = "1.85"
 
@@ -38,7 +38,7 @@ clap = { version = "4", features = ["derive"] }
 directories = "6.0.0"
 eyre = "0.6"
 file-guard = "0.2.0"
-ftn-tcp-proxy.path = "ftn-tcp-proxy"
+ftnet-tcp-proxy.path = "ftnet-tcp-proxy"
 iroh = "0.34"
 keyring = "4.0.0-rc.1"
 tokio = { version = "1", features = ["full"] }

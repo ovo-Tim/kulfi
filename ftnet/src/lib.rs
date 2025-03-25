@@ -6,7 +6,7 @@ extern crate self as ftn;
 
 #[expect(unused)]
 #[expect(clippy::single_component_path_imports)]
-use ftn_tcp_proxy;
+use ftnet_tcp_proxy;
 
 mod cli;
 mod client;
