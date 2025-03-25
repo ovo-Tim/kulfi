@@ -86,7 +86,7 @@ pub enum Protocol {
     Ping,
     /// client may not be using NTP, or may only have p2p access and no other internet access, in
     /// which case it can ask for the time from the peers and try to create a consensus.
-    WhatTimeItIs,
+    WhatTimeIsIt,
     /// client is done and want to end close the connection
     Quit,
     /// connect with the identity server. this means connect with the fastn service as part of the

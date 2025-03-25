@@ -49,7 +49,7 @@ async fn handle_connection(conn: iroh::endpoint::Incoming) -> eyre::Result<()> {
                 }
                 send_stream.write_all(ftnet::client::PONG).await?;
             }
-            Ok((ftnet::Protocol::WhatTimeItIs, rest)) => {
+            Ok((ftnet::Protocol::WhatTimeIsIt, rest)) => {
                 if !rest.is_empty() {
                     send_stream
                         .write_all(b"error: quit message should not have payload\n")
