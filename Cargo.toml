@@ -13,7 +13,7 @@ edition = "2024"
 description = "FTN: FifthTry Network"
 license = "UPL-1.0"
 repository = "https://github.com/FifthTry/ftnet"
-homepage = "https://www.ftnet.in"
+homepage = "https://ftnet.in"
 publish = true
 rust-version = "1.85"
 

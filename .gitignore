@@ -14,7 +14,8 @@ target
 
 # fastn test
 
-/**/.packages
+ftnet.in/.packages
+ftnet.in/.fastn
 
 .env
 .env.swp
