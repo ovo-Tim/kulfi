@@ -30,4 +30,4 @@ pub use start::start;
 /// to handle them, we will end up creating more connections than minimally required (one connection
 /// can only talk one APNS). So, we use a single APNS for all the protocols, and we use the first
 /// line of the input to determine the protocol.
-const APNS: &[u8] = b"ftn";
+const APNS_IDENTITY: &[u8] = b"/ftn/identity/0.1";
