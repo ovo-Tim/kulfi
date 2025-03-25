@@ -13,6 +13,7 @@ mod client;
 mod config;
 mod counters;
 mod identity;
+mod server;
 mod start;
 pub mod utils;
 

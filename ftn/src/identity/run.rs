@@ -5,13 +5,15 @@ impl ftn::Identity {
         self,
         _graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
     ) -> eyre::Result<()> {
-        let _port = start_fastn()
+        let port = start_fastn()
             .await
             .wrap_err_with(|| "failed to start fastn")?;
 
-        tokio::time::sleep(std::time::Duration::from_secs(10)).await;
+        let ep = ftn::identity::get_endpoint(self.public_key.to_string().as_str())
+            .await
+            .wrap_err_with(|| "failed to bind to iroh network")?;
 
-        Ok(())
+        ftn::server::run(ep, port).await
     }
 }
 
