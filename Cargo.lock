@@ -962,7 +962,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "ftn"
+name = "ftnet"
 version = "0.1.0"
 dependencies = [
  "bb8",

@@ -1,4 +1,4 @@
-pub mod dotftn;
+pub mod dotftnet;
 mod identities;
 mod read;
 

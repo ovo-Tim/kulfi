@@ -1,10 +1,10 @@
 [package]
-name = "ftn"
+name = "ftnet"
 version = "0.1.0"
 edition.workspace = true
 license.workspace = true
 publish.workspace = true
-description = "FTN: FifthTry Network"
+description = "FTNet: FifthTry Network"
 
 
 [dependencies]

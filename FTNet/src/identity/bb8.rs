@@ -53,7 +53,7 @@
 
 use eyre::WrapErr;
 
-impl bb8::ManageConnection for ftn::Identity {
+impl bb8::ManageConnection for ftnet::Identity {
     type Connection = iroh::endpoint::Connection;
     type Error = eyre::Error;
 
@@ -65,7 +65,7 @@ impl bb8::ManageConnection for ftn::Identity {
             let ep = get_endpoint(self.public_key.to_string().as_str())
                 .await
                 .wrap_err_with(|| "failed to bind to iroh network")?;
-            ep.connect(self.public_key, ftn::APNS_IDENTITY)
+            ep.connect(self.public_key, ftnet::APNS_IDENTITY)
                 .await
                 .map_err(|e| eyre::anyhow!("failed to connect to iroh network: {e}"))
         })
@@ -75,7 +75,7 @@ impl bb8::ManageConnection for ftn::Identity {
         &self,
         conn: &mut Self::Connection,
     ) -> impl Future<Output = Result<(), Self::Error>> + Send {
-        Box::pin(async move { ftn::client::ping(conn).await })
+        Box::pin(async move { ftnet::client::ping(conn).await })
     }
 
     fn has_broken(&self, _conn: &mut Self::Connection) -> bool {
@@ -84,12 +84,12 @@ impl bb8::ManageConnection for ftn::Identity {
 }
 
 pub async fn get_endpoint(id: &str) -> eyre::Result<iroh::Endpoint> {
-    let secret_key = ftn::utils::get_secret(id)
+    let secret_key = ftnet::utils::get_secret(id)
         .wrap_err_with(|| format!("failed to get secret key from keychain for {id}"))?;
 
     match iroh::Endpoint::builder()
         .discovery_n0()
-        .alpns(vec![ftn::APNS_IDENTITY.into()])
+        .alpns(vec![ftnet::APNS_IDENTITY.into()])
         .secret_key(secret_key)
         .bind()
         .await

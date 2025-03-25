@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "ftnet",
+    "FTNet",
     "ftnet-tcp-proxy"
 ]
 resolver = "2"

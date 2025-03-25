@@ -1,5 +1,5 @@
-impl ftn::Config {
-    pub async fn identities(&self) -> eyre::Result<Vec<ftn::Identity>> {
+impl ftnet::Config {
+    pub async fn identities(&self) -> eyre::Result<Vec<ftnet::Identity>> {
         use eyre::WrapErr;
 
         let mut identities = Vec::new();
@@ -25,7 +25,7 @@ impl ftn::Config {
                 }
             };
 
-            let identity = ftn::Identity::read(&identities_dir, id)
+            let identity = ftnet::Identity::read(&identities_dir, id)
                 .await
                 .wrap_err_with(|| format!("failed to run {path:?} as an identity folder"))?;
 

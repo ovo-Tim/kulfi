@@ -9,7 +9,7 @@
 pub async fn start(_fg: bool, dir: Option<String>) -> eyre::Result<()> {
     use eyre::WrapErr;
 
-    let config = ftn::Config::read(dir)
+    let config = ftnet::Config::read(dir)
         .await
         .wrap_err_with(|| "failed to run config")?;
 
@@ -46,7 +46,7 @@ pub async fn start(_fg: bool, dir: Option<String>) -> eyre::Result<()> {
     loop {
         count += 1;
         tokio::time::sleep(std::time::Duration::from_millis(100)).await;
-        let v = ftn::OPEN_CONNECTION_COUNT.get();
+        let v = ftnet::OPEN_CONNECTION_COUNT.get();
         if v == 0 {
             println!("No inflight requests open.");
             break;

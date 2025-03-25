@@ -2,7 +2,7 @@
 #![deny(unused_crate_dependencies)]
 #![deny(unsafe_code)]
 
-extern crate self as ftn;
+extern crate self as ftnet;
 
 #[expect(unused)]
 #[expect(clippy::single_component_path_imports)]

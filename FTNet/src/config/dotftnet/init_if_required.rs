@@ -26,12 +26,12 @@ pub async fn init_if_required(dir: Option<String>) -> eyre::Result<std::path::Pa
         tokio::fs::create_dir_all(&dir)
             .await
             .wrap_err_with(|| format!("failed to create dotftn directory: {dir:?}"))?;
-        let identities = ftn::utils::mkdir(&dir, "identities")?;
-        ftn::utils::mkdir(&dir, "logs")?;
+        let identities = ftnet::utils::mkdir(&dir, "identities")?;
+        ftnet::utils::mkdir(&dir, "logs")?;
         super::lock_file(&dir).wrap_err_with(|| "failed to create lock file")?;
 
         // we always create the default identity
-        ftn::Identity::create(&identities).await?;
+        ftnet::Identity::create(&identities).await?;
     }
 
     Ok(dir)

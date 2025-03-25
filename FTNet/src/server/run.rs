@@ -28,8 +28,8 @@ async fn handle_connection(conn: iroh::endpoint::Incoming) -> eyre::Result<()> {
     loop {
         let (mut send_stream, mut recv_stream) = conn.accept_bi().await?;
         let msg = recv_stream.read_to_end(1024).await?;
-        let (proto, _residue) = match ftn::Protocol::parse(msg) {
-            Ok((ftn::Protocol::Quit, _)) => {
+        let (proto, _residue) = match ftnet::Protocol::parse(msg) {
+            Ok((ftnet::Protocol::Quit, _)) => {
                 send_stream.finish()?;
                 break;
             }

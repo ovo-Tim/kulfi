@@ -23,7 +23,7 @@
 //!
 //! `logs` is the folder that contains the logs for this identity. This contains fastn access logs
 //! and other device access logs etc.
-impl ftn::Identity {
+impl ftnet::Identity {
     pub async fn create(identities_folder: &std::path::Path) -> eyre::Result<Self> {
         use eyre::WrapErr;
 
@@ -31,7 +31,7 @@ impl ftn::Identity {
             let mut rng = rand::rngs::OsRng;
             let secret_key = iroh::SecretKey::generate(&mut rng);
             // we do not want to keep secret key in memory, only in keychain
-            ftn::utils::save_secret(&secret_key)
+            ftnet::utils::save_secret(&secret_key)
                 .wrap_err_with(|| "failed to store secret key to keychain")?;
             secret_key.public()
         };
@@ -43,8 +43,8 @@ impl ftn::Identity {
             .as_secs();
         let tmp_dir = identities_folder.join(format!("temp-{public_key}-{unixtime}"));
 
-        ftn::utils::mkdir(&tmp_dir, "package")?;
-        ftn::utils::mkdir(&tmp_dir, "package-template")?;
+        ftnet::utils::mkdir(&tmp_dir, "package")?;
+        ftnet::utils::mkdir(&tmp_dir, "package-template")?;
         // TODO: initialise the package directory with default fastn package template
         //       which is fetched from ftn-template.fifthtry.site (zip download)
         // TODO: let user specify the template URL, and download it from there
@@ -52,8 +52,8 @@ impl ftn::Identity {
 
         // TODO: should we encrypt the contents of this folder to prevent tampering / snooping?
 
-        ftn::utils::mkdir(&tmp_dir, "devices")?;
-        ftn::utils::mkdir(&tmp_dir, "logs")?;
+        ftnet::utils::mkdir(&tmp_dir, "devices")?;
+        ftnet::utils::mkdir(&tmp_dir, "logs")?;
 
         let dir = identities_folder.join(public_key.to_string());
         std::fs::rename(&tmp_dir, dir)

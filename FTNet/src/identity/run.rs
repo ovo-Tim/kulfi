@@ -1,6 +1,6 @@
 use eyre::WrapErr;
 
-impl ftn::Identity {
+impl ftnet::Identity {
     pub async fn run(
         self,
         _graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
@@ -9,11 +9,11 @@ impl ftn::Identity {
             .await
             .wrap_err_with(|| "failed to start fastn")?;
 
-        let ep = ftn::identity::get_endpoint(self.public_key.to_string().as_str())
+        let ep = ftnet::identity::get_endpoint(self.public_key.to_string().as_str())
             .await
             .wrap_err_with(|| "failed to bind to iroh network")?;
 
-        ftn::server::run(ep, port).await
+        ftnet::server::run(ep, port).await
     }
 }
 
