@@ -1,9 +1,9 @@
 #[tokio::main]
-async fn main() {
+async fn main() -> eyre::Result<()> {
     use clap::Parser;
 
     let cli = ftnet::Cli::parse();
-    if let Err(e) = match cli.command {
+    match cli.command {
         ftnet::Command::Start {
             foreground,
             data_dir,
@@ -12,8 +12,5 @@ async fn main() {
             println!("Proxying TCP server to remote FTNet service with id: {id}, port: {port}");
             Ok(())
         }
-    } {
-        eprintln!("error: {e}");
-        std::process::exit(1);
     }
 }

@@ -67,7 +67,7 @@ impl bb8::ManageConnection for ftnet::Identity {
                 .wrap_err_with(|| "failed to bind to iroh network1")?;
             ep.connect(self.public_key, ftnet::APNS_IDENTITY)
                 .await
-                .map_err(|e| eyre::anyhow!("failed to connect to iroh network: {e}"))
+                .map_err(|e| eyre::anyhow!("failed to connect to iroh network: {e:?}"))
         })
     }
 
@@ -98,7 +98,7 @@ pub async fn get_endpoint(id: &str) -> eyre::Result<iroh::Endpoint> {
         Err(e) => {
             // https://github.com/n0-computer/iroh/issues/2741
             // this is why you MUST NOT use anyhow::Error etc. in library code.
-            Err(eyre::anyhow!("failed to bind to iroh network: {e}"))
+            Err(eyre::anyhow!("failed to bind to iroh network2: {e:?}"))
         }
     }
 }

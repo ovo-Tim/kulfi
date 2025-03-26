@@ -1,6 +1,5 @@
 pub async fn run(ep: iroh::Endpoint, _fastn_port: u16) -> eyre::Result<()> {
     loop {
-        println!("waiting for incoming connection");
         let conn = match ep.accept().await {
             Some(conn) => conn,
             None => {
@@ -8,7 +7,6 @@ pub async fn run(ep: iroh::Endpoint, _fastn_port: u16) -> eyre::Result<()> {
                 break;
             }
         };
-        println!("got connection");
         tokio::spawn(async move {
             let start = std::time::Instant::now();
             if let Err(e) = handle_connection(conn).await {
@@ -24,6 +22,7 @@ pub async fn run(ep: iroh::Endpoint, _fastn_port: u16) -> eyre::Result<()> {
 
 async fn handle_connection(conn: iroh::endpoint::Incoming) -> eyre::Result<()> {
     let conn = conn.await?;
+    println!("got connection from: {:?}", conn.remote_node_id());
     let remote_node_id = match conn.remote_node_id() {
         Ok(id) => id,
         Err(e) => {

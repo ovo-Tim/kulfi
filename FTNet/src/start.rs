@@ -18,8 +18,15 @@ pub async fn start(_fg: bool, dir: Option<String>) -> eyre::Result<()> {
         .await
         .wrap_err_with(|| "looks like there is another instance of FTNet running")?;
 
-    println!("FTNet service started: {config:?}");
     let identities = config.identities().await?;
+    println!(
+        "FTNet started with {identities}.",
+        identities = identities
+            .iter()
+            .map(|i| i.public_key.to_string())
+            .collect::<Vec<_>>()
+            .join(", ")
+    );
 
     let (graceful_shutdown_tx, graceful_shutdown_rx) = tokio::sync::watch::channel(false);
 
@@ -27,9 +34,8 @@ pub async fn start(_fg: bool, dir: Option<String>) -> eyre::Result<()> {
         let graceful_shutdown_rx = graceful_shutdown_rx.clone();
         tokio::spawn(async move {
             let public_key = identity.public_key;
-            println!("running: {public_key}");
             if let Err(e) = identity.run(graceful_shutdown_rx).await {
-                eprintln!("failed to run identity: {public_key}: {e}");
+                eprintln!("failed to run identity: {public_key}: {e:?}");
             }
         });
     }
