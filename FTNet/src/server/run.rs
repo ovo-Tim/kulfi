@@ -24,7 +24,20 @@ pub async fn run(ep: iroh::Endpoint, _fastn_port: u16) -> eyre::Result<()> {
 
 async fn handle_connection(conn: iroh::endpoint::Incoming) -> eyre::Result<()> {
     let conn = conn.await?;
-    println!("new client: {:?}", conn.remote_node_id());
+    let remote_node_id = match conn.remote_node_id() {
+        Ok(id) => id,
+        Err(e) => {
+            eprintln!("could not read remote node id: {e}, closing connection");
+            // TODO: is this how we close the connection in error cases or do we send some error
+            //       and wait for other side to close the connection?
+            let e2 = conn.closed().await;
+            println!("connection closed: {e2}");
+            // TODO: send another error_code to indicate bad remote node id?
+            conn.close(0u8.into(), &[]);
+            return Err(eyre::anyhow!("could not read remote node id: {e}"));
+        }
+    };
+    println!("new client: {remote_node_id:?}");
     loop {
         let (mut send_stream, mut recv_stream) = conn.accept_bi().await?;
         let msg = recv_stream.read_to_end(1024).await?;
@@ -67,7 +80,14 @@ async fn handle_connection(conn: iroh::endpoint::Incoming) -> eyre::Result<()> {
             Ok((ftnet::Protocol::Identity, _)) => todo!(),
             Ok((ftnet::Protocol::Http { .. }, _)) => todo!(),
             Ok((ftnet::Protocol::Socks5 { .. }, _)) => todo!(),
-            Ok((ftnet::Protocol::Tcp { .. }, _)) => todo!(),
+            Ok((ftnet::Protocol::Tcp { id }, _)) => {
+                if let Err(e) =
+                    ftnet::server::tcp(&remote_node_id, &id, &mut send_stream, recv_stream).await
+                {
+                    eprintln!("tcp error: {e}");
+                    send_stream.finish()?;
+                }
+            }
             Err(e) => {
                 eprintln!("error parsing protocol: {e}");
                 send_stream.write_all(b"error: invalid protocol\n").await?;
