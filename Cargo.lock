@@ -970,7 +970,6 @@ dependencies = [
  "directories",
  "eyre",
  "file-guard",
- "ftnet-tcp-proxy",
  "iroh",
  "keyring",
  "rand 0.8.5",
@@ -978,10 +977,6 @@ dependencies = [
  "serde_json",
  "tokio",
 ]
-
-[[package]]
-name = "ftnet-tcp-proxy"
-version = "0.1.0"
 
 [[package]]
 name = "futures"

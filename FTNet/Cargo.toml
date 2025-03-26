@@ -13,7 +13,6 @@ clap.workspace = true
 directories.workspace = true
 eyre.workspace = true
 file-guard.workspace = true
-ftnet-tcp-proxy.workspace = true
 iroh.workspace = true
 keyring.workspace = true
 rand.workspace = true
