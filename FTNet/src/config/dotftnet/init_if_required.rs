@@ -5,7 +5,7 @@ pub async fn init_if_required(dir: Option<String>) -> eyre::Result<std::path::Pa
     let dir = match dir {
         Some(dir) => dir.into(),
         // https://docs.rs/directories/6.0.0/directories/struct.ProjectDirs.html#method.data_dir
-        None => match directories::ProjectDirs::from("com", "FifthTry", "ftn") {
+        None => match directories::ProjectDirs::from("com", "FifthTry", "FTNet") {
             Some(dir) => dir.data_dir().to_path_buf(),
             None => {
                 return Err(eyre::anyhow!(
