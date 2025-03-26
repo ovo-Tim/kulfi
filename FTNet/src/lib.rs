@@ -7,6 +7,7 @@ extern crate self as ftnet;
 mod cli;
 mod client;
 mod config;
+mod control;
 mod counters;
 mod identity;
 mod protocol;
