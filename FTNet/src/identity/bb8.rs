@@ -3,7 +3,7 @@
 //!
 //! let's first understand the types of connection we make over the network.
 //!
-//! every running ftn app opens one "connection" with the relay at startup. if the connection is
+//! every running FTNet app opens one "connection" with the relay at startup. if the connection is
 //! lost, it tries to reconnect. in `iroh` terms, this is called `iroh::Endpoint`. this is a
 //! connection with the relay, and it is a long-lived connection. this is still not a
 //! `iroh::Connection`, which is the connection we want to pool, so at startup we do not have
@@ -25,8 +25,8 @@
 //! let's recap the control flow. bob wants to access alice's fastn, so bob opens
 //! https://<alice-id>.localhost.direct on their browser. localhost.direct distributes their
 //! wildcard domain certificate[1], and maps *.localhost.direct to 127.0.0.1, so the request from bob's
-//! browser lands on their own machine, to port 443, where bob's ftn-http-proxy is running. bob's
-//! ftn-http-proxy gets the `alice-id` and is the main actor here, it gets an HTTP request, and for
+//! browser lands on their own machine, to port 443, where bob's FTNet-http-proxy is running. bob's
+//! FTNet-http-proxy gets the `alice-id` and is the main actor here, it gets an HTTP request, and for
 //! that it request it creates an endpoint, initiates a connection, and creates a bidirectional
 //! stream. on the stream it then writes the HTTP request, and waits for the response from the
 //! alice's side, and converts it back as an HTTP response and send it to the browser.
@@ -64,7 +64,7 @@ impl bb8::ManageConnection for ftnet::Identity {
             // negligible, compared to 800 milliseconds or so it takes to create a new connection.
             let ep = get_endpoint(self.public_key.to_string().as_str())
                 .await
-                .wrap_err_with(|| "failed to bind to iroh network")?;
+                .wrap_err_with(|| "failed to bind to iroh network1")?;
             ep.connect(self.public_key, ftnet::APNS_IDENTITY)
                 .await
                 .map_err(|e| eyre::anyhow!("failed to connect to iroh network: {e}"))

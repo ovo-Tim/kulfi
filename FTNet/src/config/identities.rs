@@ -27,7 +27,7 @@ impl ftnet::Config {
 
             let identity = ftnet::Identity::read(&identities_dir, id)
                 .await
-                .wrap_err_with(|| format!("failed to run {path:?} as an identity folder"))?;
+                .wrap_err_with(|| format!("failed to read {path:?} as an identity folder"))?;
 
             identities.push(identity);
         }

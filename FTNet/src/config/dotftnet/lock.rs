@@ -15,8 +15,8 @@ pub async fn exclusive(
         .wrap_err_with(|| "failed to take exclusive lock")
 }
 
-/// `lock()` is used to create lock on the `ftn` directory.
-/// we do this by creating a `ftn.lock` file, and acquiring a lock on it.
+/// `lock()` is used to create lock on the `FTNet` directory.
+/// we do this by creating a `FTNet.lock` file, and acquiring a lock on it.
 pub async fn lock(
     lock_file: &std::fs::File,
     lock: file_guard::Lock,

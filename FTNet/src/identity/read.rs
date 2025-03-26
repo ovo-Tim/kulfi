@@ -1,10 +1,12 @@
 impl ftnet::Identity {
     pub async fn read(path: &std::path::Path, id: String) -> eyre::Result<Self> {
-        println!("ftnet::Identity::run: {path:?}, {id}");
-        let bytes: [u8; 32] = id.as_bytes().try_into()?; // unwrap ok as already asserted
+        use eyre::WrapErr;
 
+        println!("FTNet::Identity::read: {path:?}, {id}, {}", id.len());
         Ok(Self {
-            public_key: iroh::PublicKey::from_bytes(&bytes)?,
+            public_key: id
+                .parse()
+                .wrap_err_with(|| "failed to parse id to public key")?,
         })
     }
 }

@@ -1,12 +1,12 @@
-//! The $FTN folder
+//! The FTNet folder
 //!
 //! The location of this folder is platform-specific, on Linux it is either
-//! $HOME/.local/share/ftn or $XDG_DATA_HOME/ftn, on MacOS it is $HOME/Library/Application
-//! Support/com.FifthTry.ftn and on Windows: {FOLDERID_RoamingAppData}\ftn\data which is usually
-//! C:\Users\Alice\AppData\Roaming\FifthTry\ftn\data.
+//! $HOME/.local/share/FTNet or $XDG_DATA_HOME/FTNet, on MacOS it is $HOME/Library/Application
+//! Support/com.FifthTry.FTNet and on Windows: {FOLDERID_RoamingAppData}\FTNet\data which is usually
+//! C:\Users\Alice\AppData\Roaming\FifthTry\FTNet\data.
 //!
-//! The folder contains a lock file, `$FTN/ftn.lock, which is used to ensure only one instance
-//! of `ftn` is running.
+//! The folder contains a lock file, `$FTNet/FTNet.lock, which is used to ensure only one instance
+//! of `FTNet` is running.
 //!
 //! The folder contains more folders like `identities`, `logs` and maybe `config.json` etc. in
 //! the future.
@@ -15,7 +15,7 @@
 //! that exists on this machine. The content of single `identity` folder is described
 //! in `identity/create.rs`.
 
-pub const LOCK_FILE: &str = "ftn.lock";
+pub const LOCK_FILE: &str = "FTNet.lock";
 
 mod init_if_required;
 mod lock;

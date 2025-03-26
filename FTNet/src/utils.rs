@@ -9,7 +9,7 @@ pub fn mkdir(parent: &std::path::Path, name: &str) -> eyre::Result<std::path::Pa
 }
 
 fn keyring_entry(id: &str) -> eyre::Result<keyring::Entry> {
-    keyring::Entry::new("ftn", id)
+    keyring::Entry::new("FTNet", id)
         .wrap_err_with(|| format!("failed to create keyring Entry for {id}"))
 }
 

@@ -26,4 +26,4 @@ pub use start::start;
 /// to handle them, we will end up creating more connections than minimally required (one connection
 /// can only talk one APNS). So, we use a single APNS for all the protocols, and we use the first
 /// line of the input to determine the protocol.
-const APNS_IDENTITY: &[u8] = b"/ftn/identity/0.1";
+const APNS_IDENTITY: &[u8] = b"/FTNet/identity/0.1";

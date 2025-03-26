@@ -1,4 +1,4 @@
-/// start ftn service
+/// start FTNet service
 ///
 /// on startup, we first check if another instance is running if so we exit.
 ///
@@ -16,9 +16,9 @@ pub async fn start(_fg: bool, dir: Option<String>) -> eyre::Result<()> {
     let _lock = config
         .lock()
         .await
-        .wrap_err_with(|| "looks like there is another instance of ftn running")?;
+        .wrap_err_with(|| "looks like there is another instance of FTNet running")?;
 
-    println!("ftn service started: {config:?}");
+    println!("FTNet service started: {config:?}");
     let identities = config.identities().await?;
 
     let (graceful_shutdown_tx, graceful_shutdown_rx) = tokio::sync::watch::channel(false);

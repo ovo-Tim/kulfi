@@ -72,7 +72,7 @@
 /// security philosophy: more protocols, more liabilities
 /// =====================================================
 ///
-/// the goal of the ftn network is to make sure there are only a few protocols. all protocol
+/// the goal of the FTNet is to make sure there are only a few protocols. all protocol
 /// handlers are security risk, they are written in Rust, possibly using C and other libraries.
 /// their code has to be reviewed for potential security issues.
 ///
