@@ -59,6 +59,9 @@ impl ftnet::Identity {
         std::fs::rename(&tmp_dir, dir)
             .wrap_err_with(|| "failed to rename {tmp_dir:?} to {dir:?}")?;
 
-        Ok(Self { public_key })
+        Ok(Self {
+            id: public_key.fmt_short(),
+            public_key,
+        })
     }
 }

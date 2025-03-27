@@ -30,6 +30,11 @@ pub async fn start(_fg: bool, dir: Option<String>) -> eyre::Result<()> {
 
     let (graceful_shutdown_tx, graceful_shutdown_rx) = tokio::sync::watch::channel(false);
 
+    let first = identities
+        .first()
+        .map(|v| v.id.clone())
+        .ok_or_else(|| eyre::eyre!("no identities found"))?;
+
     for identity in identities {
         let graceful_shutdown_rx = graceful_shutdown_rx.clone();
         tokio::spawn(async move {
@@ -39,6 +44,8 @@ pub async fn start(_fg: bool, dir: Option<String>) -> eyre::Result<()> {
             }
         });
     }
+
+    tokio::spawn(async move { ftnet::control::start(first, graceful_shutdown_rx).await });
 
     tokio::signal::ctrl_c()
         .await

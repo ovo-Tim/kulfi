@@ -58,3 +58,39 @@
 //! if you notice we mentioned extra headers, this is in case you want to "manipulate" the http
 //! request before you send, such extra headers and other "manipulation hints" can also be returned
 //! by the fastn's api call.
+
+pub async fn start(
+    id: String,
+    mut graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
+) -> eyre::Result<()> {
+    use eyre::WrapErr;
+
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:80")
+        .await
+        .wrap_err_with(
+            || "can not listen to port 80, is it busy, or you do not have root access?",
+        )?;
+    println!("Listening on http://{id}.localhost.direct", id = &id[1..]);
+
+    loop {
+        tokio::select! {
+            _ = graceful_shutdown_rx.changed() => {
+                println!("Stopping control server.");
+                break;
+            }
+            val = listener.accept() => {
+                match val {
+                    Ok((_stream, addr)) => {
+                        println!("New connection from: {addr:?}.");
+                    },
+                    Err(e) => {
+                        eprintln!("failed to accept: {e:?}");
+                        continue;
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(())
+}
