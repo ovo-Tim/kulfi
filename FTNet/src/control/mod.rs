@@ -49,7 +49,7 @@
 //! port/extra headers etc, so it can simply forward the request to that server.
 //!
 //! but it does something a bit more interesting, it first makes a http request to the device's
-//! parent identity's corresponding fastn server, `/api/v1/identity/{device-id}/http/<remote-id>/`,
+//! parent identity's corresponding fastn server, `/ftnet/v1/identity/{device-id}/http/<remote-id>/`,
 //! so the fastn server can decide if this remote can access this device or not. we do not implement
 //! permission system in FTNet itself, and rely on fastn's permission system.
 //!
@@ -58,6 +58,8 @@
 //! if you notice we mentioned extra headers, this is in case you want to "manipulate" the http
 //! request before you send, such extra headers and other "manipulation hints" can also be returned
 //! by the fastn's api call.
+
+mod server;
 
 pub async fn start(
     id: String,
@@ -70,7 +72,7 @@ pub async fn start(
         .wrap_err_with(
             || "can not listen to port 80, is it busy, or you do not have root access?",
         )?;
-    println!("Listening on http://{id}.localhost.direct", id = &id[1..]);
+    println!("Listening on http://{id}.localhost.direct");
 
     loop {
         tokio::select! {
@@ -80,12 +82,11 @@ pub async fn start(
             }
             val = listener.accept() => {
                 match val {
-                    Ok((_stream, addr)) => {
-                        println!("New connection from: {addr:?}.");
+                    Ok((stream, _addr)) => {
+                        server::handle_connection(stream, graceful_shutdown_rx.clone()).await
                     },
                     Err(e) => {
                         eprintln!("failed to accept: {e:?}");
-                        continue;
                     }
                 }
             }

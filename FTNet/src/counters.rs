@@ -37,4 +37,9 @@ impl GlobalCounter {
     }
 }
 
-global_counter!(OPEN_CONNECTION_COUNT);
+global_counter!(
+    OPEN_CONNECTION_COUNT,
+    CONNECTION_COUNT,
+    REQUEST_COUNT,
+    IN_FLIGHT_REQUESTS,
+);

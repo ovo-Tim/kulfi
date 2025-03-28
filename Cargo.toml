@@ -35,6 +35,9 @@ clap = { version = "4", features = ["derive"] }
 directories = "6.0.0"
 eyre = "0.6"
 file-guard = "0.2.0"
+http-body-util = "0.1"
+hyper = { version = "1", features = ["full"] }
+hyper-util = { version = "0.1.10", features = ["tokio", "server"] }
 iroh = "0.34"
 keyring = "4.0.0-rc.1"
 tokio = { version = "1", features = ["full"] }
