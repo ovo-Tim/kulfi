@@ -59,7 +59,7 @@ async fn handle_request(
 
 async fn handle_request_(
     r: hyper::Request<hyper::body::Incoming>,
-    _id_map: ftnet::identity::IDMap,
+    id_map: ftnet::identity::IDMap,
 ) -> ftnet::http::Result {
     let id = match r
         .headers()
@@ -75,10 +75,75 @@ async fn handle_request_(
     };
 
     println!("got request for {id}");
-    // TODO: check if this is an identity, if so forward the request to fastn corresponding to that
-    //       identity
-    // TODO: if not identity, find if the id is an http device owned by identity, if so forward the
-    //       request to that device
-    // TODO: if the id belongs to a friend of an identity, send the request to the friend over iroh
+
+    // if this is an identity, if so forward the request to fastn corresponding to that identity
+    if let Some(fastn_port) = find_identity(id, id_map.clone()) {
+        return proxy_pass(r, fastn_port, Default::default()).await;
+    }
+
+    // TODO: maybe we should try all the identities not just default
+    let (default_id, default_port) = default_identity(id_map);
+    match what_to_do(default_port, id).await {
+        // if the id belongs to a friend of an identity, send the request to the friend over iroh
+        Ok(WhatToDo::ForwardToPeer { peer_id, patch }) => {
+            forward(default_id.as_str(), peer_id.as_str(), patch).await
+        }
+        // if not identity, find if the id is an http device owned by identity, if so proxy-pass the
+        // request to that device
+        Ok(WhatToDo::ProxyPass {
+            port,
+            extra_headers,
+        }) => proxy_pass(r, port, extra_headers).await,
+        Ok(WhatToDo::UnknownPeer) => {
+            eprintln!("unknown peer: {id}");
+            Ok(ftnet::server_error!("unknown peer"))
+        }
+        Err(e) => {
+            eprintln!("proxy error: {e}");
+            Ok(ftnet::server_error!(
+                "failed to contact default identity service"
+            ))
+        }
+    }
+}
+
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+pub enum WhatToDo {
+    ForwardToPeer {
+        peer_id: String,
+        patch: ftnet::http::RequestPatch,
+    },
+    ProxyPass {
+        port: u16,
+        extra_headers: ftnet::http::RequestPatch,
+    },
+    UnknownPeer,
+}
+
+async fn what_to_do(_port: u16, _id: &str) -> eyre::Result<WhatToDo> {
+    todo!()
+}
+
+async fn proxy_pass(
+    _r: hyper::Request<hyper::body::Incoming>,
+    _port: u16,
+    _patch: ftnet::http::RequestPatch,
+) -> ftnet::http::Result {
+    todo!()
+}
+
+fn find_identity(_id: &str, _id_map: ftnet::identity::IDMap) -> Option<u16> {
+    todo!()
+}
+
+fn default_identity(_id_map: ftnet::identity::IDMap) -> (String, u16) {
+    todo!()
+}
+
+async fn forward(
+    _requesting_id: &str,
+    _peer_id: &str,
+    _patch: ftnet::http::RequestPatch,
+) -> ftnet::http::Result {
     todo!()
 }

@@ -22,6 +22,18 @@ pub fn bad_request_(m: String) -> Response {
     bytes_to_resp(m.into_bytes(), hyper::StatusCode::BAD_REQUEST)
 }
 
+/// our fastn identity service can tell us to modify the request in some ways
+/// TODO: make this smallvec to reduce heap allocations
+pub type RequestPatch = Vec<RequestPatchItem>;
+
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+pub enum RequestPatchItem {
+    AddHeader { name: String, value: String },
+    DeleteHeader { name: String },
+    AddCookie { name: String, value: String },
+    DeleteCookie { name: String },
+}
+
 #[macro_export]
 macro_rules! server_error {
     ($($t:tt)*) => {{
