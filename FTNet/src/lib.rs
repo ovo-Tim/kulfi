@@ -9,6 +9,7 @@ mod client;
 mod config;
 pub mod control;
 mod counters;
+pub mod http;
 mod identity;
 mod protocol;
 mod server;
@@ -17,7 +18,10 @@ pub mod utils;
 
 pub use cli::{Cli, Command};
 pub use config::Config;
-pub use counters::{CONNECTION_COUNT, IN_FLIGHT_REQUESTS, OPEN_CONNECTION_COUNT, REQUEST_COUNT};
+pub use counters::{
+    CONTROL_CONNECTION_COUNT, CONTROL_REQUEST_COUNT, IN_FLIGHT_REQUESTS,
+    OPEN_CONTROL_CONNECTION_COUNT,
+};
 pub use identity::Identity;
 pub use protocol::Protocol;
 pub use start::start;

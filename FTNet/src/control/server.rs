@@ -1,13 +1,9 @@
-pub type HttpResponse =
-    hyper::Response<http_body_util::combinators::BoxBody<hyper::body::Bytes, std::io::Error>>;
-pub type HttpResult<E = std::io::Error> = Result<HttpResponse, E>;
-
 pub async fn handle_connection(
     stream: tokio::net::TcpStream,
     mut graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
 ) {
-    ftnet::OPEN_CONNECTION_COUNT.incr();
-    ftnet::CONNECTION_COUNT.incr();
+    ftnet::OPEN_CONTROL_CONNECTION_COUNT.incr();
+    ftnet::CONTROL_CONNECTION_COUNT.incr();
 
     let io = hyper_util::rt::TokioIo::new(stream);
 
@@ -46,17 +42,36 @@ pub async fn handle_connection(
         eprintln!("connection error: {e:?}");
     }
 
-    ftnet::OPEN_CONNECTION_COUNT.decr();
+    ftnet::OPEN_CONTROL_CONNECTION_COUNT.decr();
 }
 
-async fn handle_request(r: hyper::Request<hyper::body::Incoming>) -> HttpResult {
-    ftnet::REQUEST_COUNT.incr();
+async fn handle_request(r: hyper::Request<hyper::body::Incoming>) -> ftnet::http::Result {
+    ftnet::CONTROL_REQUEST_COUNT.incr();
     ftnet::IN_FLIGHT_REQUESTS.incr();
     let r = handle_request_(r).await;
     ftnet::IN_FLIGHT_REQUESTS.decr();
     r
 }
 
-async fn handle_request_(_r: hyper::Request<hyper::body::Incoming>) -> HttpResult {
+async fn handle_request_(r: hyper::Request<hyper::body::Incoming>) -> ftnet::http::Result {
+    let id = match r
+        .headers()
+        .get("Host")
+        .and_then(|h| h.to_str().ok())
+        .and_then(|h| h.split_once('.'))
+    {
+        Some((first, _)) => first,
+        None => {
+            eprintln!("got http request without Host header");
+            return Ok(ftnet::bad_request!("got http request without Host header"));
+        }
+    };
+
+    println!("got request for {id}");
+    // TODO: check if this is an identity, if so forward the request to fastn corresponding to that
+    //       identity
+    // TODO: if not identity, find if the id is an http device owned by identity, if so forward the
+    //       request to that device
+    // TODO: if the id belongs to a friend of an identity, send the request to the friend over iroh
     todo!()
 }

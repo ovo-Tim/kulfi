@@ -59,7 +59,7 @@ pub async fn start(_fg: bool, dir: Option<String>) -> eyre::Result<()> {
     loop {
         count += 1;
         tokio::time::sleep(std::time::Duration::from_millis(100)).await;
-        let v = ftnet::OPEN_CONNECTION_COUNT.get();
+        let v = ftnet::OPEN_CONTROL_CONNECTION_COUNT.get();
         if v == 0 {
             println!("No inflight requests open.");
             break;
