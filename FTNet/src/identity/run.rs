@@ -4,8 +4,9 @@ impl ftnet::Identity {
     pub async fn run(
         self,
         _graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
+        id_map: ftnet::identity::IDMap,
     ) -> eyre::Result<()> {
-        let port = start_fastn()
+        let port = start_fastn(id_map)
             .await
             .wrap_err_with(|| "failed to start fastn")?;
 
@@ -18,7 +19,7 @@ impl ftnet::Identity {
 }
 
 /// launch fastn from the package directory and return the port
-async fn start_fastn() -> eyre::Result<u16> {
+async fn start_fastn(_id_map: ftnet::identity::IDMap) -> eyre::Result<u16> {
     // TODO
     Ok(0)
 }

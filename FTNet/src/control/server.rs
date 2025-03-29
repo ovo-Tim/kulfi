@@ -1,6 +1,7 @@
 pub async fn handle_connection(
     stream: tokio::net::TcpStream,
     mut graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
+    id_map: ftnet::identity::IDMap,
 ) {
     ftnet::OPEN_CONTROL_CONNECTION_COUNT.incr();
     ftnet::CONTROL_CONNECTION_COUNT.incr();
@@ -28,7 +29,7 @@ pub async fn handle_connection(
                 // send multiple requests on the same connection as they are independent of each
                 // other. without pipelining, we will end up having effectively more open
                 // connections between edge and js/wasm.
-                hyper::service::service_fn(handle_request),
+                hyper::service::service_fn(|r| handle_request(r, id_map.clone())),
             );
     }
 
@@ -45,15 +46,21 @@ pub async fn handle_connection(
     ftnet::OPEN_CONTROL_CONNECTION_COUNT.decr();
 }
 
-async fn handle_request(r: hyper::Request<hyper::body::Incoming>) -> ftnet::http::Result {
+async fn handle_request(
+    r: hyper::Request<hyper::body::Incoming>,
+    id_map: ftnet::identity::IDMap,
+) -> ftnet::http::Result {
     ftnet::CONTROL_REQUEST_COUNT.incr();
     ftnet::IN_FLIGHT_REQUESTS.incr();
-    let r = handle_request_(r).await;
+    let r = handle_request_(r, id_map).await;
     ftnet::IN_FLIGHT_REQUESTS.decr();
     r
 }
 
-async fn handle_request_(r: hyper::Request<hyper::body::Incoming>) -> ftnet::http::Result {
+async fn handle_request_(
+    r: hyper::Request<hyper::body::Incoming>,
+    _id_map: ftnet::identity::IDMap,
+) -> ftnet::http::Result {
     let id = match r
         .headers()
         .get("Host")
