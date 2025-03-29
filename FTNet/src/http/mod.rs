@@ -1,6 +1,8 @@
+mod client;
 mod peer_proxy;
 mod proxy_pass;
 
+pub use client::Client;
 pub use peer_proxy::peer_proxy;
 pub use proxy_pass::proxy_pass;
 

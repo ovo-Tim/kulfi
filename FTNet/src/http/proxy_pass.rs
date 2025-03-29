@@ -3,5 +3,7 @@ pub async fn proxy_pass(
     _port: u16,
     _patch: ftnet::http::RequestPatch,
 ) -> ftnet::http::Result {
+    let _client = reqwest::Client::default();
+
     todo!()
 }
