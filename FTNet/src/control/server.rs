@@ -78,7 +78,7 @@ async fn handle_request_(
 
     // if this is an identity, if so forward the request to fastn corresponding to that identity
     if let Some(fastn_port) = find_identity(id, id_map.clone()) {
-        return proxy_pass(r, fastn_port, Default::default()).await;
+        return ftnet::http::proxy_pass(r, fastn_port, Default::default()).await;
     }
 
     // TODO: maybe we should try all the identities not just default
@@ -86,14 +86,14 @@ async fn handle_request_(
     match what_to_do(default_port, id).await {
         // if the id belongs to a friend of an identity, send the request to the friend over iroh
         Ok(WhatToDo::ForwardToPeer { peer_id, patch }) => {
-            forward(default_id.as_str(), peer_id.as_str(), patch).await
+            ftnet::http::peer_proxy(default_id.as_str(), peer_id.as_str(), patch).await
         }
         // if not identity, find if the id is an http device owned by identity, if so proxy-pass the
         // request to that device
         Ok(WhatToDo::ProxyPass {
             port,
             extra_headers,
-        }) => proxy_pass(r, port, extra_headers).await,
+        }) => ftnet::http::proxy_pass(r, port, extra_headers).await,
         Ok(WhatToDo::UnknownPeer) => {
             eprintln!("unknown peer: {id}");
             Ok(ftnet::server_error!("unknown peer"))
@@ -124,26 +124,24 @@ async fn what_to_do(_port: u16, _id: &str) -> eyre::Result<WhatToDo> {
     todo!()
 }
 
-async fn proxy_pass(
-    _r: hyper::Request<hyper::body::Incoming>,
-    _port: u16,
-    _patch: ftnet::http::RequestPatch,
-) -> ftnet::http::Result {
-    todo!()
+fn find_identity(id: &str, id_map: ftnet::identity::IDMap) -> Option<u16> {
+    // TODO: what to do if the lock is poisoned?
+    for (i, v) in id_map.read().unwrap().iter() {
+        if i == id {
+            return Some(*v);
+        }
+    }
+
+    None
 }
 
-fn find_identity(_id: &str, _id_map: ftnet::identity::IDMap) -> Option<u16> {
-    todo!()
-}
-
-fn default_identity(_id_map: ftnet::identity::IDMap) -> (String, u16) {
-    todo!()
-}
-
-async fn forward(
-    _requesting_id: &str,
-    _peer_id: &str,
-    _patch: ftnet::http::RequestPatch,
-) -> ftnet::http::Result {
-    todo!()
+fn default_identity(id_map: ftnet::identity::IDMap) -> (String, u16) {
+    id_map
+        .read()
+        // TODO: what to do if the lock is poisoned?
+        .unwrap()
+        .first()
+        .map(ToOwned::to_owned)
+        // ftnet ensures there is at least one identity at start
+        .unwrap()
 }
