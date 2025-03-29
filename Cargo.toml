@@ -41,7 +41,6 @@ hyper = { version = "1", features = ["full"] }
 hyper-util = { version = "0.1.10", features = ["tokio", "server"] }
 iroh = "0.34"
 keyring = "4.0.0-rc.1"
-reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 serde = "1.0"
 serde_json = "1.0"
 tokio = { version = "1", features = ["full"] }
