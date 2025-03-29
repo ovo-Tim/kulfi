@@ -23,7 +23,7 @@ pub async fn start(_fg: bool, dir: Option<String>) -> eyre::Result<()> {
         "FTNet started with {identities}.",
         identities = identities
             .iter()
-            .map(|i| i.public_key.to_string())
+            .map(|i| i.id.to_string())
             .collect::<Vec<_>>()
             .join(", ")
     );

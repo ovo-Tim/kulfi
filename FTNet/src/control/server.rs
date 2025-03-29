@@ -121,6 +121,7 @@ pub enum WhatToDo {
 }
 
 async fn what_to_do(_port: u16, _id: &str) -> eyre::Result<WhatToDo> {
+    // request to fastn server at /-/ftnet/v1/control/what-to-do/<id>/
     todo!()
 }
 

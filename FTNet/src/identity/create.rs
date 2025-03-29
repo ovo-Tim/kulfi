@@ -41,7 +41,10 @@ impl ftnet::Identity {
             .duration_since(std::time::UNIX_EPOCH)
             .wrap_err_with(|| "failed to get unix time")?
             .as_secs();
-        let tmp_dir = identities_folder.join(format!("temp-{public_key}-{unixtime}"));
+        let tmp_dir = identities_folder.join(format!(
+            "temp-{public_key}-{unixtime}",
+            public_key = data_encoding::BASE32_DNSSEC.encode(public_key.as_bytes())
+        ));
 
         ftnet::utils::mkdir(&tmp_dir, "package")?;
         ftnet::utils::mkdir(&tmp_dir, "package-template")?;
@@ -55,12 +58,13 @@ impl ftnet::Identity {
         ftnet::utils::mkdir(&tmp_dir, "devices")?;
         ftnet::utils::mkdir(&tmp_dir, "logs")?;
 
-        let dir = identities_folder.join(public_key.to_string());
+        let dir =
+            identities_folder.join(data_encoding::BASE32_DNSSEC.encode(public_key.as_bytes()));
         std::fs::rename(&tmp_dir, dir)
             .wrap_err_with(|| "failed to rename {tmp_dir:?} to {dir:?}")?;
 
         Ok(Self {
-            id: public_key.fmt_short(),
+            id: data_encoding::BASE32_DNSSEC.encode(public_key.as_bytes()),
             public_key,
         })
     }
