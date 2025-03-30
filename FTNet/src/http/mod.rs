@@ -1,14 +1,13 @@
-mod client;
+pub mod client;
 mod peer_proxy;
 mod proxy_pass;
 
-pub use client::Client;
 pub use peer_proxy::peer_proxy;
 pub use proxy_pass::proxy_pass;
 
 pub type Response =
     hyper::Response<http_body_util::combinators::BoxBody<hyper::body::Bytes, hyper::Error>>;
-pub type Result<E = std::io::Error> = std::result::Result<Response, E>;
+pub type Result<E = eyre::Error> = std::result::Result<Response, E>;
 
 pub fn json<T: serde::Serialize>(o: T) -> Response {
     let bytes = match serde_json::to_vec(&o) {

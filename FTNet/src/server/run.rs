@@ -1,4 +1,8 @@
-pub async fn run(ep: iroh::Endpoint, _fastn_port: u16) -> eyre::Result<()> {
+pub async fn run(
+    ep: iroh::Endpoint,
+    _fastn_port: u16,
+    client_pools: ftnet::http::client::ConnectionPools,
+) -> eyre::Result<()> {
     loop {
         let conn = match ep.accept().await {
             Some(conn) => conn,
@@ -7,9 +11,10 @@ pub async fn run(ep: iroh::Endpoint, _fastn_port: u16) -> eyre::Result<()> {
                 break;
             }
         };
+        let client_pools = client_pools.clone();
         tokio::spawn(async move {
             let start = std::time::Instant::now();
-            if let Err(e) = handle_connection(conn).await {
+            if let Err(e) = handle_connection(conn, client_pools).await {
                 eprintln!("connection error: {:?}", e);
             }
             println!("connection handled in {:?}", start.elapsed());
@@ -20,7 +25,10 @@ pub async fn run(ep: iroh::Endpoint, _fastn_port: u16) -> eyre::Result<()> {
     Ok(())
 }
 
-async fn handle_connection(conn: iroh::endpoint::Incoming) -> eyre::Result<()> {
+async fn handle_connection(
+    conn: iroh::endpoint::Incoming,
+    _client_pools: ftnet::http::client::ConnectionPools,
+) -> eyre::Result<()> {
     let conn = conn.await?;
     println!("got connection from: {:?}", conn.remote_node_id());
     let remote_node_id = match conn.remote_node_id() {

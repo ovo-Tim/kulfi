@@ -1,14 +1,15 @@
 pub async fn proxy_pass(
     mut req: hyper::Request<hyper::body::Incoming>,
+    pool: ftnet::http::client::ConnectionPool,
     port: u16,
     _patch: ftnet::http::RequestPatch,
 ) -> ftnet::http::Result {
     use eyre::WrapErr;
 
-    let mut client = ftnet::http::Client::new(port)
-        .connect()
+    let mut client = pool
+        .get()
         .await
-        .wrap_err_with(|| "cant create connection")
+        // .wrap_err_with(|| "cant create connection")
         .unwrap();
 
     let path_query = req

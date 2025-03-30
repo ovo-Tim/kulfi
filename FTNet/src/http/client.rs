@@ -1,8 +1,12 @@
-pub struct Client {
+pub type ConnectionPool = bb8::Pool<ConnectionManager>;
+pub type ConnectionPools =
+    std::sync::Arc<std::sync::Mutex<std::collections::HashMap<u16, ConnectionPool>>>;
+
+pub struct ConnectionManager {
     port: u16,
 }
 
-impl Client {
+impl ConnectionManager {
     pub fn new(port: u16) -> Self {
         Self { port }
     }
@@ -31,7 +35,7 @@ impl Client {
     }
 }
 
-impl bb8::ManageConnection for Client {
+impl bb8::ManageConnection for ConnectionManager {
     type Connection = hyper::client::conn::http1::SendRequest<hyper::body::Incoming>;
     type Error = eyre::Error;
 

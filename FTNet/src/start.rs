@@ -36,19 +36,26 @@ pub async fn start(_fg: bool, dir: Option<String>) -> eyre::Result<()> {
         .ok_or_else(|| eyre::eyre!("no identities found"))?;
 
     let id_map = ftnet::identity::IDMap::default();
+    let client_pools = ftnet::http::client::ConnectionPools::default();
 
     for identity in identities {
         let graceful_shutdown_rx = graceful_shutdown_rx.clone();
         let id_map = id_map.clone();
+        let client_pools = client_pools.clone();
         tokio::spawn(async move {
             let public_key = identity.public_key;
-            if let Err(e) = identity.run(graceful_shutdown_rx, id_map).await {
+            if let Err(e) = identity
+                .run(graceful_shutdown_rx, id_map, client_pools)
+                .await
+            {
                 eprintln!("failed to run identity: {public_key}: {e:?}");
             }
         });
     }
 
-    tokio::spawn(async move { ftnet::control::start(first, graceful_shutdown_rx, id_map).await });
+    tokio::spawn(async move {
+        ftnet::control::start(first, graceful_shutdown_rx, id_map, client_pools).await
+    });
 
     tokio::signal::ctrl_c()
         .await

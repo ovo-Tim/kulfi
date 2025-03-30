@@ -65,6 +65,7 @@ pub async fn start(
     id: String,
     mut graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
     id_map: ftnet::identity::IDMap,
+    client_pools: ftnet::http::client::ConnectionPools,
 ) -> eyre::Result<()> {
     use eyre::WrapErr;
 
@@ -84,7 +85,7 @@ pub async fn start(
             val = listener.accept() => {
                 match val {
                     Ok((stream, _addr)) => {
-                        server::handle_connection(stream, graceful_shutdown_rx.clone(), id_map.clone()).await
+                        server::handle_connection(stream, graceful_shutdown_rx.clone(), id_map.clone(), client_pools.clone()).await
                     },
                     Err(e) => {
                         eprintln!("failed to accept: {e:?}");

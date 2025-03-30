@@ -5,6 +5,7 @@ impl ftnet::Identity {
         self,
         _graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
         id_map: ftnet::identity::IDMap,
+        client_pools: ftnet::http::client::ConnectionPools,
     ) -> eyre::Result<()> {
         let port = start_fastn(id_map)
             .await
@@ -14,7 +15,7 @@ impl ftnet::Identity {
             .await
             .wrap_err_with(|| "failed to bind to iroh network")?;
 
-        ftnet::server::run(ep, port).await
+        ftnet::server::run(ep, port, client_pools).await
     }
 }
 

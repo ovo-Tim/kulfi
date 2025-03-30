@@ -2,6 +2,7 @@ pub async fn handle_connection(
     stream: tokio::net::TcpStream,
     mut graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
     id_map: ftnet::identity::IDMap,
+    client_pools: ftnet::http::client::ConnectionPools,
 ) {
     ftnet::OPEN_CONTROL_CONNECTION_COUNT.incr();
     ftnet::CONTROL_CONNECTION_COUNT.incr();
@@ -29,7 +30,7 @@ pub async fn handle_connection(
                 // send multiple requests on the same connection as they are independent of each
                 // other. without pipelining, we will end up having effectively more open
                 // connections between edge and js/wasm.
-                hyper::service::service_fn(|r| handle_request(r, id_map.clone())),
+                hyper::service::service_fn(|r| handle_request(r, id_map.clone(), client_pools.clone())),
             );
     }
 
@@ -49,10 +50,11 @@ pub async fn handle_connection(
 async fn handle_request(
     r: hyper::Request<hyper::body::Incoming>,
     id_map: ftnet::identity::IDMap,
+    client_pools: ftnet::http::client::ConnectionPools,
 ) -> ftnet::http::Result {
     ftnet::CONTROL_REQUEST_COUNT.incr();
     ftnet::IN_FLIGHT_REQUESTS.incr();
-    let r = handle_request_(r, id_map).await;
+    let r = handle_request_(r, id_map, client_pools).await;
     ftnet::IN_FLIGHT_REQUESTS.decr();
     r
 }
@@ -60,6 +62,7 @@ async fn handle_request(
 async fn handle_request_(
     r: hyper::Request<hyper::body::Incoming>,
     id_map: ftnet::identity::IDMap,
+    client_pools: ftnet::http::client::ConnectionPools,
 ) -> ftnet::http::Result {
     let id = match r
         .headers()
@@ -77,12 +80,18 @@ async fn handle_request_(
     println!("got request for {id}");
 
     // if this is an identity, if so forward the request to fastn corresponding to that identity
-    if let Some(fastn_port) = find_identity(id, id_map.clone()) {
-        return ftnet::http::proxy_pass(r, fastn_port, Default::default()).await;
+    if let Some(fastn_port) = find_identity(id, id_map.clone())? {
+        return ftnet::http::proxy_pass(
+            r,
+            find_pool(client_pools, fastn_port).await?,
+            fastn_port,
+            Default::default(),
+        )
+        .await;
     }
 
     // TODO: maybe we should try all the identities not just default
-    let (default_id, default_port) = default_identity(id_map);
+    let (default_id, default_port) = default_identity(id_map)?;
     match what_to_do(default_port, id).await {
         // if the id belongs to a friend of an identity, send the request to the friend over iroh
         Ok(WhatToDo::ForwardToPeer { peer_id, patch }) => {
@@ -93,7 +102,10 @@ async fn handle_request_(
         Ok(WhatToDo::ProxyPass {
             port,
             extra_headers,
-        }) => ftnet::http::proxy_pass(r, port, extra_headers).await,
+        }) => {
+            ftnet::http::proxy_pass(r, find_pool(client_pools, port).await?, port, extra_headers)
+                .await
+        }
         Ok(WhatToDo::UnknownPeer) => {
             eprintln!("unknown peer: {id}");
             Ok(ftnet::server_error!("unknown peer"))
@@ -105,6 +117,33 @@ async fn handle_request_(
             ))
         }
     }
+}
+
+pub async fn find_pool(
+    client_pools: ftnet::http::client::ConnectionPools,
+    port: u16,
+) -> eyre::Result<ftnet::http::client::ConnectionPool> {
+    {
+        let pools = client_pools
+            .lock()
+            .map_err(|e| eyre::anyhow!("failed to acquire lock: {e}"))?;
+        if let Some(v) = pools.get(&port) {
+            return Ok(v.to_owned());
+        }
+    }
+
+    let c = ftnet::http::client::ConnectionPool::builder()
+        .build(ftnet::http::client::ConnectionManager::new(port))
+        .await?;
+
+    {
+        client_pools
+            .lock()
+            .map_err(|e| eyre::anyhow!("failed to acquire lock: {e}"))?
+            .insert(port, c.clone());
+    }
+
+    Ok(c)
 }
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
@@ -125,24 +164,26 @@ async fn what_to_do(_port: u16, _id: &str) -> eyre::Result<WhatToDo> {
     todo!()
 }
 
-fn find_identity(id: &str, id_map: ftnet::identity::IDMap) -> Option<u16> {
-    // TODO: what to do if the lock is poisoned?
-    for (i, v) in id_map.read().unwrap().iter() {
+fn find_identity(id: &str, id_map: ftnet::identity::IDMap) -> eyre::Result<Option<u16>> {
+    for (i, v) in id_map
+        .read()
+        .map_err(|e| eyre::anyhow!("failed to acquire lock: {e}"))?
+        .iter()
+    {
         if i == id {
-            return Some(*v);
+            return Ok(Some(*v));
         }
     }
 
-    None
+    Ok(None)
 }
 
-fn default_identity(id_map: ftnet::identity::IDMap) -> (String, u16) {
-    id_map
+fn default_identity(id_map: ftnet::identity::IDMap) -> eyre::Result<(String, u16)> {
+    Ok(id_map
         .read()
-        // TODO: what to do if the lock is poisoned?
-        .unwrap()
+        .map_err(|e| eyre::anyhow!("failed to acquire lock: {e}"))?
         .first()
         .map(ToOwned::to_owned)
-        // ftnet ensures there is at least one identity at start
-        .unwrap()
+        // ftnet ensures there is at least one identity at the start
+        .unwrap())
 }
