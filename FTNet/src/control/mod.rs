@@ -83,9 +83,12 @@ pub async fn start(
                 break;
             }
             val = listener.accept() => {
+                let id_map= id_map.clone();
+                let client_pools = client_pools.clone();
+                let graceful_shutdown_rx = graceful_shutdown_rx.clone();
                 match val {
                     Ok((stream, _addr)) => {
-                        server::handle_connection(stream, graceful_shutdown_rx.clone(), id_map.clone(), client_pools.clone()).await
+                        tokio::spawn(async move { server::handle_connection(stream, graceful_shutdown_rx, id_map, client_pools).await });
                     },
                     Err(e) => {
                         eprintln!("failed to accept: {e:?}");

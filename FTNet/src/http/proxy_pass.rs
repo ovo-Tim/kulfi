@@ -25,8 +25,7 @@ pub async fn proxy_pass(
     let resp = client
         .send_request(req)
         .await
-        .wrap_err_with(|| "failed to send request")
-        .unwrap();
+        .wrap_err_with(|| "failed to send request")?;
 
     let (meta, body) = resp.into_parts();
 
