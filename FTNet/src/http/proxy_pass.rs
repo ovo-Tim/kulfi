@@ -17,7 +17,9 @@ pub async fn proxy_pass(
         .path_and_query()
         .map_or_else(|| req.uri().path(), |v| v.as_str());
 
-    let uri = format!("http://localhost:{port}/{path_query}");
+    let uri = format!("http://localhost:{port}{path_query}");
+    println!("proxying to {uri}");
+
     *req.uri_mut() = hyper::Uri::try_from(uri).unwrap();
 
     let resp = client
