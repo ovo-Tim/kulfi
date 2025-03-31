@@ -7,9 +7,13 @@ impl ftnet::Identity {
         id_map: ftnet::identity::IDMap,
         client_pools: ftnet::http::client::ConnectionPools,
     ) -> eyre::Result<()> {
-        let port = start_fastn(id_map)
+        let port = start_fastn(id_map.clone())
             .await
             .wrap_err_with(|| "failed to start fastn")?;
+
+        {
+            id_map.lock().await.push((self.id.to_string(), port));
+        }
 
         let ep = ftnet::identity::get_endpoint(self.public_key.to_string().as_str())
             .await

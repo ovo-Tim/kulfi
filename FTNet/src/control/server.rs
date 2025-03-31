@@ -80,7 +80,7 @@ async fn handle_request_(
     println!("got request for {id}");
 
     // if this is an identity, if so forward the request to fastn corresponding to that identity
-    if let Some(fastn_port) = find_identity(id, id_map.clone())? {
+    if let Some(fastn_port) = find_identity(id, id_map.clone()).await? {
         return ftnet::http::proxy_pass(
             r,
             find_pool(client_pools, fastn_port).await?,
@@ -91,7 +91,7 @@ async fn handle_request_(
     }
 
     // TODO: maybe we should try all the identities not just default
-    let (default_id, default_port) = default_identity(id_map)?;
+    let (default_id, default_port) = default_identity(id_map).await?;
     match what_to_do(default_port, id).await {
         // if the id belongs to a friend of an identity, send the request to the friend over iroh
         Ok(WhatToDo::ForwardToPeer { peer_id, patch }) => {
@@ -159,12 +159,8 @@ async fn what_to_do(_port: u16, _id: &str) -> eyre::Result<WhatToDo> {
     todo!()
 }
 
-fn find_identity(id: &str, id_map: ftnet::identity::IDMap) -> eyre::Result<Option<u16>> {
-    for (i, v) in id_map
-        .read()
-        .map_err(|e| eyre::anyhow!("failed to acquire lock: {e}"))?
-        .iter()
-    {
+async fn find_identity(id: &str, id_map: ftnet::identity::IDMap) -> eyre::Result<Option<u16>> {
+    for (i, v) in id_map.lock().await.iter() {
         if i == id {
             return Ok(Some(*v));
         }
@@ -173,10 +169,10 @@ fn find_identity(id: &str, id_map: ftnet::identity::IDMap) -> eyre::Result<Optio
     Ok(None)
 }
 
-fn default_identity(id_map: ftnet::identity::IDMap) -> eyre::Result<(String, u16)> {
+async fn default_identity(id_map: ftnet::identity::IDMap) -> eyre::Result<(String, u16)> {
     Ok(id_map
-        .read()
-        .map_err(|e| eyre::anyhow!("failed to acquire lock: {e}"))?
+        .lock()
+        .await
         .first()
         .map(ToOwned::to_owned)
         // ftnet ensures there is at least one identity at the start

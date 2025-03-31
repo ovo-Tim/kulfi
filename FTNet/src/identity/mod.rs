@@ -20,4 +20,4 @@ pub struct Identity {
 ///
 /// since the number of identities will be small, a prefix match is probably going to be the same
 /// speed as the hash map exact lookup.
-pub type IDMap = std::sync::Arc<std::sync::RwLock<Vec<(String, u16)>>>;
+pub type IDMap = std::sync::Arc<tokio::sync::Mutex<Vec<(String, u16)>>>;
