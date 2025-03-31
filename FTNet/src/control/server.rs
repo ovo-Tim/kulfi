@@ -161,6 +161,7 @@ async fn what_to_do(_port: u16, _id: &str) -> eyre::Result<WhatToDo> {
 
 async fn find_identity(id: &str, id_map: ftnet::identity::IDMap) -> eyre::Result<Option<u16>> {
     for (i, v) in id_map.lock().await.iter() {
+        // if i.starts_with(id) {
         if i == id {
             return Ok(Some(*v));
         }

@@ -26,5 +26,5 @@ impl ftnet::Identity {
 /// launch fastn from the package directory and return the port
 async fn start_fastn(_id_map: ftnet::identity::IDMap) -> eyre::Result<u16> {
     // TODO
-    Ok(0)
+    Ok(8000)
 }
