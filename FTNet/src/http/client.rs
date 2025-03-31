@@ -1,6 +1,6 @@
 pub type ConnectionPool = bb8::Pool<ConnectionManager>;
 pub type ConnectionPools =
-    std::sync::Arc<std::sync::Mutex<std::collections::HashMap<u16, ConnectionPool>>>;
+    std::sync::Arc<tokio::sync::Mutex<std::collections::HashMap<u16, ConnectionPool>>>;
 
 pub struct ConnectionManager {
     port: u16,

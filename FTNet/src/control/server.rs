@@ -124,9 +124,7 @@ pub async fn find_pool(
     port: u16,
 ) -> eyre::Result<ftnet::http::client::ConnectionPool> {
     {
-        let pools = client_pools
-            .lock()
-            .map_err(|e| eyre::anyhow!("failed to acquire lock: {e}"))?;
+        let pools = client_pools.lock().await;
         if let Some(v) = pools.get(&port) {
             return Ok(v.to_owned());
         }
@@ -137,10 +135,7 @@ pub async fn find_pool(
         .await?;
 
     {
-        client_pools
-            .lock()
-            .map_err(|e| eyre::anyhow!("failed to acquire lock: {e}"))?
-            .insert(port, c.clone());
+        client_pools.lock().await.insert(port, c.clone());
     }
 
     Ok(c)
