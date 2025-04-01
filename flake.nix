@@ -34,6 +34,10 @@
               rust-analyzer-unwrapped
             ];
 
+            shellHook = ''
+              source scripts/auto.sh
+            '';
+
             RUST_SRC_PATH = "${toolchain}/lib/rustlib/src/rust/library";
           };
         });

@@ -9,13 +9,20 @@ result
 .envrc
 
 # Rust stuff
+debug/
 target
 **/*.rs.bk
 
 # fastn test
 
-ftnet.in/.packages
-ftnet.in/.fastn
-
 .env
 .env.swp
+
+# MSVC Windows builds of rustc generate these, which store debugging information
+*.pdb
+
+*.sqlite
+
+.fastn
+.packages
+*.wasm
