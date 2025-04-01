@@ -52,7 +52,7 @@ impl ftnet::Identity {
         ftnet::utils::mkdir(&tmp_dir, "package")?;
         ftnet::utils::mkdir(&tmp_dir, "package-template")?;
         // TODO: initialise the package directory with default fastn package template
-        //       which is fetched from ftn-template.fifthtry.site (zip download)
+        //       which is fetched from ftnet-template.fifthtry.site (zip download)
         // TODO: let user specify the template URL, and download it from there
         // TODO: call `fastn update` in the folder to ensure all dependencies are downloaded
 

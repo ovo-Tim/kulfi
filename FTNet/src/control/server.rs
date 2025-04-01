@@ -3,6 +3,7 @@ pub async fn handle_connection(
     mut graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
     id_map: ftnet::identity::IDMap,
     client_pools: ftnet::http::client::ConnectionPools,
+    peer_connections: ftnet::identity::PeerConnections,
 ) {
     ftnet::OPEN_CONTROL_CONNECTION_COUNT.incr();
     ftnet::CONTROL_CONNECTION_COUNT.incr();
@@ -30,7 +31,7 @@ pub async fn handle_connection(
                 // send multiple requests on the same connection as they are independent of each
                 // other. without pipelining, we will end up having effectively more open
                 // connections between edge and js/wasm.
-                hyper::service::service_fn(|r| handle_request(r, id_map.clone(), client_pools.clone())),
+                hyper::service::service_fn(|r| handle_request(r, id_map.clone(), client_pools.clone(), peer_connections.clone())),
             );
     }
 
@@ -51,10 +52,11 @@ async fn handle_request(
     r: hyper::Request<hyper::body::Incoming>,
     id_map: ftnet::identity::IDMap,
     client_pools: ftnet::http::client::ConnectionPools,
+    peer_connections: ftnet::identity::PeerConnections,
 ) -> ftnet::http::Result {
     ftnet::CONTROL_REQUEST_COUNT.incr();
     ftnet::IN_FLIGHT_REQUESTS.incr();
-    let r = handle_request_(r, id_map, client_pools).await;
+    let r = handle_request_(r, id_map, client_pools, peer_connections).await;
     ftnet::IN_FLIGHT_REQUESTS.decr();
     r
 }
@@ -63,6 +65,7 @@ async fn handle_request_(
     r: hyper::Request<hyper::body::Incoming>,
     id_map: ftnet::identity::IDMap,
     client_pools: ftnet::http::client::ConnectionPools,
+    peer_connections: ftnet::identity::PeerConnections,
 ) -> ftnet::http::Result {
     let id = match r
         .headers()
@@ -95,7 +98,13 @@ async fn handle_request_(
     match what_to_do(default_port, id).await {
         // if the id belongs to a friend of an identity, send the request to the friend over iroh
         Ok(WhatToDo::ForwardToPeer { peer_id, patch }) => {
-            ftnet::http::peer_proxy(default_id.as_str(), peer_id.as_str(), patch).await
+            ftnet::http::peer_proxy(
+                default_id.as_str(),
+                peer_id.as_str(),
+                peer_connections,
+                patch,
+            )
+            .await
         }
         // if not identity, find if the id is an http device owned by identity, if so proxy-pass the
         // request to that device

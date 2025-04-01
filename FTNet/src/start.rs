@@ -56,7 +56,14 @@ pub async fn start(_fg: bool, dir: Option<String>) -> eyre::Result<()> {
     }
 
     tokio::spawn(async move {
-        ftnet::control::start(first, graceful_shutdown_rx, id_map, client_pools).await
+        ftnet::control::start(
+            first,
+            graceful_shutdown_rx,
+            id_map,
+            client_pools,
+            peer_connections,
+        )
+        .await
     });
 
     tokio::signal::ctrl_c()
