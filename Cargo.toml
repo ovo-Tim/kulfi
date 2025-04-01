@@ -1,5 +1,5 @@
 [workspace]
-members = ["FTNet"]
+members = ["FTNet", "control-backend-wasm"]
 resolver = "2"
 
 [workspace.package]
@@ -35,10 +35,12 @@ bb8 = "0.9"
 bytes = "1"
 clap = { version = "4", features = ["derive"] }
 data-encoding = "2.8"
+diesel = { version = "2", default-features = false, features = ["chrono"] }
 directories = "6.0.0"
 eyre = "0.6"
 file-guard = "0.2.0"
 http = "1"
+ft-sdk = { version = "0.6.3", features = ["sqlite-default", "auth-provider", "field-extractors"] }
 http-body-util = "0.1"
 hyper = { version = "1", features = ["full"] }
 hyper-util = { version = "0.1.10", features = ["tokio", "server"] }

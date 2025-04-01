@@ -1,0 +1,6 @@
+-- ftd.text: ftnet app
+
+-- ftd.text:
+
+Contains backend used by control server to determine `what-to-do` with a
+request for `id`.

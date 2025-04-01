@@ -1,0 +1,5 @@
+-- import: fastn
+
+-- fastn.package: ftnet.fifthtry.site
+system: ftnet
+system-is-confidential: false
