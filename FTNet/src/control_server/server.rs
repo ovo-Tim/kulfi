@@ -203,6 +203,5 @@ async fn default_identity(id_map: ftnet::identity::IDMap) -> eyre::Result<(Strin
         .await
         .first()
         .map(ToOwned::to_owned)
-        // ftnet ensures there is at least one identity at the start
-        .unwrap())
+        .expect("ftnet ensures there is at least one identity at the start"))
 }
