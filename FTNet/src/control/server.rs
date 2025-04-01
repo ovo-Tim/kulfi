@@ -99,6 +99,7 @@ async fn handle_request_(
         // if the id belongs to a friend of an identity, send the request to the friend over iroh
         Ok(WhatToDo::ForwardToPeer { peer_id, patch }) => {
             ftnet::http::peer_proxy(
+                r,
                 default_id.as_str(),
                 peer_id.as_str(),
                 peer_connections,

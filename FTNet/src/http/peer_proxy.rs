@@ -1,13 +1,52 @@
 pub async fn peer_proxy(
+    req: hyper::Request<hyper::body::Incoming>,
     _requesting_id: &str,
     peer_id: &str,
     peer_connections: ftnet::identity::PeerConnections,
     client_pools: ftnet::http::client::ConnectionPools,
     _patch: ftnet::http::RequestPatch,
 ) -> ftnet::http::Result {
-    let (_send, _recv) = get_stream(peer_id, peer_connections, client_pools).await?;
+    let (mut send, _recv) = get_stream(peer_id, peer_connections, client_pools).await?;
+
+    send.write_all(&serde_json::to_vec(&ftnet::Protocol::Identity)?)
+        .await?;
+    send.write(b"\n").await?;
+
+    let (head, _body) = req.into_parts();
+    send.write_all(&serde_json::to_vec(&Request::from(head))?)
+        .await?;
+
+    // while let Some(v) = body.poll_frame().await {
+    //     send.write_all(&v?).await?;
+    // }
 
     todo!()
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
+pub struct Request {
+    pub uri: String,
+    pub method: String,
+    pub headers: Vec<(String, Vec<u8>)>,
+}
+
+impl From<http::request::Parts> for Request {
+    fn from(r: http::request::Parts) -> Self {
+        let mut headers = vec![];
+        for (k, v) in r.headers {
+            let k = match k {
+                Some(v) => v.to_string(),
+                None => continue,
+            };
+            headers.push((k, v.as_bytes().to_vec()));
+        }
+
+        Request {
+            uri: r.uri.to_string(),
+            method: r.method.to_string(),
+            headers,
+        }
+    }
 }
 
 async fn get_stream(
