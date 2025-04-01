@@ -65,6 +65,7 @@ pub async fn start(_fg: bool, dir: Option<String>, control_port: u16) -> eyre::R
             peer_connections,
         )
         .await
+        .unwrap()
     });
 
     tokio::signal::ctrl_c()
