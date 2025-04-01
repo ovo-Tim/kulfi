@@ -70,6 +70,7 @@ pub async fn start(_fg: bool, dir: Option<String>, control_port: u16) -> eyre::R
     tokio::signal::ctrl_c()
         .await
         .wrap_err_with(|| "failed to get ctrl-c signal handler")?;
+
     graceful_shutdown_tx
         .send(true)
         .wrap_err_with(|| "failed to send graceful shutdown signal")?;
