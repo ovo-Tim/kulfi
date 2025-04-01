@@ -7,9 +7,37 @@ pub use bb8::get_endpoint;
 
 #[derive(Debug)]
 pub struct Identity {
-    pub id: String,
+    pub id52: String,
     pub public_key: iroh::PublicKey,
     pub client_pools: ftnet::http::client::ConnectionPools,
+}
+
+impl Identity {
+    pub fn from_id52(
+        id: &str,
+        client_pools: ftnet::http::client::ConnectionPools,
+    ) -> eyre::Result<Self> {
+        use eyre::WrapErr;
+
+        let bytes = data_encoding::BASE32_DNSSEC.decode(id.as_bytes())?;
+        if bytes.len() != 32 {
+            return Err(eyre::anyhow!(
+                "read: id has invalid length: {}",
+                bytes.len()
+            ));
+        }
+
+        let bytes: [u8; 32] = bytes.try_into().unwrap(); // unwrap ok as already asserted
+
+        let public_key: iroh::PublicKey = iroh::PublicKey::from_bytes(&bytes)
+            .wrap_err_with(|| "failed to parse id to public key")?;
+
+        Ok(Self {
+            id52: data_encoding::BASE32_DNSSEC.encode(public_key.as_bytes()),
+            public_key,
+            client_pools,
+        })
+    }
 }
 
 /// IDMap stores the fastn port for every identity

@@ -62,7 +62,7 @@ async fn enqueue_connection(conn: iroh::endpoint::Connection) -> eyre::Result<()
 
     let pool = bb8::Pool::builder()
         .build(ftnet::Identity {
-            id: id.clone(),
+            id52: id.clone(),
             public_key,
             client_pools: ftnet::http::client::ConnectionPools::default(),
         })

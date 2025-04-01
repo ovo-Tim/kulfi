@@ -26,7 +26,7 @@ pub async fn start(_fg: bool, dir: Option<String>) -> eyre::Result<()> {
         "FTNet started with {identities}.",
         identities = identities
             .iter()
-            .map(|i| i.id.to_string())
+            .map(|i| i.id52.to_string())
             .collect::<Vec<_>>()
             .join(", ")
     );
@@ -35,7 +35,7 @@ pub async fn start(_fg: bool, dir: Option<String>) -> eyre::Result<()> {
 
     let first = identities
         .first()
-        .map(|v| v.id.clone())
+        .map(|v| v.id52.clone())
         .ok_or_else(|| eyre::eyre!("no identities found"))?;
 
     let id_map = ftnet::identity::IDMap::default();

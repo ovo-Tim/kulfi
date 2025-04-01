@@ -67,7 +67,7 @@ impl ftnet::Identity {
             .wrap_err_with(|| "failed to rename {tmp_dir:?} to {dir:?}")?;
 
         Ok(Self {
-            id: data_encoding::BASE32_DNSSEC.encode(public_key.as_bytes()),
+            id52: data_encoding::BASE32_DNSSEC.encode(public_key.as_bytes()),
             public_key,
             client_pools,
         })

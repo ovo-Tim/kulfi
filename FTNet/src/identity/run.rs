@@ -12,7 +12,7 @@ impl ftnet::Identity {
             .wrap_err_with(|| "failed to start fastn")?;
 
         {
-            id_map.lock().await.push((self.id.to_string(), port));
+            id_map.lock().await.push((self.id52.to_string(), port));
         }
 
         let ep = ftnet::identity::get_endpoint(self.public_key.to_string().as_str())

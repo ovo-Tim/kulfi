@@ -102,6 +102,7 @@ async fn handle_request_(
                 default_id.as_str(),
                 peer_id.as_str(),
                 peer_connections,
+                client_pools,
                 patch,
             )
             .await
