@@ -3,11 +3,11 @@ use eyre::WrapErr;
 impl ftnet::Identity {
     pub async fn run(
         self,
-        _graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
+        graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
         id_map: ftnet::identity::IDMap,
-        client_pools: ftnet::http::client::ConnectionPools,
+        peer_connections: ftnet::identity::PeerConnections,
     ) -> eyre::Result<()> {
-        let port = start_fastn(id_map.clone())
+        let port = start_fastn(id_map.clone(), graceful_shutdown_rx.clone())
             .await
             .wrap_err_with(|| "failed to start fastn")?;
 
@@ -19,12 +19,22 @@ impl ftnet::Identity {
             .await
             .wrap_err_with(|| "failed to bind to iroh network")?;
 
-        ftnet::server::run(ep, port, client_pools).await
+        ftnet::server::run(
+            ep,
+            port,
+            self.client_pools.clone(),
+            peer_connections,
+            graceful_shutdown_rx,
+        )
+        .await
     }
 }
 
 /// launch fastn from the package directory and return the port
-async fn start_fastn(_id_map: ftnet::identity::IDMap) -> eyre::Result<u16> {
+async fn start_fastn(
+    _id_map: ftnet::identity::IDMap,
+    _graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
+) -> eyre::Result<u16> {
     // TODO
     Ok(8000)
 }

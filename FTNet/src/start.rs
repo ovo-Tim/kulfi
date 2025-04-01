@@ -10,6 +10,8 @@ pub async fn start(_fg: bool, dir: Option<String>) -> eyre::Result<()> {
     use eyre::WrapErr;
 
     let client_pools = ftnet::http::client::ConnectionPools::default();
+    let peer_connections = ftnet::identity::PeerConnections::default();
+
     let config = ftnet::Config::read(dir, client_pools.clone())
         .await
         .wrap_err_with(|| "failed to run config")?;
@@ -41,11 +43,11 @@ pub async fn start(_fg: bool, dir: Option<String>) -> eyre::Result<()> {
     for identity in identities {
         let graceful_shutdown_rx = graceful_shutdown_rx.clone();
         let id_map = id_map.clone();
-        let client_pools = client_pools.clone();
+        let peer_connections = peer_connections.clone();
         tokio::spawn(async move {
             let public_key = identity.public_key;
             if let Err(e) = identity
-                .run(graceful_shutdown_rx, id_map, client_pools)
+                .run(graceful_shutdown_rx, id_map, peer_connections)
                 .await
             {
                 eprintln!("failed to run identity: {public_key}: {e:?}");

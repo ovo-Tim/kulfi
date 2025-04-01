@@ -2,8 +2,11 @@ pub async fn run(
     ep: iroh::Endpoint,
     _fastn_port: u16,
     client_pools: ftnet::http::client::ConnectionPools,
+    peer_connections: ftnet::identity::PeerConnections,
+    _graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
 ) -> eyre::Result<()> {
     loop {
+        let _peer_connections = peer_connections.clone();
         let conn = match ep.accept().await {
             Some(conn) => conn,
             None => {
@@ -22,6 +25,7 @@ pub async fn run(
                 }
             };
 
+            // todo: add conn to peer_connections
             if let Err(e) = handle_connection(conn, client_pools).await {
                 eprintln!("connection error: {:?}", e);
             }
