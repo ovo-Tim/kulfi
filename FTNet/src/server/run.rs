@@ -20,12 +20,14 @@ pub async fn run(
             let conn = match conn.await {
                 Ok(c) => c,
                 Err(e) => {
-                    eprintln!("connection error: {:?}", e);
+                    eprintln!("failed to convert connecting to connection: {:?}", e);
                     return;
                 }
             };
-
-            // todo: add conn to peer_connections
+            if let Err(e) = enqueue_connection(conn.clone()).await {
+                eprintln!("failed to enqueue connection: {:?}", e);
+                return;
+            }
             if let Err(e) = handle_connection(conn, client_pools).await {
                 eprintln!("connection error: {:?}", e);
             }
@@ -34,6 +36,45 @@ pub async fn run(
     }
 
     ep.close().await;
+    Ok(())
+}
+
+async fn enqueue_connection(conn: iroh::endpoint::Connection) -> eyre::Result<()> {
+    let public_key = match conn.remote_node_id() {
+        Ok(v) => v,
+        Err(e) => {
+            eprintln!("can not get remote id: {e:?}");
+            return Err(eyre::anyhow!("can not get remote id: {e:?}"));
+        }
+    };
+    let id = data_encoding::BASE32_DNSSEC.encode(public_key.as_bytes());
+    let peer_connections = ftnet::identity::PeerConnections::default();
+    let mut map = peer_connections.lock().await;
+    if let Some(v) = map.get_mut(&id) {
+        if let Err(e) = v.add(conn.clone()) {
+            eprintln!("failed to add connection to peer_connections: {e:?}");
+            return Err(eyre::anyhow!(
+                "failed to add add connection to peer_connections: {e:?}"
+            ));
+        }
+        return Ok(());
+    };
+
+    let pool = bb8::Pool::builder()
+        .build(ftnet::Identity {
+            id: id.clone(),
+            public_key,
+            client_pools: ftnet::http::client::ConnectionPools::default(),
+        })
+        .await?;
+    if let Err(e) = pool.add(conn.clone()) {
+        eprintln!("failed to add connection to peer_connections: {e:?}");
+        return Err(eyre::anyhow!(
+            "failed to add add connection to peer_connections: {e:?}"
+        ));
+    }
+    map.insert(id.clone(), pool);
+
     Ok(())
 }
 
