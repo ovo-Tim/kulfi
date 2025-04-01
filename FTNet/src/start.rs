@@ -9,7 +9,8 @@
 pub async fn start(_fg: bool, dir: Option<String>) -> eyre::Result<()> {
     use eyre::WrapErr;
 
-    let config = ftnet::Config::read(dir)
+    let client_pools = ftnet::http::client::ConnectionPools::default();
+    let config = ftnet::Config::read(dir, client_pools.clone())
         .await
         .wrap_err_with(|| "failed to run config")?;
 
@@ -18,7 +19,7 @@ pub async fn start(_fg: bool, dir: Option<String>) -> eyre::Result<()> {
         .await
         .wrap_err_with(|| "looks like there is another instance of FTNet running")?;
 
-    let identities = config.identities().await?;
+    let identities = config.identities(client_pools.clone()).await?;
     println!(
         "FTNet started with {identities}.",
         identities = identities
@@ -36,7 +37,6 @@ pub async fn start(_fg: bool, dir: Option<String>) -> eyre::Result<()> {
         .ok_or_else(|| eyre::eyre!("no identities found"))?;
 
     let id_map = ftnet::identity::IDMap::default();
-    let client_pools = ftnet::http::client::ConnectionPools::default();
 
     for identity in identities {
         let graceful_shutdown_rx = graceful_shutdown_rx.clone();

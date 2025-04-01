@@ -24,7 +24,10 @@
 //! `logs` is the folder that contains the logs for this identity. This contains fastn access logs
 //! and other device access logs etc.
 impl ftnet::Identity {
-    pub async fn create(identities_folder: &std::path::Path) -> eyre::Result<Self> {
+    pub async fn create(
+        identities_folder: &std::path::Path,
+        client_pools: ftnet::http::client::ConnectionPools,
+    ) -> eyre::Result<Self> {
         use eyre::WrapErr;
 
         let public_key = {
@@ -66,6 +69,7 @@ impl ftnet::Identity {
         Ok(Self {
             id: data_encoding::BASE32_DNSSEC.encode(public_key.as_bytes()),
             public_key,
+            client_pools,
         })
     }
 }

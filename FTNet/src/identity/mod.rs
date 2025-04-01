@@ -9,6 +9,7 @@ pub use bb8::get_endpoint;
 pub struct Identity {
     pub id: String,
     pub public_key: iroh::PublicKey,
+    pub client_pools: ftnet::http::client::ConnectionPools,
 }
 
 /// IDMap stores the fastn port for every identity

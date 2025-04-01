@@ -1,5 +1,8 @@
 /// this function is called on startup, and initializes the FTNet directory if it doesn't exist
-pub async fn init_if_required(dir: Option<String>) -> eyre::Result<std::path::PathBuf> {
+pub async fn init_if_required(
+    dir: Option<String>,
+    client_pools: ftnet::http::client::ConnectionPools,
+) -> eyre::Result<std::path::PathBuf> {
     use eyre::WrapErr;
 
     let dir = match dir {
@@ -31,7 +34,7 @@ pub async fn init_if_required(dir: Option<String>) -> eyre::Result<std::path::Pa
         super::lock_file(&dir).wrap_err_with(|| "failed to create lock file")?;
 
         // we always create the default identity
-        ftnet::Identity::create(&identities).await?;
+        ftnet::Identity::create(&identities, client_pools).await?;
     }
 
     Ok(dir)

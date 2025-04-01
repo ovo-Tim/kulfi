@@ -14,6 +14,14 @@ pub async fn run(
         let client_pools = client_pools.clone();
         tokio::spawn(async move {
             let start = std::time::Instant::now();
+            let conn = match conn.await {
+                Ok(c) => c,
+                Err(e) => {
+                    eprintln!("connection error: {:?}", e);
+                    return;
+                }
+            };
+
             if let Err(e) = handle_connection(conn, client_pools).await {
                 eprintln!("connection error: {:?}", e);
             }
@@ -25,11 +33,10 @@ pub async fn run(
     Ok(())
 }
 
-async fn handle_connection(
-    conn: iroh::endpoint::Incoming,
+pub async fn handle_connection(
+    conn: iroh::endpoint::Connection,
     _client_pools: ftnet::http::client::ConnectionPools,
 ) -> eyre::Result<()> {
-    let conn = conn.await?;
     println!("got connection from: {:?}", conn.remote_node_id());
     let remote_node_id = match conn.remote_node_id() {
         Ok(id) => id,

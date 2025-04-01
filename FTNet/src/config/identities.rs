@@ -1,5 +1,8 @@
 impl ftnet::Config {
-    pub async fn identities(&self) -> eyre::Result<Vec<ftnet::Identity>> {
+    pub async fn identities(
+        &self,
+        client_pools: ftnet::http::client::ConnectionPools,
+    ) -> eyre::Result<Vec<ftnet::Identity>> {
         use eyre::WrapErr;
 
         let mut identities = Vec::new();
@@ -25,7 +28,7 @@ impl ftnet::Config {
                 }
             };
 
-            let identity = ftnet::Identity::read(&identities_dir, id)
+            let identity = ftnet::Identity::read(&identities_dir, id, client_pools.clone())
                 .await
                 .wrap_err_with(|| format!("failed to read {path:?} as an identity folder"))?;
 

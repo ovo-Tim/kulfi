@@ -1,5 +1,9 @@
 impl ftnet::Identity {
-    pub async fn read(_path: &std::path::Path, id: String) -> eyre::Result<Self> {
+    pub async fn read(
+        _path: &std::path::Path,
+        id: String,
+        client_pools: ftnet::http::client::ConnectionPools,
+    ) -> eyre::Result<Self> {
         use eyre::WrapErr;
 
         let bytes = data_encoding::BASE32_DNSSEC.decode(id.as_bytes())?;
@@ -18,6 +22,7 @@ impl ftnet::Identity {
         Ok(Self {
             id: data_encoding::BASE32_DNSSEC.encode(public_key.as_bytes()),
             public_key,
+            client_pools,
         })
     }
 }

@@ -65,9 +65,23 @@ impl bb8::ManageConnection for ftnet::Identity {
             let ep = get_endpoint(self.public_key.to_string().as_str())
                 .await
                 .wrap_err_with(|| "failed to bind to iroh network1")?;
-            ep.connect(self.public_key, ftnet::APNS_IDENTITY)
+            let conn = ep
+                .connect(self.public_key, ftnet::APNS_IDENTITY)
                 .await
-                .map_err(|e| eyre::anyhow!("failed to connect to iroh network: {e:?}"))
+                .map_err(|e| eyre::anyhow!("failed to connect to iroh network: {e:?}"))?;
+
+            let conn2 = conn.clone();
+            let client_pools = self.client_pools.clone();
+
+            tokio::spawn(async move {
+                let start = std::time::Instant::now();
+                if let Err(e) = ftnet::server::handle_connection(conn2, client_pools).await {
+                    eprintln!("connection error: {:?}", e);
+                }
+                println!("connection handled in {:?}", start.elapsed());
+            });
+
+            Ok(conn)
         })
     }
 
