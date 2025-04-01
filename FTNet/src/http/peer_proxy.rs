@@ -6,19 +6,25 @@ pub async fn peer_proxy(
     client_pools: ftnet::http::client::ConnectionPools,
     _patch: ftnet::http::RequestPatch,
 ) -> ftnet::http::Result {
-    let (mut send, _recv) = get_stream(peer_id, peer_connections, client_pools).await?;
+    use tokio_stream::StreamExt;
+
+    let (mut send, mut recv) = get_stream(peer_id, peer_connections, client_pools).await?;
 
     send.write_all(&serde_json::to_vec(&ftnet::Protocol::Identity)?)
         .await?;
     send.write(b"\n").await?;
 
-    let (head, _body) = req.into_parts();
+    let (head, body) = req.into_parts();
     send.write_all(&serde_json::to_vec(&Request::from(head))?)
         .await?;
 
-    // while let Some(v) = body.poll_frame().await {
-    //     send.write_all(&v?).await?;
-    // }
+    let mut body = http_body_util::BodyDataStream::new(body);
+
+    while let Some(v) = body.next().await {
+        send.write_all(&v?).await?;
+    }
+
+    recv.read_to_end(64 * 1024).await?;
 
     todo!()
 }
