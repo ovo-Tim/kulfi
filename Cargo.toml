@@ -5,6 +5,7 @@ resolver = "2"
 [workspace.package]
 authors = [
     "Amit Upadhyay <upadhyay@gmail.com>",
+    "Siddhant Kumar <siddhantk232@gmail.com>",
 ]
 edition = "2024"
 description = "FTN: FifthTry Network"
