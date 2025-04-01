@@ -31,7 +31,6 @@ pub async fn init_if_required(
             .wrap_err_with(|| format!("failed to create dotFTNet directory: {dir:?}"))?;
         let identities = ftnet::utils::mkdir(&dir, "identities")?;
         ftnet::utils::mkdir(&dir, "logs")?;
-        super::lock_file(&dir).wrap_err_with(|| "failed to create lock file")?;
 
         // we always create the default identity
         ftnet::Identity::create(&identities, client_pools).await?;
