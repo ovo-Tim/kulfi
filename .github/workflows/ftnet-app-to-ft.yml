@@ -20,4 +20,4 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: Swatinem/rust-cache@v2
-      - run: ./scripts/publish-app.sh
+      - run: ./scripts/publish-app.sh >> $GITHUB_STEP_SUMMARY

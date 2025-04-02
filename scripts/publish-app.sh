@@ -3,8 +3,8 @@
 set -ue
 set -o pipefail
 
-../scripts/build-wasm.sh || exit 1
-../scripts/optimise-wasm.sh || exit 1
+./scripts/build-wasm.sh || exit 1
+./scripts/optimise-wasm.sh || exit 1
 
 rm .gitignore
 
@@ -17,4 +17,4 @@ sh -c "$(curl -fsSL https://fastn.com/install.sh)"
 
 cd ftnet.fifthtry.site/
 
-fastn upload ftnet >> "$GITHUB_STEP_SUMMARY"
+fastn upload ftnet
