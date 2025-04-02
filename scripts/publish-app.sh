@@ -17,4 +17,4 @@ sh -c "$(curl -fsSL https://fastn.com/install.sh)"
 
 cd ftnet.fifthtry.site/
 
-fastn upload ftnet
+fastn upload ftnet >> "$GITHUB_STEP_SUMMARY"
