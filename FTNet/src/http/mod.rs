@@ -1,9 +1,4 @@
 pub mod client;
-mod peer_proxy;
-mod proxy_pass;
-
-pub use peer_proxy::peer_proxy;
-pub use proxy_pass::proxy_pass;
 
 pub type Response =
     hyper::Response<http_body_util::combinators::BoxBody<hyper::body::Bytes, hyper::Error>>;

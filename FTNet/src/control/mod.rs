@@ -59,7 +59,12 @@
 //! request before you send, such extra headers and other "manipulation hints" can also be returned
 //! by the fastn's api call.
 
+mod peer_proxy;
+mod proxy_pass;
 mod server;
+
+pub use peer_proxy::peer_proxy;
+pub use proxy_pass::proxy_pass;
 
 pub async fn start(
     id: String,
