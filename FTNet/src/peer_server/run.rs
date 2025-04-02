@@ -6,7 +6,7 @@ pub async fn run(
     _graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
 ) -> eyre::Result<()> {
     loop {
-        let _peer_connections = peer_connections.clone();
+        let peer_connections = peer_connections.clone();
         let conn = match ep.accept().await {
             Some(conn) => conn,
             None => {
@@ -24,7 +24,13 @@ pub async fn run(
                     return;
                 }
             };
-            if let Err(e) = enqueue_connection(conn.clone(), client_pools.clone(), fastn_port).await
+            if let Err(e) = enqueue_connection(
+                conn.clone(),
+                client_pools.clone(),
+                peer_connections,
+                fastn_port,
+            )
+            .await
             {
                 eprintln!("failed to enqueue connection: {:?}", e);
                 return;
@@ -43,6 +49,7 @@ pub async fn run(
 async fn enqueue_connection(
     conn: iroh::endpoint::Connection,
     client_pools: ftnet::http::client::ConnectionPools,
+    peer_connections: ftnet::identity::PeerConnections,
     fastn_port: u16,
 ) -> eyre::Result<()> {
     let public_key = match conn.remote_node_id() {
@@ -53,7 +60,6 @@ async fn enqueue_connection(
         }
     };
     let id = data_encoding::BASE32_DNSSEC.encode(public_key.as_bytes());
-    let peer_connections = ftnet::identity::PeerConnections::default();
     let mut map = peer_connections.lock().await;
     if let Some(v) = map.get_mut(&id) {
         if let Err(e) = v.add(conn.clone()) {
