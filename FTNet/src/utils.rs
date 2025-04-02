@@ -85,6 +85,7 @@ pub async fn download_package_template(
             .unwrap()
             .to_str()
             .unwrap()
+            // remove the quotes from the etag if they exist
             .trim_matches('"')
             .to_string();
 
@@ -99,7 +100,6 @@ pub async fn download_package_template(
 
         tracing::info!("template zip downloaded");
 
-        // remove the quotes from the etag if they exist
         version
     };
 
