@@ -70,36 +70,53 @@ pub async fn download_package_template(
     template_slug: String,
 ) -> eyre::Result<()> {
     use tokio::io::AsyncWriteExt;
+    use tokio_stream::StreamExt;
 
     let client = reqwest::Client::new();
 
-    {
+    let version = {
         let mut file = tokio::fs::File::create(dir.join("template.zip")).await?;
-        let url =
-            format!("https://www.fifthtry.com/ft2/api/site/download?site-slug={template_slug}");
+        let url = format!("https://www.fifthtry.com/{template_slug}.zip");
+        let res = client.get(url).send().await?.error_for_status()?;
 
-        download(&client, &url, &mut file).await?;
+        let version = res
+            .headers()
+            .get("etag")
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .trim_matches('"')
+            .to_string();
+
+        tracing::info!(package_checkpoint = %version);
+
+        let mut stream = res.bytes_stream();
+
+        while let Some(item) = stream.next().await {
+            let item = item?;
+            file.write_all(&item).await?;
+        }
 
         tracing::info!("template zip downloaded");
-    }
+
+        // remove the quotes from the etag if they exist
+        version
+    };
 
     {
         let mut version_file = tokio::fs::File::create(dir.join("version")).await?;
-        let version_url =
-            format!("https://www.fifthtry.com/ft2/ops/last-hash/?site-id={template_slug}");
-
-        let res = client.get(version_url).send().await?;
-        let version = res.text().await?;
         version_file.write_all(version.as_bytes()).await?;
 
-        tracing::info!(version = %version, "version downloaded");
+        tracing::info!("version file written");
     }
 
     // create template dir and unzip the template.zip
     let template_dir = mkdir(dir, "template")?;
 
-    let zip_file  = std::fs::File::open(dir.join("template.zip"))?;
+    let zip_file = std::fs::File::open(dir.join("template.zip"))?;
     let mut archive = zip::ZipArchive::new(zip_file)?;
+
+    tracing::info!("unzipping {} files", archive.len());
 
     // TODO: use tokio::fs and tokio::io
     for i in 0..archive.len() {
@@ -117,27 +134,7 @@ pub async fn download_package_template(
         }
     }
 
-
-    Ok(())
-}
-
-#[tracing::instrument(skip_all)]
-async fn download(
-    client: &reqwest::Client,
-    url: &str,
-    file: &mut tokio::fs::File,
-) -> eyre::Result<()> {
-    use tokio::io::AsyncWriteExt;
-    use tokio_stream::StreamExt;
-
-    let res = client.get(url).send().await?.error_for_status()?;
-
-    let mut stream = res.bytes_stream();
-
-    while let Some(item) = stream.next().await {
-        let item = item?;
-        file.write_all(&item).await?;
-    }
+    tracing::info!("template unzipped");
 
     Ok(())
 }
