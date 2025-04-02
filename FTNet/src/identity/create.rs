@@ -70,6 +70,7 @@ impl ftnet::Identity {
             id52: data_encoding::BASE32_DNSSEC.encode(public_key.as_bytes()),
             public_key,
             client_pools,
+            fastn_port: None, // real fastn port will be assigned later
         })
     }
 }

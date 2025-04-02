@@ -1,6 +1,6 @@
 pub async fn run(
     ep: iroh::Endpoint,
-    _fastn_port: u16,
+    fastn_port: u16,
     client_pools: ftnet::http::client::ConnectionPools,
     peer_connections: ftnet::identity::PeerConnections,
     _graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
@@ -24,11 +24,12 @@ pub async fn run(
                     return;
                 }
             };
-            if let Err(e) = enqueue_connection(conn.clone()).await {
+            if let Err(e) = enqueue_connection(conn.clone(), client_pools.clone(), fastn_port).await
+            {
                 eprintln!("failed to enqueue connection: {:?}", e);
                 return;
             }
-            if let Err(e) = handle_connection(conn, client_pools).await {
+            if let Err(e) = handle_connection(conn, client_pools, fastn_port).await {
                 eprintln!("connection error: {:?}", e);
             }
             println!("connection handled in {:?}", start.elapsed());
@@ -39,7 +40,11 @@ pub async fn run(
     Ok(())
 }
 
-async fn enqueue_connection(conn: iroh::endpoint::Connection) -> eyre::Result<()> {
+async fn enqueue_connection(
+    conn: iroh::endpoint::Connection,
+    client_pools: ftnet::http::client::ConnectionPools,
+    fastn_port: u16,
+) -> eyre::Result<()> {
     let public_key = match conn.remote_node_id() {
         Ok(v) => v,
         Err(e) => {
@@ -64,7 +69,8 @@ async fn enqueue_connection(conn: iroh::endpoint::Connection) -> eyre::Result<()
         .build(ftnet::Identity {
             id52: id.clone(),
             public_key,
-            client_pools: ftnet::http::client::ConnectionPools::default(),
+            client_pools,
+            fastn_port: Some(fastn_port),
         })
         .await?;
     if let Err(e) = pool.add(conn.clone()) {
@@ -81,6 +87,7 @@ async fn enqueue_connection(conn: iroh::endpoint::Connection) -> eyre::Result<()
 pub async fn handle_connection(
     conn: iroh::endpoint::Connection,
     _client_pools: ftnet::http::client::ConnectionPools,
+    fastn_port: u16,
 ) -> eyre::Result<()> {
     println!("got connection from: {:?}", conn.remote_node_id());
     let remote_node_id = match conn.remote_node_id() {
@@ -98,64 +105,61 @@ pub async fn handle_connection(
     };
     println!("new client: {remote_node_id:?}");
     loop {
-        let (mut send_stream, mut recv_stream) = conn.accept_bi().await?;
-        let msg = recv_stream.read_to_end(1024).await?;
+        let (mut send, mut recv) = conn.accept_bi().await?;
+        // TODO: replace read_to_end (fails the stream if there is more content than the size_limit)
+        let msg = recv.read_to_end(1024).await?;
         match ftnet::Protocol::parse(&msg) {
             Ok((ftnet::Protocol::Quit, rest)) => {
                 if !rest.is_empty() {
-                    send_stream
-                        .write_all(b"error: quit message should not have payload\n")
+                    send.write_all(b"error: quit message should not have payload\n")
                         .await?;
                 } else {
-                    send_stream.write_all(b"see you later!\n").await?;
+                    send.write_all(b"see you later!\n").await?;
                 }
-                send_stream.finish()?;
+                send.finish()?;
                 break;
             }
             Ok((ftnet::Protocol::Ping, rest)) => {
                 if !rest.is_empty() {
-                    send_stream
-                        .write_all(b"error: ping message should not have payload\n")
+                    send.write_all(b"error: ping message should not have payload\n")
                         .await?;
                     break;
                 }
-                send_stream.write_all(ftnet::client::PONG).await?;
+                send.write_all(ftnet::client::PONG).await?;
             }
             Ok((ftnet::Protocol::WhatTimeIsIt, rest)) => {
                 if !rest.is_empty() {
-                    send_stream
-                        .write_all(b"error: quit message should not have payload\n")
+                    send.write_all(b"error: quit message should not have payload\n")
                         .await?;
                 } else {
                     let d = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)?;
 
-                    send_stream
-                        .write_all(format!("{}\n", d.as_nanos()).as_bytes())
+                    send.write_all(format!("{}\n", d.as_nanos()).as_bytes())
                         .await?;
                 }
-                send_stream.finish()?;
+                send.finish()?;
                 break;
             }
-            Ok((ftnet::Protocol::Identity, _)) => todo!(),
+            Ok((ftnet::Protocol::Identity, rest)) => {
+                ftnet::peer_server::http(rest, fastn_port, &mut send, recv).await
+            }
             Ok((ftnet::Protocol::Http { .. }, _)) => todo!(),
             Ok((ftnet::Protocol::Socks5 { .. }, _)) => todo!(),
             Ok((ftnet::Protocol::Tcp { id }, _)) => {
-                if let Err(e) =
-                    ftnet::peer_server::tcp(&remote_node_id, &id, &mut send_stream, recv_stream)
-                        .await
+                if let Err(e) = ftnet::peer_server::tcp(&remote_node_id, &id, &mut send, recv).await
                 {
                     eprintln!("tcp error: {e}");
-                    send_stream.finish()?;
+                    send.finish()?;
                 }
             }
             Err(e) => {
                 eprintln!("error parsing protocol: {e}");
-                send_stream.write_all(b"error: invalid protocol\n").await?;
-                send_stream.finish()?;
+                send.write_all(b"error: invalid protocol\n").await?;
+                send.finish()?;
                 break;
             }
         };
-        send_stream.finish()?;
+        send.finish()?;
     }
 
     let e = conn.closed().await;

@@ -59,6 +59,13 @@ impl bb8::ManageConnection for ftnet::Identity {
 
     fn connect(&self) -> impl Future<Output = Result<Self::Connection, Self::Error>> + Send {
         Box::pin(async move {
+            let fastn_port = match self.fastn_port {
+                Some(v) => v,
+                None => {
+                    return Err(eyre::anyhow!("fastn port not set"));
+                }
+            };
+
             // creating a new endpoint takes about 30 milliseconds, so we can do it here.
             // since we create just a single connection via this endpoint, the overhead is
             // negligible, compared to 800 milliseconds or so it takes to create a new connection.
@@ -75,7 +82,9 @@ impl bb8::ManageConnection for ftnet::Identity {
 
             tokio::spawn(async move {
                 let start = std::time::Instant::now();
-                if let Err(e) = ftnet::peer_server::handle_connection(conn2, client_pools).await {
+                if let Err(e) =
+                    ftnet::peer_server::handle_connection(conn2, client_pools, fastn_port).await
+                {
                     eprintln!("connection error: {:?}", e);
                 }
                 println!("connection handled in {:?}", start.elapsed());

@@ -10,6 +10,7 @@ pub struct Identity {
     pub id52: String,
     pub public_key: iroh::PublicKey,
     pub client_pools: ftnet::http::client::ConnectionPools,
+    pub fastn_port: Option<u16>,
 }
 
 impl Identity {
@@ -36,6 +37,7 @@ impl Identity {
             id52: data_encoding::BASE32_DNSSEC.encode(public_key.as_bytes()),
             public_key,
             client_pools,
+            fastn_port: None, // fastn port will be assigned later
         })
     }
 }
