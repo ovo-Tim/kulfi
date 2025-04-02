@@ -15,24 +15,26 @@
 pub async fn tcp(
     _remote_id: &iroh::NodeId,
     _id: &str,
-    send: &mut iroh::endpoint::SendStream,
-    recv: iroh::endpoint::RecvStream,
+    _send: &mut iroh::endpoint::SendStream,
+    _recv: tokio_util::codec::FramedRead<iroh::endpoint::RecvStream, tokio_util::codec::LinesCodec>,
 ) -> eyre::Result<()> {
     // todo: call identity server (fastn server running on behalf of identity
     //       /api/v1/identity/{id}/tcp/ with remote_id and id and get the ip:port
     //       to connect to.
-    let addr = "127.0.0.1:8000";
+    let _addr = "127.0.0.1:8000";
 
-    let stream = tokio::net::TcpStream::connect(addr).await?;
-    let (mut tcp_recv, tcp_send) = tokio::io::split(stream);
+    // let stream = tokio::net::TcpStream::connect(addr).await?;
+    // let (mut tcp_recv, tcp_send) = tokio::io::split(stream);
+    //
+    // let t = tokio::spawn(async move {
+    //     let mut t = tcp_send;
+    //     let mut recv = recv;
+    //     tokio::io::copy(&mut recv, &mut t).await
+    // });
+    //
+    // tokio::io::copy(&mut tcp_recv, send).await?;
+    //
+    // Ok(t.await?.map(|_| ())?)
 
-    let t = tokio::spawn(async move {
-        let mut t = tcp_send;
-        let mut recv = recv;
-        tokio::io::copy(&mut recv, &mut t).await
-    });
-
-    tokio::io::copy(&mut tcp_recv, send).await?;
-
-    Ok(t.await?.map(|_| ())?)
+    todo!()
 }

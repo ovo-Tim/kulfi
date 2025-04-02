@@ -6,7 +6,6 @@ pub async fn peer_proxy(
     client_pools: ftnet::http::client::ConnectionPools,
     _patch: ftnet::http::RequestPatch,
 ) -> ftnet::http::Result {
-    use http_body_util::BodyExt;
     use tokio_stream::StreamExt;
 
     let (mut send, mut recv) = get_stream(peer_id, peer_connections, client_pools).await?;
@@ -28,33 +27,35 @@ pub async fn peer_proxy(
     // TODO: figure out how to do streaming response
     let mut buf = Vec::with_capacity(64 * 1024 * 1024);
 
-    let size = match recv.read(&mut buf).await? {
+    let _size = match recv.read(&mut buf).await? {
         Some(0) | None => {
             return Err(eyre::anyhow!("peer closed connection"));
         }
         Some(v) => v,
     };
 
-    let data = &buf[..size];
+    // let data = &buf[..size];
+    //
+    // let (r, rest): (Request, _) = ftnet::utils::read_newline_separated_json(data)?;
+    //
+    // let mut res = hyper::Response::new(
+    //     http_body_util::Full::new(hyper::body::Bytes::from(rest.to_vec()))
+    //         .map_err(|e| match e {})
+    //         .boxed(),
+    // );
+    //
+    // *res.status_mut() = r.method.parse::<http::StatusCode>()?;
+    //
+    // for (k, v) in r.headers {
+    //     res.headers_mut().insert(
+    //         http::header::HeaderName::from_bytes(k.as_bytes())?,
+    //         http::header::HeaderValue::from_bytes(&v)?,
+    //     );
+    // }
+    //
+    // Ok(res)
 
-    let (r, rest): (Request, _) = ftnet::utils::read_newline_separated_json(data)?;
-
-    let mut res = hyper::Response::new(
-        http_body_util::Full::new(hyper::body::Bytes::from(rest.to_vec()))
-            .map_err(|e| match e {})
-            .boxed(),
-    );
-
-    *res.status_mut() = r.method.parse::<http::StatusCode>()?;
-
-    for (k, v) in r.headers {
-        res.headers_mut().insert(
-            http::header::HeaderName::from_bytes(k.as_bytes())?,
-            http::header::HeaderValue::from_bytes(&v)?,
-        );
-    }
-
-    Ok(res)
+    todo!()
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]

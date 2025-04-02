@@ -109,9 +109,3 @@ pub enum Protocol {
     },
     // TODO: RTP/"RTCP" for audio video streaming
 }
-
-impl Protocol {
-    pub fn parse(msg: &[u8]) -> eyre::Result<(Protocol, &[u8])> {
-        ftnet::utils::read_newline_separated_json(msg)
-    }
-}
