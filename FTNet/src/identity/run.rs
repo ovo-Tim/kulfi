@@ -19,7 +19,7 @@ impl ftnet::Identity {
             .await
             .wrap_err_with(|| "failed to bind to iroh network")?;
 
-        ftnet::server::run(
+        ftnet::peer_server::run(
             ep,
             port,
             self.client_pools.clone(),

@@ -75,7 +75,7 @@ impl bb8::ManageConnection for ftnet::Identity {
 
             tokio::spawn(async move {
                 let start = std::time::Instant::now();
-                if let Err(e) = ftnet::server::handle_connection(conn2, client_pools).await {
+                if let Err(e) = ftnet::peer_server::handle_connection(conn2, client_pools).await {
                     eprintln!("connection error: {:?}", e);
                 }
                 println!("connection handled in {:?}", start.elapsed());

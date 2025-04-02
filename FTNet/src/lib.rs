@@ -7,12 +7,12 @@ extern crate self as ftnet;
 mod cli;
 mod client;
 mod config;
-pub mod control;
+pub mod control_server;
 mod counters;
 pub mod http;
 mod identity;
+mod peer_server;
 mod protocol;
-mod server;
 mod start;
 pub mod utils;
 

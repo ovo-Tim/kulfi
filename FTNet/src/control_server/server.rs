@@ -84,7 +84,7 @@ async fn handle_request_(
 
     // if this is an identity, if so forward the request to fastn corresponding to that identity
     if let Some(fastn_port) = find_identity(id, id_map.clone()).await? {
-        return ftnet::control::proxy_pass(
+        return ftnet::control_server::proxy_pass(
             r,
             find_pool(client_pools, fastn_port).await?,
             fastn_port,
@@ -98,7 +98,7 @@ async fn handle_request_(
     match what_to_do(default_port, id).await {
         // if the id belongs to a friend of an identity, send the request to the friend over iroh
         Ok(WhatToDo::ForwardToPeer { peer_id, patch }) => {
-            ftnet::control::peer_proxy(
+            ftnet::control_server::peer_proxy(
                 r,
                 default_id.as_str(),
                 peer_id.as_str(),
@@ -114,8 +114,13 @@ async fn handle_request_(
             port,
             extra_headers,
         }) => {
-            ftnet::control::proxy_pass(r, find_pool(client_pools, port).await?, port, extra_headers)
-                .await
+            ftnet::control_server::proxy_pass(
+                r,
+                find_pool(client_pools, port).await?,
+                port,
+                extra_headers,
+            )
+            .await
         }
         Ok(WhatToDo::UnknownPeer) => {
             eprintln!("unknown peer: {id}");

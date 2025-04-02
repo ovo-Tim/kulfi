@@ -141,7 +141,8 @@ pub async fn handle_connection(
             Ok((ftnet::Protocol::Socks5 { .. }, _)) => todo!(),
             Ok((ftnet::Protocol::Tcp { id }, _)) => {
                 if let Err(e) =
-                    ftnet::server::tcp(&remote_node_id, &id, &mut send_stream, recv_stream).await
+                    ftnet::peer_server::tcp(&remote_node_id, &id, &mut send_stream, recv_stream)
+                        .await
                 {
                     eprintln!("tcp error: {e}");
                     send_stream.finish()?;
