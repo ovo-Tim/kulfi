@@ -112,20 +112,6 @@ pub enum Protocol {
 
 impl Protocol {
     pub fn parse(msg: &[u8]) -> eyre::Result<(Protocol, &[u8])> {
-        let mut i = 0;
-        for (j, &b) in msg.iter().enumerate() {
-            if b == b'\n' {
-                i = j;
-            }
-        }
-
-        if i == 0 {
-            return Err(eyre::eyre!("no newline found in the message: {msg:?}"));
-        }
-
-        let header = &msg[..i];
-        let rest = &msg[i + 1..];
-
-        Ok((serde_json::from_slice(header)?, rest))
+        ftnet::utils::read_newline_separated_json(msg)
     }
 }

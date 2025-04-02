@@ -34,3 +34,23 @@ pub fn get_secret(id: &str) -> eyre::Result<iroh::SecretKey> {
     let bytes: [u8; 32] = secret.try_into().unwrap(); // unwrap ok as already asserted
     Ok(iroh::SecretKey::from_bytes(&bytes))
 }
+
+pub fn read_newline_separated_json<T: serde::de::DeserializeOwned>(
+    msg: &[u8],
+) -> eyre::Result<(T, &[u8])> {
+    let mut i = 0;
+    for (j, &b) in msg.iter().enumerate() {
+        if b == b'\n' {
+            i = j;
+        }
+    }
+
+    if i == 0 {
+        return Err(eyre::eyre!("no newline found in the message: {msg:?}"));
+    }
+
+    let header = &msg[..i];
+    let rest = &msg[i + 1..];
+
+    Ok((serde_json::from_slice(header)?, rest))
+}
