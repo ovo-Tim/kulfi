@@ -10,7 +10,7 @@ description = "FTNet: FifthTry Network"
 [dependencies]
 bb8.workspace = true
 clap.workspace = true
-common.workspace = true
+ftnet-common.workspace = true
 data-encoding.workspace = true
 directories.workspace = true
 eyre.workspace = true
