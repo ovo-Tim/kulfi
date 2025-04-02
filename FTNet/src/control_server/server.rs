@@ -169,11 +169,11 @@ pub async fn find_pool(
 pub enum WhatToDo {
     ForwardToPeer {
         peer_id: String,
-        patch: ftnet::http::RequestPatch,
+        patch: common::RequestPatch,
     },
     ProxyPass {
         port: u16,
-        extra_headers: ftnet::http::RequestPatch,
+        extra_headers: common::RequestPatch,
     },
     UnknownPeer,
 }
