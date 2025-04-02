@@ -92,7 +92,7 @@ async fn enqueue_connection(
 
 pub async fn handle_connection(
     conn: iroh::endpoint::Connection,
-    _client_pools: ftnet::http::client::ConnectionPools,
+    client_pools: ftnet::http::client::ConnectionPools,
     fastn_port: u16,
 ) -> eyre::Result<()> {
     use tokio_stream::StreamExt;
@@ -113,6 +113,7 @@ pub async fn handle_connection(
     };
     println!("new client: {remote_node_id:?}");
     loop {
+        let client_pools = client_pools.clone();
         let (mut send, recv) = conn.accept_bi().await?;
         let mut recv = ftnet::utils::frame_reader(recv);
         let msg = match recv.next().await {
@@ -155,7 +156,13 @@ pub async fn handle_connection(
                 break;
             }
             ftnet::Protocol::Identity => {
-                ftnet::peer_server::http(fastn_port, &mut send, recv).await
+                ftnet::peer_server::http(
+                    &format!("127.0.0.1:{fastn_port}"),
+                    client_pools,
+                    &mut send,
+                    recv,
+                )
+                .await
             }
             ftnet::Protocol::Http { .. } => todo!(),
             ftnet::Protocol::Socks5 { .. } => todo!(),

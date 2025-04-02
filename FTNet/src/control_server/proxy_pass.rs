@@ -1,7 +1,7 @@
 pub async fn proxy_pass(
     mut req: hyper::Request<hyper::body::Incoming>,
     pool: ftnet::http::client::ConnectionPool,
-    port: u16,
+    addr: &str,
     _patch: ftnet::http::RequestPatch,
 ) -> ftnet::http::Result {
     use eyre::WrapErr;
@@ -17,7 +17,7 @@ pub async fn proxy_pass(
         .path_and_query()
         .map_or_else(|| req.uri().path(), |v| v.as_str());
 
-    let uri = format!("http://localhost:{port}{path_query}");
+    let uri = format!("http://{addr}{path_query}");
     println!("proxying to {uri}");
 
     *req.uri_mut() = hyper::Uri::try_from(uri)?;

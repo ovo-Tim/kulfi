@@ -84,10 +84,11 @@ async fn handle_request_(
 
     // if this is an identity, if so forward the request to fastn corresponding to that identity
     if let Some(fastn_port) = find_identity(id, id_map.clone()).await? {
+        let addr = format!("127.0.0.1:{fastn_port}");
         return ftnet::control_server::proxy_pass(
             r,
-            find_pool(client_pools, fastn_port).await?,
-            fastn_port,
+            find_pool(client_pools, &addr).await?,
+            &addr,
             Default::default(),
         )
         .await;
@@ -114,10 +115,11 @@ async fn handle_request_(
             port,
             extra_headers,
         }) => {
+            let addr = format!("127.0.0.1:{port}");
             ftnet::control_server::proxy_pass(
                 r,
-                find_pool(client_pools, port).await?,
-                port,
+                find_pool(client_pools, &addr).await?,
+                &addr,
                 extra_headers,
             )
             .await
@@ -137,21 +139,26 @@ async fn handle_request_(
 
 pub async fn find_pool(
     client_pools: ftnet::http::client::ConnectionPools,
-    port: u16,
+    addr: &str,
 ) -> eyre::Result<ftnet::http::client::ConnectionPool> {
     {
         let pools = client_pools.lock().await;
-        if let Some(v) = pools.get(&port) {
+        if let Some(v) = pools.get(addr) {
             return Ok(v.to_owned());
         }
     }
 
     let c = ftnet::http::client::ConnectionPool::builder()
-        .build(ftnet::http::client::ConnectionManager::new(port))
+        .build(ftnet::http::client::ConnectionManager::new(
+            addr.to_string(),
+        ))
         .await?;
 
     {
-        client_pools.lock().await.insert(port, c.clone());
+        client_pools
+            .lock()
+            .await
+            .insert(addr.to_string(), c.clone());
     }
 
     Ok(c)

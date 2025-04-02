@@ -1,14 +1,14 @@
 pub type ConnectionPool = bb8::Pool<ConnectionManager>;
 pub type ConnectionPools =
-    std::sync::Arc<tokio::sync::Mutex<std::collections::HashMap<u16, ConnectionPool>>>;
+    std::sync::Arc<tokio::sync::Mutex<std::collections::HashMap<String, ConnectionPool>>>;
 
 pub struct ConnectionManager {
-    port: u16,
+    addr: String,
 }
 
 impl ConnectionManager {
-    pub fn new(port: u16) -> Self {
-        Self { port }
+    pub fn new(addr: String) -> Self {
+        Self { addr }
     }
 
     pub async fn connect(
@@ -16,15 +16,14 @@ impl ConnectionManager {
     ) -> eyre::Result<hyper::client::conn::http1::SendRequest<hyper::body::Incoming>> {
         use eyre::WrapErr;
 
-        let addr = format!("127.0.0.1:{}", self.port);
-        let stream = tokio::net::TcpStream::connect(addr)
+        let stream = tokio::net::TcpStream::connect(&self.addr)
             .await
             .wrap_err_with(|| "failed to open tcp connection")?;
         let io = hyper_util::rt::TokioIo::new(stream);
 
         let (sender, conn) = hyper::client::conn::http1::handshake(io)
             .await
-            .wrap_err_with(|| "failed to do http1 handhsake")?;
+            .wrap_err_with(|| "failed to do http1 handshake")?;
         tokio::task::spawn(async move {
             if let Err(err) = conn.await.wrap_err_with(|| "connection failed") {
                 eprintln!("Connection failed: {err:?}");
