@@ -3,6 +3,9 @@
 pub struct Cli {
     #[command(subcommand)]
     pub command: Command,
+
+    #[arg(long, global = true)]
+    pub trace: bool,
 }
 
 #[derive(clap::Subcommand, Debug)]

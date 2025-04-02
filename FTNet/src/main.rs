@@ -2,7 +2,11 @@
 async fn main() -> eyre::Result<()> {
     use clap::Parser;
 
+    // run with RUST_LOG="ftnet=info" to only see our logs when running with the --trace flag
+    observe();
+
     let cli = ftnet::Cli::parse();
+
     match cli.command {
         ftnet::Command::Start {
             foreground,
@@ -14,4 +18,15 @@ async fn main() -> eyre::Result<()> {
             Ok(())
         }
     }
+}
+
+fn observe() {
+    use tracing_subscriber::layer::SubscriberExt;
+
+    tracing::subscriber::set_global_default(
+        tracing_subscriber::registry()
+            .with(fastn_observer::Layer::default())
+            .with(tracing_subscriber::EnvFilter::from_default_env()),
+    )
+    .unwrap();
 }
