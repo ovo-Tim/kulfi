@@ -1,5 +1,5 @@
 [workspace]
-members = ["FTNet", "control-backend-wasm"]
+members = ["FTNet", "control-backend-wasm", "common"]
 resolver = "2"
 
 [workspace.package]
@@ -34,6 +34,7 @@ strip = true
 bb8 = "0.9"
 bytes = "1"
 clap = { version = "4", features = ["derive"] }
+common = { path = "common" }
 data-encoding = "2.8"
 diesel = { version = "2", default-features = false, features = ["chrono"] }
 directories = "6.0.0"
