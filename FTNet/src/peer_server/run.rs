@@ -114,8 +114,7 @@ pub async fn handle_connection(
     println!("new client: {remote_node_id:?}");
     loop {
         let (mut send, recv) = conn.accept_bi().await?;
-        let mut recv =
-            tokio_util::codec::FramedRead::new(recv, tokio_util::codec::LinesCodec::new());
+        let mut recv = ftnet::utils::frame_reader(recv);
         let msg = match recv.next().await {
             Some(v) => v?,
             None => {

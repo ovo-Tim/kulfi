@@ -34,3 +34,10 @@ pub fn get_secret(id: &str) -> eyre::Result<iroh::SecretKey> {
     let bytes: [u8; 32] = secret.try_into().unwrap(); // unwrap ok as already asserted
     Ok(iroh::SecretKey::from_bytes(&bytes))
 }
+
+pub type FrameReader =
+    tokio_util::codec::FramedRead<iroh::endpoint::RecvStream, tokio_util::codec::LinesCodec>;
+
+pub fn frame_reader(recv: iroh::endpoint::RecvStream) -> FrameReader {
+    tokio_util::codec::FramedRead::new(recv, tokio_util::codec::LinesCodec::new())
+}

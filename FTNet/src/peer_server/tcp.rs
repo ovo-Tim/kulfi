@@ -1,3 +1,5 @@
+use tokio::io::AsyncWriteExt;
+
 /// this is the tcp proxy.
 ///
 /// the other side has indicated they want to access our TCP device, whose id is specified in the
@@ -15,26 +17,25 @@
 pub async fn tcp(
     _remote_id: &iroh::NodeId,
     _id: &str,
-    _send: &mut iroh::endpoint::SendStream,
-    _recv: tokio_util::codec::FramedRead<iroh::endpoint::RecvStream, tokio_util::codec::LinesCodec>,
+    send: &mut iroh::endpoint::SendStream,
+    recv: ftnet::utils::FrameReader,
 ) -> eyre::Result<()> {
     // todo: call identity server (fastn server running on behalf of identity
     //       /api/v1/identity/{id}/tcp/ with remote_id and id and get the ip:port
     //       to connect to.
-    let _addr = "127.0.0.1:8000";
+    let addr = "127.0.0.1:8000";
 
-    // let stream = tokio::net::TcpStream::connect(addr).await?;
-    // let (mut tcp_recv, tcp_send) = tokio::io::split(stream);
-    //
-    // let t = tokio::spawn(async move {
-    //     let mut t = tcp_send;
-    //     let mut recv = recv;
-    //     tokio::io::copy(&mut recv, &mut t).await
-    // });
-    //
-    // tokio::io::copy(&mut tcp_recv, send).await?;
-    //
-    // Ok(t.await?.map(|_| ())?)
+    let stream = tokio::net::TcpStream::connect(addr).await?;
+    let (mut tcp_recv, tcp_send) = tokio::io::split(stream);
 
-    todo!()
+    let t = tokio::spawn(async move {
+        let mut t = tcp_send;
+        t.write_all(recv.read_buffer().as_ref()).await?;
+        let mut recv = recv.into_inner();
+        tokio::io::copy(&mut recv, &mut t).await
+    });
+
+    tokio::io::copy(&mut tcp_recv, send).await?;
+
+    Ok(t.await?.map(|_| ())?)
 }
