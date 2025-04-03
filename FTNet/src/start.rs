@@ -41,9 +41,11 @@ pub async fn start(_fg: bool, dir: Option<String>, control_port: u16) -> eyre::R
     let id_map = ftnet::identity::IDMap::default();
 
     for identity in identities {
+        use std::sync::Arc;
+
         let graceful_shutdown_rx = graceful_shutdown_rx.clone();
-        let id_map = id_map.clone();
-        let peer_connections = peer_connections.clone();
+        let id_map = Arc::clone(&id_map);
+        let peer_connections = Arc::clone(&peer_connections);
         tokio::spawn(async move {
             let public_key = identity.public_key;
             if let Err(e) = identity
