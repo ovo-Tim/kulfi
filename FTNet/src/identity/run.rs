@@ -7,7 +7,7 @@ impl ftnet::Identity {
         id_map: ftnet::identity::IDMap,
         peer_connections: ftnet::identity::PeerConnections,
     ) -> eyre::Result<()> {
-        let port = start_fastn(id_map.clone(), graceful_shutdown_rx.clone())
+        let port = start_fastn(std::sync::Arc::clone(&id_map), graceful_shutdown_rx.clone())
             .await
             .wrap_err_with(|| "failed to start fastn")?;
 
