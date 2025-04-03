@@ -49,15 +49,17 @@ impl ftnet::Identity {
             public_key = ftnet::utils::public_key_to_id52(&public_key),
         ));
 
-        ftnet::utils::mkdir(&tmp_dir, "package")?;
         let package_template_folder = ftnet::utils::mkdir(&tmp_dir, "package-template")?;
 
         // TODO: get the slug from config
         ftnet::utils::download_package_template(&package_template_folder, "ftnet-template".to_string()).await?;
 
-        // TODO: initialise the package directory with default fastn package template
-        //       which is fetched from ftnet-template.fifthtry.site (zip download)
-        // TODO: let user specify the template URL, and download it from there
+        // copy package-template/template/ to package
+        ftnet::utils::copy_dir(
+            &package_template_folder.join("template"),
+            &tmp_dir.join("package"),
+        )?;
+
         // TODO: call `fastn update` in the folder to ensure all dependencies are downloaded
 
         // TODO: should we encrypt the contents of this folder to prevent tampering / snooping?

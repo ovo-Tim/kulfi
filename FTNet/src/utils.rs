@@ -143,5 +143,25 @@ pub async fn download_package_template(
 
     Ok(())
 }
+
+/// Synchronously copy a directory and its contents to a new location.
+pub fn copy_dir(src: &std::path::Path, dest: &std::path::Path) -> eyre::Result<()> {
+    use std::fs;
+
+    if !dest.exists() {
+        fs::create_dir_all(dest)?;
+    }
+
+    for entry in fs::read_dir(src)? {
+        let entry = entry?;
+        let path = entry.path();
+        let dest_path = dest.join(entry.file_name());
+
+        if path.is_dir() {
+            copy_dir(&path, &dest_path)?;
+        } else {
+            fs::copy(&path, &dest_path)?;
+        }
+    }
     Ok(())
 }
