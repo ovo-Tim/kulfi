@@ -136,5 +136,12 @@ pub async fn download_package_template(
 
     tracing::info!("template unzipped");
 
+    drop(archive);
+    tokio::fs::remove_file(dir.join("template.zip")).await?;
+
+    tracing::info!("template zip removed");
+
+    Ok(())
+}
     Ok(())
 }
