@@ -6,7 +6,7 @@
 /// identities folder, and set-up http device driver for each of them.
 ///
 /// it also has to start the device "drivers" for every device in the <identities>/devices folder.
-pub async fn start(_fg: bool, dir: Option<String>) -> eyre::Result<()> {
+pub async fn start(_fg: bool, dir: Option<String>, control_port: u16) -> eyre::Result<()> {
     use eyre::WrapErr;
 
     let client_pools = ftnet::http::client::ConnectionPools::default();
@@ -57,6 +57,7 @@ pub async fn start(_fg: bool, dir: Option<String>) -> eyre::Result<()> {
 
     tokio::spawn(async move {
         ftnet::control_server::start(
+            control_port,
             first,
             graceful_shutdown_rx,
             id_map,

@@ -7,7 +7,8 @@ async fn main() -> eyre::Result<()> {
         ftnet::Command::Start {
             foreground,
             data_dir,
-        } => ftnet::start(foreground, data_dir).await,
+            control_port,
+        } => ftnet::start(foreground, data_dir, control_port).await,
         ftnet::Command::TcpProxy { id, port } => {
             println!("Proxying TCP server to remote FTNet service with id: {id}, port: {port}");
             Ok(())

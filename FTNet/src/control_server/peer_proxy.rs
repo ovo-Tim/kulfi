@@ -20,7 +20,6 @@ pub async fn peer_proxy(
         .await?;
 
     let mut body = http_body_util::BodyDataStream::new(body);
-
     while let Some(v) = body.next().await {
         send.write_all(&v?).await?;
     }
@@ -35,7 +34,6 @@ pub async fn peer_proxy(
     };
 
     let mut body = Vec::new();
-
     while let Some(v) = recv.next().await {
         body.extend_from_slice(v?.as_bytes());
     }
@@ -45,9 +43,7 @@ pub async fn peer_proxy(
             .map_err(|e| match e {})
             .boxed(),
     );
-
     *res.status_mut() = r.method.parse::<http::StatusCode>()?;
-
     for (k, v) in r.headers {
         res.headers_mut().insert(
             http::header::HeaderName::from_bytes(k.as_bytes())?,

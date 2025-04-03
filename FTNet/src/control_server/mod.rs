@@ -67,6 +67,7 @@ pub use peer_proxy::peer_proxy;
 pub use proxy_pass::proxy_pass;
 
 pub async fn start(
+    control_port: u16,
     id: String,
     mut graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
     id_map: ftnet::identity::IDMap,
@@ -75,7 +76,7 @@ pub async fn start(
 ) -> eyre::Result<()> {
     use eyre::WrapErr;
 
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:80")
+    let listener = tokio::net::TcpListener::bind(format!("127.0.0.1:{control_port}"))
         .await
         .wrap_err_with(
             || "can not listen to port 80, is it busy, or you do not have root access?",
