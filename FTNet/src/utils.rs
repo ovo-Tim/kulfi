@@ -145,6 +145,7 @@ pub async fn download_package_template(
 }
 
 /// Synchronously copy a directory and its contents to a new location.
+#[tracing::instrument]
 pub fn copy_dir(src: &std::path::Path, dest: &std::path::Path) -> eyre::Result<()> {
     use std::fs;
 
@@ -174,6 +175,7 @@ pub fn copy_dir(src: &std::path::Path, dest: &std::path::Path) -> eyre::Result<(
 /// ```rust,ignore
 /// run_fastn("~/my-fastn-project/", &["update"]);
 /// ```
+#[tracing::instrument]
 pub fn run_fastn(dir: &std::path::Path, args: &[&str]) -> eyre::Result<()> {
     let mut cmd = std::process::Command::new("fastn");
     cmd.current_dir(dir);
