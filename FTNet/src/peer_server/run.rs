@@ -127,9 +127,10 @@ pub async fn handle_connection(
                 continue;
             }
         };
-        match serde_json::from_str::<ftnet::Protocol>(&msg)
-            .inspect_err(|e| eprintln!("json error for {msg}: {e}"))?
-        {
+        let msg = serde_json::from_str::<ftnet::Protocol>(&msg)
+            .inspect_err(|e| eprintln!("json error for {msg}: {e}"))?;
+        println!("{remote_id52}: {msg:?}");
+        match msg {
             ftnet::Protocol::Quit => {
                 if !recv.read_buffer().is_empty() {
                     send.write_all(b"error: quit message should not have payload\n")
@@ -138,15 +139,20 @@ pub async fn handle_connection(
                     send.write_all(b"see you later!\n").await?;
                 }
                 send.finish()?;
+                // quit should close the connection, so we are breaking the for loop.
                 break;
             }
             ftnet::Protocol::Ping => {
+                println!("got ping");
                 if !recv.read_buffer().is_empty() {
                     send.write_all(b"error: ping message should not have payload\n")
                         .await?;
                     break;
                 }
-                send.write_all(ftnet::client::PONG).await?;
+                println!("sending PONG");
+                send.write_all(&serde_json::to_vec(&ftnet::client::PONG)?)
+                    .await?;
+                println!("sent");
             }
             ftnet::Protocol::WhatTimeIsIt => {
                 if !recv.read_buffer().is_empty() {
@@ -158,8 +164,6 @@ pub async fn handle_connection(
                     send.write_all(format!("{}\n", d.as_nanos()).as_bytes())
                         .await?;
                 }
-                send.finish()?;
-                break;
             }
             ftnet::Protocol::Identity => {
                 ftnet::peer_server::http(
@@ -175,10 +179,10 @@ pub async fn handle_connection(
             ftnet::Protocol::Tcp { id } => {
                 if let Err(e) = ftnet::peer_server::tcp(&remote_id52, &id, &mut send, recv).await {
                     eprintln!("tcp error: {e}");
-                    send.finish()?;
                 }
             }
         };
+        println!("closing send stream");
         send.finish()?;
     }
 
