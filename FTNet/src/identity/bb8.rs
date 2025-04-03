@@ -66,13 +66,13 @@ impl bb8::ManageConnection for ftnet::PeerIdentity {
             // creating a new endpoint takes about 30 milliseconds, so we can do it here.
             // since we create just a single connection via this endpoint, the overhead is
             // negligible, compared to 800 milliseconds or so it takes to create a new connection.
-            let ep = get_endpoint(self.public_key.to_string().as_str())
+            let ep = get_endpoint(self.self_public_key.to_string().as_str())
                 .await
                 .wrap_err_with(|| "failed to bind to iroh network1")?;
-            println!("got ep, ep={}", self.id52);
+            println!("got ep, ep={}", self.self_id52);
 
             let conn = ep
-                .connect(self.public_key, ftnet::APNS_IDENTITY)
+                .connect(self.peer_public_key, ftnet::APNS_IDENTITY)
                 .await
                 .map_err(|e| {
                     eprintln!("failed to connect to iroh network: {e:?}");
@@ -115,6 +115,7 @@ pub async fn get_endpoint(id: &str) -> eyre::Result<iroh::Endpoint> {
 
     match iroh::Endpoint::builder()
         .discovery_n0()
+        .discovery_local_network()
         .alpns(vec![ftnet::APNS_IDENTITY.into()])
         .secret_key(secret_key)
         .bind()

@@ -12,44 +12,33 @@ pub struct Identity {
     pub client_pools: ftnet::http::client::ConnectionPools,
 }
 
+#[derive(Clone, Debug)]
 pub struct PeerIdentity {
-    pub id52: String,
+    pub self_id52: String,
     pub fastn_port: u16,
-    pub public_key: iroh::PublicKey,
+    pub self_public_key: iroh::PublicKey,
+    pub peer_public_key: iroh::PublicKey,
     pub client_pools: ftnet::http::client::ConnectionPools,
 }
 
 impl Identity {
-    pub fn peer_identity(&self, fastn_port: u16) -> PeerIdentity {
-        PeerIdentity {
+    pub fn peer_identity(&self, fastn_port: u16, peer_id: &str) -> eyre::Result<PeerIdentity> {
+        Ok(PeerIdentity {
             fastn_port,
-            id52: self.id52.clone(),
-            public_key: self.public_key,
+            self_id52: self.id52.clone(),
+            self_public_key: self.public_key,
+            peer_public_key: ftnet::utils::id52_to_public_key(peer_id)?,
             client_pools: self.client_pools.clone(),
-        }
+        })
     }
 
     pub fn from_id52(
         id: &str,
         client_pools: ftnet::http::client::ConnectionPools,
     ) -> eyre::Result<Self> {
-        use eyre::WrapErr;
-
-        let bytes = data_encoding::BASE32_DNSSEC.decode(id.as_bytes())?;
-        if bytes.len() != 32 {
-            return Err(eyre::anyhow!(
-                "read: id has invalid length: {}",
-                bytes.len()
-            ));
-        }
-
-        let bytes: [u8; 32] = bytes.try_into().unwrap(); // unwrap ok as already asserted
-
-        let public_key: iroh::PublicKey = iroh::PublicKey::from_bytes(&bytes)
-            .wrap_err_with(|| "failed to parse id to public key")?;
-
+        let public_key = ftnet::utils::id52_to_public_key(id)?;
         Ok(Self {
-            id52: data_encoding::BASE32_DNSSEC.encode(public_key.as_bytes()),
+            id52: ftnet::utils::public_key_to_id52(&public_key),
             public_key,
             client_pools,
         })

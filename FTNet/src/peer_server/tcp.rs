@@ -15,7 +15,7 @@ use tokio::io::AsyncWriteExt;
 /// so we will make one tcp connection from this function, and connect the `send` and `recv` streams
 /// to tcp connection's `recv` and `send` side respectively.
 pub async fn tcp(
-    _remote_id: &iroh::NodeId,
+    _remote_id: &str,
     _id: &str,
     send: &mut iroh::endpoint::SendStream,
     recv: ftnet::utils::FrameReader,

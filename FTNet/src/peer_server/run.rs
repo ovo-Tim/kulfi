@@ -59,7 +59,7 @@ async fn enqueue_connection(
             return Err(eyre::anyhow!("can not get remote id: {e:?}"));
         }
     };
-    let id = data_encoding::BASE32_DNSSEC.encode(public_key.as_bytes());
+    let id = ftnet::utils::public_key_to_id52(&public_key);
     let mut map = peer_connections.lock().await;
     if let Some(v) = map.get_mut(&id) {
         if let Err(e) = v.add(conn.clone()) {
@@ -73,9 +73,12 @@ async fn enqueue_connection(
 
     let pool = bb8::Pool::builder()
         .build(ftnet::PeerIdentity {
-            id52: id.clone(),
-            public_key,
+            self_id52: id.clone(),
+            self_public_key: public_key,
             client_pools,
+            peer_public_key: conn
+                .remote_node_id()
+                .map_err(|e| eyre::anyhow!("could not find remote node id: {e:?}"))?,
             fastn_port,
         })
         .await?;
@@ -111,7 +114,8 @@ pub async fn handle_connection(
             return Err(eyre::anyhow!("could not read remote node id: {e}"));
         }
     };
-    println!("new client: {remote_node_id:?}");
+    let remote_id52 = ftnet::utils::public_key_to_id52(&remote_node_id);
+    println!("new client: {remote_id52}");
     loop {
         let client_pools = client_pools.clone();
         let (mut send, recv) = conn.accept_bi().await?;
@@ -167,8 +171,7 @@ pub async fn handle_connection(
             ftnet::Protocol::Http { .. } => todo!(),
             ftnet::Protocol::Socks5 { .. } => todo!(),
             ftnet::Protocol::Tcp { id } => {
-                if let Err(e) = ftnet::peer_server::tcp(&remote_node_id, &id, &mut send, recv).await
-                {
+                if let Err(e) = ftnet::peer_server::tcp(&remote_id52, &id, &mut send, recv).await {
                     eprintln!("tcp error: {e}");
                     send.finish()?;
                 }

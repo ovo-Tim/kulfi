@@ -46,7 +46,7 @@ impl ftnet::Identity {
             .as_secs();
         let tmp_dir = identities_folder.join(format!(
             "temp-{public_key}-{unixtime}",
-            public_key = data_encoding::BASE32_DNSSEC.encode(public_key.as_bytes())
+            public_key = ftnet::utils::public_key_to_id52(&public_key),
         ));
 
         ftnet::utils::mkdir(&tmp_dir, "package")?;
@@ -61,13 +61,13 @@ impl ftnet::Identity {
         ftnet::utils::mkdir(&tmp_dir, "devices")?;
         ftnet::utils::mkdir(&tmp_dir, "logs")?;
 
-        let dir =
-            identities_folder.join(data_encoding::BASE32_DNSSEC.encode(public_key.as_bytes()));
+        let id52 = ftnet::utils::public_key_to_id52(&public_key);
+        let dir = identities_folder.join(&id52);
         std::fs::rename(&tmp_dir, dir)
             .wrap_err_with(|| "failed to rename {tmp_dir:?} to {dir:?}")?;
 
         Ok(Self {
-            id52: data_encoding::BASE32_DNSSEC.encode(public_key.as_bytes()),
+            id52,
             public_key,
             client_pools,
         })

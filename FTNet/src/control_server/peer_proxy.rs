@@ -1,6 +1,6 @@
 pub async fn peer_proxy(
     req: hyper::Request<hyper::body::Incoming>,
-    _requesting_id: &str,
+    requesting_id: &str,
     peer_id: &str,
     peer_connections: ftnet::identity::PeerConnections,
     client_pools: ftnet::http::client::ConnectionPools,
@@ -12,7 +12,14 @@ pub async fn peer_proxy(
 
     println!("peer_proxy: {peer_id}");
 
-    let (mut send, recv) = get_stream(peer_id, peer_connections, client_pools, fastn_port).await?;
+    let (mut send, recv) = get_stream(
+        requesting_id,
+        peer_id,
+        peer_connections,
+        client_pools,
+        fastn_port,
+    )
+    .await?;
 
     println!("got stream");
     send.write_all(&serde_json::to_vec(&ftnet::Protocol::Identity)?)
@@ -96,6 +103,7 @@ impl From<http::request::Parts> for Request {
 }
 
 async fn get_stream(
+    self_id: &str,
     peer_id: &str,
     peer_connections: ftnet::identity::PeerConnections,
     client_pools: ftnet::http::client::ConnectionPools,
@@ -109,7 +117,10 @@ async fn get_stream(
         Some(v) => v.clone(),
         None => {
             let pool = bb8::Pool::builder()
-                .build(ftnet::Identity::from_id52(peer_id, client_pools)?.peer_identity(fastn_port))
+                .build(
+                    ftnet::Identity::from_id52(self_id, client_pools)?
+                        .peer_identity(fastn_port, peer_id)?,
+                )
                 .await?;
 
             peers.insert(peer_id.to_string(), pool.clone());
