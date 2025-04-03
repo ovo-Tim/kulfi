@@ -1,4 +1,5 @@
 /// this function is called on startup, and initializes the FTNet directory if it doesn't exist
+#[tracing::instrument(skip(client_pools))]
 pub async fn init_if_required(
     dir: Option<String>,
     client_pools: ftnet::http::client::ConnectionPools,

@@ -24,6 +24,7 @@
 //! `logs` is the folder that contains the logs for this identity. This contains fastn access logs
 //! and other device access logs etc.
 impl ftnet::Identity {
+    #[tracing::instrument(skip(client_pools))]
     pub async fn create(
         identities_folder: &std::path::Path,
         client_pools: ftnet::http::client::ConnectionPools,
@@ -52,7 +53,11 @@ impl ftnet::Identity {
         let package_template_folder = ftnet::utils::mkdir(&tmp_dir, "package-template")?;
 
         // TODO: get the slug from config
-        ftnet::utils::download_package_template(&package_template_folder, "ftnet-template".to_string()).await?;
+        ftnet::utils::download_package_template(
+            &package_template_folder,
+            "ftnet-template".to_string(),
+        )
+        .await?;
 
         // copy package-template/template/ to package
         ftnet::utils::copy_dir(
@@ -61,6 +66,9 @@ impl ftnet::Identity {
         )?;
 
         // TODO: call `fastn update` in the folder to ensure all dependencies are downloaded
+        tracing::info!("running fastn update in {tmp_dir:?}/package");
+        ftnet::utils::run_fastn(&tmp_dir.join("package"), &["update"])?;
+        tracing::info!("fastn update completed");
 
         // TODO: should we encrypt the contents of this folder to prevent tampering / snooping?
 

@@ -165,3 +165,27 @@ pub fn copy_dir(src: &std::path::Path, dest: &std::path::Path) -> eyre::Result<(
     }
     Ok(())
 }
+
+/// Runs the fastn binary with the given arguments in the specified directory.
+/// Assumes that the fastn binary is in the PATH.
+///
+/// # Example
+///
+/// ```rust,ignore
+/// run_fastn("~/my-fastn-project/", &["update"]);
+/// ```
+pub fn run_fastn(dir: &std::path::Path, args: &[&str]) -> eyre::Result<()> {
+    let mut cmd = std::process::Command::new("fastn");
+    cmd.current_dir(dir);
+    cmd.args(args);
+
+    let status = cmd.status()?;
+
+    tracing::info!("fastn command exited with status {status}");
+
+    if !status.success() {
+        return Err(eyre::eyre!("fastn update failed"));
+    }
+
+    Ok(())
+}
