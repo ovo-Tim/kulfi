@@ -113,7 +113,7 @@ function wasm_opt() {
 
   # Get the file size before optimization
   before_size=$(get_size "$wasm_file")
-  $WASM_OPT_CMD -Oz "$wasm_file" -o "$wasm_file"
+  $WASM_OPT_CMD -Oz --enable-bulk-memory "$wasm_file" -o "$wasm_file"
   if [ $? -ne 0 ]; then
     echo "Error: Optimization failed."
     return 1
