@@ -170,24 +170,31 @@ pub fn copy_dir(src: &std::path::Path, dest: &std::path::Path) -> eyre::Result<(
 /// Runs the fastn binary with the given arguments in the specified directory.
 /// Assumes that the fastn binary is in the PATH.
 ///
+/// The stdout of the command is captured and returned as a String.
+///
 /// # Example
 ///
 /// ```rust,ignore
 /// run_fastn("~/my-fastn-project/", &["update"]);
 /// ```
 #[tracing::instrument]
-pub fn run_fastn(dir: &std::path::Path, args: &[&str]) -> eyre::Result<()> {
+pub fn run_fastn(dir: &std::path::Path, args: &[&str]) -> eyre::Result<String> {
     let mut cmd = std::process::Command::new("fastn");
     cmd.current_dir(dir);
     cmd.args(args);
+    cmd.stdout(std::process::Stdio::piped());
 
-    let status = cmd.status()?;
+    let output = cmd.output()?;
 
-    tracing::info!("fastn command exited with status {status}");
+    tracing::info!("fastn command done. {}", output.status);
 
-    if !status.success() {
+    let output_str = String::from_utf8_lossy(&output.stdout);
+
+    tracing::debug!("fastn command output: {output_str}",);
+
+    if !output.status.success() {
         return Err(eyre::eyre!("fastn update failed"));
     }
 
-    Ok(())
+    Ok(output_str.to_string())
 }

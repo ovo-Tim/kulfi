@@ -58,6 +58,7 @@ pub async fn start(_fg: bool, dir: Option<String>, control_port: u16) -> eyre::R
     }
 
     tokio::spawn(async move {
+        tracing::info!("Starting control server with identity: {first}");
         ftnet::control_server::start(
             control_port,
             first,
