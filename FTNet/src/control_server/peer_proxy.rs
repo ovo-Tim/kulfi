@@ -4,7 +4,7 @@ pub async fn peer_proxy(
     peer_id: &str,
     peer_connections: ftnet::identity::PeerConnections,
     client_pools: ftnet::http::client::ConnectionPools,
-    _patch: ft_common::RequestPatch,
+    _patch: ftnet_common::RequestPatch,
     fastn_port: u16,
 ) -> ftnet::http::Result {
     use http_body_util::BodyExt;
