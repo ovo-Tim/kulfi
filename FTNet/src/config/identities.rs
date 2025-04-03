@@ -34,6 +34,10 @@ impl ftnet::Config {
 
             identities.push(identity);
         }
+
+        // std::fs::read_dir does not guarantee the order of the entries, so we sort them
+        identities.sort_by(|a, b| a.id52.cmp(&b.id52));
+
         Ok(identities)
     }
 }
