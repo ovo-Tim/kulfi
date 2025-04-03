@@ -36,7 +36,7 @@ pub async fn run(
                 return;
             }
             if let Err(e) = handle_connection(conn, client_pools, fastn_port).await {
-                eprintln!("connection error: {:?}", e);
+                eprintln!("connection error3: {:?}", e);
             }
             println!("connection handled in {:?}", start.elapsed());
         });
@@ -127,7 +127,9 @@ pub async fn handle_connection(
                 continue;
             }
         };
-        match serde_json::from_str::<ftnet::Protocol>(&msg)? {
+        match serde_json::from_str::<ftnet::Protocol>(&msg)
+            .inspect_err(|e| eprintln!("json error for {msg}: {e}"))?
+        {
             ftnet::Protocol::Quit => {
                 if !recv.read_buffer().is_empty() {
                     send.write_all(b"error: quit message should not have payload\n")

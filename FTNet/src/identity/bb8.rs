@@ -88,7 +88,7 @@ impl bb8::ManageConnection for ftnet::PeerIdentity {
                 if let Err(e) =
                     ftnet::peer_server::handle_connection(conn2, client_pools, fastn_port).await
                 {
-                    eprintln!("connection error: {:?}", e);
+                    eprintln!("connection error2: {:?}", e);
                 }
                 println!("connection handled in {:?}", start.elapsed());
             });

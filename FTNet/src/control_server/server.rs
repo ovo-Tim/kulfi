@@ -42,7 +42,7 @@ pub async fn handle_connection(
         }
         r = &mut conn => r,
     } {
-        eprintln!("connection error: {e:?}");
+        eprintln!("connection error1: {e:?}");
     }
 
     ftnet::OPEN_CONTROL_CONNECTION_COUNT.decr();
