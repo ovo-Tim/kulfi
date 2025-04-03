@@ -106,6 +106,7 @@ async fn handle_request_(
                 peer_connections,
                 client_pools,
                 patch,
+                default_port,
             )
             .await
         }
@@ -177,9 +178,12 @@ pub enum WhatToDo {
     UnknownPeer,
 }
 
-async fn what_to_do(_port: u16, _id: &str) -> eyre::Result<WhatToDo> {
+async fn what_to_do(_port: u16, id: &str) -> eyre::Result<WhatToDo> {
     // request to fastn server at /-/ftnet/v1/control/what-to-do/<id>/
-    todo!()
+    Ok(WhatToDo::ForwardToPeer {
+        peer_id: id.to_string(),
+        patch: Default::default(),
+    })
 }
 
 async fn find_identity(id: &str, id_map: ftnet::identity::IDMap) -> eyre::Result<Option<u16>> {

@@ -2,7 +2,7 @@ use eyre::WrapErr;
 
 impl ftnet::Identity {
     pub async fn run(
-        mut self,
+        self,
         graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
         id_map: ftnet::identity::IDMap,
         peer_connections: ftnet::identity::PeerConnections,
@@ -14,8 +14,6 @@ impl ftnet::Identity {
         {
             id_map.lock().await.push((self.id52.to_string(), port));
         }
-
-        self.fastn_port = Some(port);
 
         let ep = ftnet::identity::get_endpoint(self.public_key.to_string().as_str())
             .await

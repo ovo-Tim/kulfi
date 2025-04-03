@@ -72,11 +72,11 @@ async fn enqueue_connection(
     };
 
     let pool = bb8::Pool::builder()
-        .build(ftnet::Identity {
+        .build(ftnet::PeerIdentity {
             id52: id.clone(),
             public_key,
             client_pools,
-            fastn_port: Some(fastn_port),
+            fastn_port,
         })
         .await?;
     if let Err(e) = pool.add(conn.clone()) {

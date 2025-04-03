@@ -22,7 +22,7 @@ pub use counters::{
     CONTROL_CONNECTION_COUNT, CONTROL_REQUEST_COUNT, IN_FLIGHT_REQUESTS,
     OPEN_CONTROL_CONNECTION_COUNT,
 };
-pub use identity::Identity;
+pub use identity::{Identity, PeerIdentity};
 pub use protocol::Protocol;
 pub use start::start;
 

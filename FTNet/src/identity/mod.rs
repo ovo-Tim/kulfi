@@ -10,10 +10,25 @@ pub struct Identity {
     pub id52: String,
     pub public_key: iroh::PublicKey,
     pub client_pools: ftnet::http::client::ConnectionPools,
-    pub fastn_port: Option<u16>,
+}
+
+pub struct PeerIdentity {
+    pub id52: String,
+    pub fastn_port: u16,
+    pub public_key: iroh::PublicKey,
+    pub client_pools: ftnet::http::client::ConnectionPools,
 }
 
 impl Identity {
+    pub fn peer_identity(&self, fastn_port: u16) -> PeerIdentity {
+        PeerIdentity {
+            fastn_port,
+            id52: self.id52.clone(),
+            public_key: self.public_key,
+            client_pools: self.client_pools.clone(),
+        }
+    }
+
     pub fn from_id52(
         id: &str,
         client_pools: ftnet::http::client::ConnectionPools,
@@ -37,7 +52,6 @@ impl Identity {
             id52: data_encoding::BASE32_DNSSEC.encode(public_key.as_bytes()),
             public_key,
             client_pools,
-            fastn_port: None, // fastn port will be assigned later
         })
     }
 }
@@ -52,5 +66,6 @@ impl Identity {
 /// since the number of identities will be small, a prefix match is probably going to be the same
 /// speed as the hash map exact lookup.
 pub type IDMap = std::sync::Arc<tokio::sync::Mutex<Vec<(String, u16)>>>;
-pub type PeerConnections =
-    std::sync::Arc<tokio::sync::Mutex<std::collections::HashMap<String, ::bb8::Pool<Identity>>>>;
+pub type PeerConnections = std::sync::Arc<
+    tokio::sync::Mutex<std::collections::HashMap<String, ::bb8::Pool<PeerIdentity>>>,
+>;
