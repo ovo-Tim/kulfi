@@ -4,14 +4,14 @@ set -ue
 set -o pipefail
 
 
-cargo build --package control --release --target wasm32-unknown-unknown
+cargo build --package control-backend-wasm --release --target wasm32-unknown-unknown
 
 # Define the common source folder paths
 SOURCE1="./target/wasm32-unknown-unknown/release/"
 SOURCE2="$HOME/target/wasm32-unknown-unknown/release/"
 
-# Define destination folders
-DEST="./ftnet.fifthtry.site"
+# Define destination
+DEST="./ftnet.fifthtry.site/"
 
 # Ensure WASM files exist and determine the source folder to use
 if [ -d "$SOURCE1" ]; then
@@ -24,6 +24,6 @@ else
 fi
 
 # Copy files to destinations
-cp "${SOURCE_DIR}control.wasm" "$DEST"
+cp "${SOURCE_DIR}control_backend_wasm.wasm" "${DEST}control.wasm"
 
 echo "WASM files copied successfully to ${DEST}"
