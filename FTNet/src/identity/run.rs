@@ -1,18 +1,26 @@
 use eyre::WrapErr;
 
 impl ftnet::Identity {
+    #[tracing::instrument(skip_all)]
     pub async fn run(
         self,
         graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
         id_map: ftnet::identity::IDMap,
         peer_connections: ftnet::identity::PeerConnections,
+        data_dir: &std::path::Path,
     ) -> eyre::Result<()> {
-        let port = start_fastn(std::sync::Arc::clone(&id_map), graceful_shutdown_rx.clone())
-            .await
-            .wrap_err_with(|| "failed to start fastn")?;
+        let port = start_fastn(
+            std::sync::Arc::clone(&id_map),
+            graceful_shutdown_rx.clone(),
+            &self.id52,
+            data_dir,
+        )
+        .await
+        .wrap_err_with(|| "failed to start fastn")?;
 
         {
-            id_map.lock().await.push((self.id52.to_string(), port));
+            tracing::info!("fastn started on port {port}");
+            id_map.lock().await.push((self.id52, port));
         }
 
         let ep = ftnet::identity::get_endpoint(self.public_key.to_string().as_str())
@@ -31,13 +39,16 @@ impl ftnet::Identity {
 }
 
 /// launch fastn from the package directory and return the port
+#[tracing::instrument(skip_all)]
 async fn start_fastn(
     _id_map: ftnet::identity::IDMap,
     _graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
+    id52: &str,
+    data_dir: &std::path::Path,
 ) -> eyre::Result<u16> {
-    // TODO: make [path] from data-dir/identities/<self.id52>/package/
-    let path = std::path::Path::new("");
-    let output = ftnet::utils::run_fastn(path, &["serve"])?;
+    tracing::info!("Running `fastn serve` for {id52}");
+    let path = data_dir.join("identities").join(&id52).join("package");
+    let output = ftnet::utils::run_fastn(&path, &["serve"])?;
     let port = parse_port_from_fastn_output(output);
     Ok(port)
 }
