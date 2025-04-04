@@ -48,67 +48,53 @@ async fn start_fastn(
 ) -> eyre::Result<u16> {
     tracing::info!("Running `fastn serve` for {id52}");
     let path = data_dir.join("identities").join(&id52).join("package");
-    let output = ftnet::utils::run_fastn(&path, &["serve"])?;
-    let port = parse_port_from_fastn_output(output);
+    let (port, _child) = spawn_fastn_serve_and_get_port(&path).await?;
+
+    // TODO: store the child process as well. Use child.kill() to kill it when shutting down
+
     Ok(port)
 }
 
-#[tracing::instrument(skip_all)]
-fn parse_port_from_fastn_output(output: String) -> u16 {
-    // The following is a typical output of running `fastn serve`:
-    //
-    // ```
-    // Checking dependencies for ftnet-template.fifthtry.site.
-    // Checking ftnet.fifthtry.site: checked in 0.231s
-    // All the 1 packages are up to date.
-    // Applying Migration for fastn: initial
-    // ### Server Started ###
-    // Go to: http://127.0.0.1:8001
-    // ```
+/// Spawn `fastn serve` in [dir] and return the port and the child process.
+/// The returned child process can be used to kill the fastn server later.
+#[tracing::instrument]
+pub async fn spawn_fastn_serve_and_get_port(
+    dir: &std::path::Path,
+) -> eyre::Result<(u16, tokio::process::Child)> {
+    use std::process::Stdio;
+    use tokio::io::{AsyncBufReadExt, BufReader};
+
+    let mut cmd = tokio::process::Command::new("fastn");
+    cmd.current_dir(dir);
+    cmd.args(&["serve"]);
+    cmd.stdout(Stdio::piped());
+    cmd.stderr(Stdio::null());
+
+    let mut child = cmd.spawn()?;
+    let stdout = child
+        .stdout
+        .take()
+        .ok_or_else(|| eyre::eyre!("Failed to capture stdout"))?;
+
+    let mut reader = BufReader::new(stdout).lines();
     let prefix = "Go to: http://127.0.0.1:";
 
-    output
-        .lines()
-        .filter(|l| l.starts_with(prefix))
-        .next()
-        .map(|l| l.trim())
-        .and_then(|l| l.strip_prefix(prefix))
-        .and_then(|s| s.parse::<u16>().ok())
-        .unwrap_or(8000)
-}
+    tracing::info!("Waiting for fastn server to start...");
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn test_parse_port_from_fastn_output() {
-        use super::parse_port_from_fastn_output;
+    while let Some(line) = reader.next_line().await? {
+        tracing::debug!("fastn output: {}", line);
+        if let Some(port_str) = line.trim().strip_prefix(prefix) {
+            let port: u16 = port_str
+                .trim()
+                .parse()
+                .map_err(|e| eyre::eyre!("Failed to parse port: {}", e))?;
 
-        let output = r#"Checking dependencies for ftnet-template.fifthtry.site.
-Checking ftnet.fifthtry.site: checked in 0.231s
-All the 1 packages are up to date.
-Applying Migration for fastn: initial
-### Server Started ###
-Go to: http://127.0.0.1:8001"#
-            .to_string();
+            tracing::info!("Fastn server started on port {}", port);
 
-        assert_port(output, 8001);
-
-        let output = r#"Checking dependencies for ftnet-template.fifthtry.site.
-Checking ftnet.fifthtry.site: checked in 0.231s
-All the 1 packages are up to date.
-Applying Migration for fastn: initial
-### Server Started ###
-Go to: http://127.0.0.1:9800
-
-Some garbage
-"#
-        .to_string();
-
-        assert_port(output, 9800);
-
-        fn assert_port(o: String, port: u16) {
-            let p = parse_port_from_fastn_output(o);
-            assert_eq!(p, port);
+            // Return the port and keep the child alive
+            return Ok((port, child));
         }
     }
+
+    Err(eyre::eyre!("Did not find port in fastn output"))
 }
