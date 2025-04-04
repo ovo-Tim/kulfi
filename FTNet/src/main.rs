@@ -3,7 +3,8 @@ async fn main() -> eyre::Result<()> {
     use clap::Parser;
 
     // run with RUST_LOG="ftnet=info" to only see our logs when running with the --trace flag
-    configure_tracing_subscriber();
+    tracing_subscriber::fmt::init();
+    // configure_tracing_subscriber();
 
     let cli = ftnet::Cli::parse();
 
@@ -14,12 +15,15 @@ async fn main() -> eyre::Result<()> {
             control_port,
         } => ftnet::start(foreground, data_dir, control_port).await,
         ftnet::Command::TcpProxy { id, port } => {
-            println!("Proxying TCP server to remote FTNet service with id: {id}, port: {port}");
+            tracing::info!(
+                "Proxying TCP server to remote FTNet service with id: {id}, port: {port}"
+            );
             Ok(())
         }
     }
 }
 
+#[expect(dead_code)]
 fn configure_tracing_subscriber() {
     use tracing_subscriber::layer::SubscriberExt;
 

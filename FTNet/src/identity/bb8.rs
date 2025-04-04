@@ -59,9 +59,9 @@ impl bb8::ManageConnection for ftnet::PeerIdentity {
 
     fn connect(&self) -> impl Future<Output = Result<Self::Connection, Self::Error>> + Send {
         Box::pin(async move {
-            println!("connect called");
+            tracing::info!("connect called");
             let fastn_port = self.fastn_port;
-            println!("here");
+            tracing::info!("here");
 
             // creating a new endpoint takes about 30 milliseconds, so we can do it here.
             // since we create just a single connection via this endpoint, the overhead is
@@ -69,16 +69,16 @@ impl bb8::ManageConnection for ftnet::PeerIdentity {
             let ep = get_endpoint(self.self_public_key.to_string().as_str())
                 .await
                 .wrap_err_with(|| "failed to bind to iroh network1")?;
-            println!("got ep, ep={}", self.self_id52);
+            tracing::info!("got ep, ep={}", self.self_id52);
 
             let conn = ep
                 .connect(self.peer_public_key, ftnet::APNS_IDENTITY)
                 .await
                 .map_err(|e| {
-                    eprintln!("failed to connect to iroh network: {e:?}");
+                    tracing::error!("failed to connect to iroh network: {e:?}");
                     eyre::anyhow!("failed to connect to iroh network: {e:?}")
                 })?;
-            println!("connected");
+            tracing::info!("connected");
 
             let conn2 = conn.clone();
             let client_pools = self.client_pools.clone();
@@ -88,9 +88,9 @@ impl bb8::ManageConnection for ftnet::PeerIdentity {
                 if let Err(e) =
                     ftnet::peer_server::handle_connection(conn2, client_pools, fastn_port).await
                 {
-                    eprintln!("connection error2: {:?}", e);
+                    tracing::error!("connection error2: {:?}", e);
                 }
-                println!("connection handled in {:?}", start.elapsed());
+                tracing::info!("connection handled in {:?}", start.elapsed());
             });
 
             Ok(conn)

@@ -26,7 +26,7 @@ impl ConnectionManager {
             .wrap_err_with(|| "failed to do http1 handshake")?;
         tokio::task::spawn(async move {
             if let Err(err) = conn.await.wrap_err_with(|| "connection failed") {
-                eprintln!("Connection failed: {err:?}");
+                tracing::error!("Connection failed: {err:?}");
             }
         });
 

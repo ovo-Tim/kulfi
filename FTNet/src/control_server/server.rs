@@ -42,7 +42,7 @@ pub async fn handle_connection(
         }
         r = &mut conn => r,
     } {
-        eprintln!("connection error1: {e:?}");
+        tracing::error!("connection error1: {e:?}");
     }
 
     ftnet::OPEN_CONTROL_CONNECTION_COUNT.decr();
@@ -75,12 +75,12 @@ async fn handle_request_(
     {
         Some((first, _)) => first,
         None => {
-            eprintln!("got http request without Host header");
+            tracing::error!("got http request without Host header");
             return Ok(ftnet::bad_request!("got http request without Host header"));
         }
     };
 
-    println!("got request for {id}");
+    tracing::info!("got request for {id}");
 
     // if this is an identity, if so forward the request to fastn corresponding to that identity
     if let Some(fastn_port) = find_identity(id, id_map.clone()).await? {
@@ -126,11 +126,11 @@ async fn handle_request_(
             .await
         }
         Ok(WhatToDo::UnknownPeer) => {
-            eprintln!("unknown peer: {id}");
+            tracing::error!("unknown peer: {id}");
             Ok(ftnet::server_error!("unknown peer"))
         }
         Err(e) => {
-            eprintln!("proxy error: {e}");
+            tracing::error!("proxy error: {e}");
             Ok(ftnet::server_error!(
                 "failed to contact default identity service"
             ))

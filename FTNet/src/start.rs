@@ -22,7 +22,7 @@ pub async fn start(_fg: bool, dir: Option<String>, control_port: u16) -> eyre::R
         .wrap_err_with(|| "looks like there is another instance of FTNet running")?;
 
     let identities = config.identities(client_pools.clone()).await?;
-    println!(
+    tracing::info!(
         "FTNet started with {identities}.",
         identities = identities
             .iter()
@@ -52,7 +52,7 @@ pub async fn start(_fg: bool, dir: Option<String>, control_port: u16) -> eyre::R
                 .run(graceful_shutdown_rx, id_map, peer_connections)
                 .await
             {
-                eprintln!("failed to run identity: {public_key}: {e:?}");
+                tracing::error!("failed to run identity: {public_key}: {e:?}");
             }
         });
     }
@@ -86,23 +86,23 @@ pub async fn start(_fg: bool, dir: Option<String>, control_port: u16) -> eyre::R
         tokio::time::sleep(std::time::Duration::from_millis(100)).await;
         let v = ftnet::OPEN_CONTROL_CONNECTION_COUNT.get();
         if v == 0 {
-            println!("No inflight requests open.");
+            tracing::info!("No inflight requests open.");
             break;
         }
 
         // every second print status
         if count % 10 == 0 {
-            println!("Waiting for {v} inflight requests to finish.");
+            tracing::info!("Waiting for {v} inflight requests to finish.");
         }
 
         // give up in 1 min
         if count > 60 {
-            println!("Giving up.");
+            tracing::info!("Giving up.");
             break;
         }
     }
 
-    println!("Shutting down.");
+    tracing::info!("Shutting down.");
 
     Ok(())
 }

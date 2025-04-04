@@ -10,7 +10,7 @@ pub async fn run(
         let conn = match ep.accept().await {
             Some(conn) => conn,
             None => {
-                println!("no connection");
+                tracing::info!("no connection");
                 break;
             }
         };
@@ -20,7 +20,7 @@ pub async fn run(
             let conn = match conn.await {
                 Ok(c) => c,
                 Err(e) => {
-                    eprintln!("failed to convert connecting to connection: {:?}", e);
+                    tracing::error!("failed to convert connecting to connection: {:?}", e);
                     return;
                 }
             };
@@ -32,13 +32,13 @@ pub async fn run(
             )
             .await
             {
-                eprintln!("failed to enqueue connection: {:?}", e);
+                tracing::error!("failed to enqueue connection: {:?}", e);
                 return;
             }
             if let Err(e) = handle_connection(conn, client_pools, fastn_port).await {
-                eprintln!("connection error3: {:?}", e);
+                tracing::error!("connection error3: {:?}", e);
             }
-            println!("connection handled in {:?}", start.elapsed());
+            tracing::info!("connection handled in {:?}", start.elapsed());
         });
     }
 
@@ -55,7 +55,7 @@ async fn enqueue_connection(
     let public_key = match conn.remote_node_id() {
         Ok(v) => v,
         Err(e) => {
-            eprintln!("can not get remote id: {e:?}");
+            tracing::error!("can not get remote id: {e:?}");
             return Err(eyre::anyhow!("can not get remote id: {e:?}"));
         }
     };
@@ -63,7 +63,7 @@ async fn enqueue_connection(
     let mut map = peer_connections.lock().await;
     if let Some(v) = map.get_mut(&id) {
         if let Err(e) = v.add(conn.clone()) {
-            eprintln!("failed to add connection to peer_connections: {e:?}");
+            tracing::error!("failed to add connection to peer_connections: {e:?}");
             return Err(eyre::anyhow!(
                 "failed to add add connection to peer_connections: {e:?}"
             ));
@@ -83,7 +83,7 @@ async fn enqueue_connection(
         })
         .await?;
     if let Err(e) = pool.add(conn.clone()) {
-        eprintln!("failed to add connection to peer_connections: {e:?}");
+        tracing::error!("failed to add connection to peer_connections: {e:?}");
         return Err(eyre::anyhow!(
             "failed to add add connection to peer_connections: {e:?}"
         ));
@@ -100,22 +100,22 @@ pub async fn handle_connection(
 ) -> eyre::Result<()> {
     use tokio_stream::StreamExt;
 
-    println!("got connection from: {:?}", conn.remote_node_id());
+    tracing::info!("got connection from: {:?}", conn.remote_node_id());
     let remote_node_id = match conn.remote_node_id() {
         Ok(id) => id,
         Err(e) => {
-            eprintln!("could not read remote node id: {e}, closing connection");
+            tracing::error!("could not read remote node id: {e}, closing connection");
             // TODO: is this how we close the connection in error cases or do we send some error
             //       and wait for other side to close the connection?
             let e2 = conn.closed().await;
-            println!("connection closed: {e2}");
+            tracing::info!("connection closed: {e2}");
             // TODO: send another error_code to indicate bad remote node id?
             conn.close(0u8.into(), &[]);
             return Err(eyre::anyhow!("could not read remote node id: {e}"));
         }
     };
     let remote_id52 = ftnet::utils::public_key_to_id52(&remote_node_id);
-    println!("new client: {remote_id52}");
+    tracing::info!("new client: {remote_id52}");
     loop {
         let client_pools = client_pools.clone();
         let (mut send, recv) = conn.accept_bi().await?;
@@ -123,13 +123,13 @@ pub async fn handle_connection(
         let msg = match recv.next().await {
             Some(v) => v?,
             None => {
-                eprintln!("failed to read from incoming connection");
+                tracing::error!("failed to read from incoming connection");
                 continue;
             }
         };
         let msg = serde_json::from_str::<ftnet::Protocol>(&msg)
-            .inspect_err(|e| eprintln!("json error for {msg}: {e}"))?;
-        println!("{remote_id52}: {msg:?}");
+            .inspect_err(|e| tracing::error!("json error for {msg}: {e}"))?;
+        tracing::info!("{remote_id52}: {msg:?}");
         match msg {
             ftnet::Protocol::Quit => {
                 if !recv.read_buffer().is_empty() {
@@ -143,16 +143,17 @@ pub async fn handle_connection(
                 break;
             }
             ftnet::Protocol::Ping => {
-                println!("got ping");
+                tracing::info!("got ping");
                 if !recv.read_buffer().is_empty() {
                     send.write_all(b"error: ping message should not have payload\n")
                         .await?;
                     break;
                 }
-                println!("sending PONG");
+                tracing::info!("sending PONG");
                 send.write_all(&serde_json::to_vec(&ftnet::client::PONG)?)
-                    .await?;
-                println!("sent");
+                    .await
+                    .inspect_err(|e| tracing::error!("failed to write PONG: {e:?}"))?;
+                tracing::info!("sent");
             }
             ftnet::Protocol::WhatTimeIsIt => {
                 if !recv.read_buffer().is_empty() {
@@ -178,16 +179,16 @@ pub async fn handle_connection(
             ftnet::Protocol::Socks5 { .. } => todo!(),
             ftnet::Protocol::Tcp { id } => {
                 if let Err(e) = ftnet::peer_server::tcp(&remote_id52, &id, &mut send, recv).await {
-                    eprintln!("tcp error: {e}");
+                    tracing::error!("tcp error: {e}");
                 }
             }
         };
-        println!("closing send stream");
+        tracing::info!("closing send stream");
         send.finish()?;
     }
 
     let e = conn.closed().await;
-    println!("connection closed by peer: {e}");
+    tracing::info!("connection closed by peer: {e}");
     conn.close(0u8.into(), &[]);
     Ok(())
 }

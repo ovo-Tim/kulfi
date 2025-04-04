@@ -10,7 +10,7 @@ pub async fn peer_proxy(
     use http_body_util::BodyExt;
     use tokio_stream::StreamExt;
 
-    println!("peer_proxy: {peer_id}");
+    tracing::info!("peer_proxy: {peer_id}");
 
     let (mut send, recv) = get_stream(
         requesting_id,
@@ -21,43 +21,43 @@ pub async fn peer_proxy(
     )
     .await?;
 
-    println!("got stream");
+    tracing::info!("got stream");
     send.write_all(&serde_json::to_vec(&ftnet::Protocol::Identity)?)
         .await?;
     send.write(b"\n").await?;
 
-    println!("wrote protocol");
+    tracing::info!("wrote protocol");
 
     let (head, body) = req.into_parts();
     send.write_all(&serde_json::to_vec(&Request::from(head))?)
         .await?;
 
-    println!("sent request header");
+    tracing::info!("sent request header");
 
     let mut body = http_body_util::BodyDataStream::new(body);
     while let Some(v) = body.next().await {
         send.write_all(&v?).await?;
     }
 
-    println!("sent body");
+    tracing::info!("sent body");
 
     let mut recv = ftnet::utils::frame_reader(recv);
     let r: Request = match recv.next().await {
         Some(v) => serde_json::from_str(&v?)?,
         None => {
-            eprintln!("failed to read from incoming connection");
+            tracing::error!("failed to read from incoming connection");
             return Err(eyre::anyhow!("failed to read from incoming connection"));
         }
     };
 
-    println!("got response header: {r:?}");
+    tracing::info!("got response header: {r:?}");
 
     let mut body = Vec::new();
     while let Some(v) = recv.next().await {
         body.extend_from_slice(v?.as_bytes());
     }
 
-    println!("read body");
+    tracing::info!("read body");
 
     let mut res = hyper::Response::new(
         http_body_util::Full::new(hyper::body::Bytes::from(body))
@@ -72,7 +72,7 @@ pub async fn peer_proxy(
         );
     }
 
-    println!("all done");
+    tracing::info!("all done");
     Ok(res)
 }
 
@@ -109,9 +109,9 @@ async fn get_stream(
     client_pools: ftnet::http::client::ConnectionPools,
     fastn_port: u16,
 ) -> eyre::Result<(iroh::endpoint::SendStream, iroh::endpoint::RecvStream)> {
-    println!("get stream1");
+    tracing::info!("get stream1");
     let mut peers = peer_connections.lock().await;
-    println!("get stream1");
+    tracing::info!("get stream1");
 
     let pool = match peers.get(peer_id) {
         Some(v) => v.clone(),
@@ -127,14 +127,14 @@ async fn get_stream(
             pool
         }
     };
-    println!("get stream got pool");
+    tracing::info!("get stream got pool");
 
     Ok(pool
         .get()
         .await
-        .inspect(|_v| println!("got connection"))
+        .inspect(|_v| tracing::info!("got connection"))
         .map_err(|e| {
-            eprintln!("failed to get connection: {e:?}");
+            tracing::error!("failed to get connection: {e:?}");
             eyre::anyhow!("failed to get connection: {e:?}")
         })?
         .open_bi()

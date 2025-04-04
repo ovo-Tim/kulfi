@@ -81,12 +81,12 @@ pub async fn start(
         .wrap_err_with(
             || "can not listen to port 80, is it busy, or you do not have root access?",
         )?;
-    println!("Listening on http://{id}.localhost.direct");
+    tracing::info!("Listening on http://{id}.localhost.direct");
 
     loop {
         tokio::select! {
             _ = graceful_shutdown_rx.changed() => {
-                println!("Stopping control server.");
+                tracing::info!("Stopping control server.");
                 break;
             }
             val = listener.accept() => {
@@ -99,7 +99,7 @@ pub async fn start(
                         tokio::spawn(async move { server::handle_connection(stream, graceful_shutdown_rx, id_map, client_pools, peer_connections).await });
                     },
                     Err(e) => {
-                        eprintln!("failed to accept: {e:?}");
+                        tracing::error!("failed to accept: {e:?}");
                     }
                 }
             }
