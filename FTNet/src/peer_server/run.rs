@@ -168,13 +168,16 @@ pub async fn handle_connection(
                 }
             }
             ftnet::Protocol::Identity => {
-                ftnet::peer_server::http(
+                if let Err(e) = ftnet::peer_server::http(
                     &format!("127.0.0.1:{fastn_port}"),
                     client_pools,
                     &mut send,
                     recv,
                 )
                 .await
+                {
+                    tracing::error!("failed to proxy http: {e:?}");
+                }
             }
             ftnet::Protocol::Http { .. } => todo!(),
             ftnet::Protocol::Socks5 { .. } => todo!(),

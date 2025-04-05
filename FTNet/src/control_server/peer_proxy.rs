@@ -31,7 +31,7 @@ pub async fn peer_proxy(
     let (head, body) = req.into_parts();
     send.write_all(&serde_json::to_vec(&Request::from(head))?)
         .await?;
-
+    send.write_all("\n".as_bytes()).await?;
     tracing::info!("sent request header");
 
     let mut body = http_body_util::BodyDataStream::new(body);

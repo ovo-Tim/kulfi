@@ -63,7 +63,7 @@ mod peer_proxy;
 mod proxy_pass;
 mod server;
 
-pub use peer_proxy::peer_proxy;
+pub use peer_proxy::{peer_proxy, Request};
 pub use proxy_pass::proxy_pass;
 
 pub async fn start(
