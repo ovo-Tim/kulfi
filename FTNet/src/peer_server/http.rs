@@ -1,6 +1,6 @@
 pub async fn http(
     addr: &str,
-    _client_pools: ftnet::http::client::ConnectionPools,
+    client_pools: ftnet::http::client::ConnectionPools,
     _send: &mut iroh::endpoint::SendStream,
     mut recv: ftnet::utils::FrameReader,
 ) -> eyre::Result<()> {
@@ -48,5 +48,42 @@ pub async fn http(
     }
 
     tracing::info!("request: {r:?}");
+
+    let pool = get_pool(addr, client_pools).await?;
+    let _conn = match pool.get().await {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("failed to get connection: {e:?}");
+            return Err(eyre::anyhow!("failed to get connection: {e:?}"));
+        }
+    };
+
     todo!()
+}
+
+async fn get_pool(
+    addr: &str,
+    client_pools: ftnet::http::client::ConnectionPools,
+) -> eyre::Result<bb8::Pool<ftnet::http::client::ConnectionManager>> {
+    tracing::info!("get client");
+    let mut pools = client_pools.lock().await;
+    tracing::info!("get client1");
+
+    let pool = match pools.get(addr) {
+        Some(v) => v.clone(),
+        None => {
+            let pool = bb8::Pool::builder()
+                .build(ftnet::http::client::ConnectionManager::new(
+                    addr.to_string(),
+                ))
+                .await?;
+
+            pools.insert(addr.to_string(), pool.clone());
+            pool
+        }
+    };
+
+    tracing::info!("get client got pool");
+
+    Ok(pool)
 }

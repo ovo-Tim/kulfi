@@ -6,11 +6,13 @@ pub async fn proxy_pass(
 ) -> ftnet::http::Result {
     use eyre::WrapErr;
 
-    let mut client = pool
-        .get()
-        .await
-        // .wrap_err_with(|| "cant create connection")
-        .unwrap();
+    let mut client = match pool.get().await {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("proxy_pass: failed to get connection: {e:?}");
+            return Err(eyre::anyhow!("proxy_pass: failed to get connection: {e:?}"));
+        }
+    };
 
     let path_query = req
         .uri()
