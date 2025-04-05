@@ -2,11 +2,11 @@ pub async fn run(
     ep: iroh::Endpoint,
     fastn_port: u16,
     client_pools: ftnet::http::client::ConnectionPools,
-    _peer_connections: ftnet::identity::PeerConnections,
+    peer_connections: ftnet::identity::PeerConnections,
     _graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
 ) -> eyre::Result<()> {
     loop {
-        // let peer_connections = peer_connections.clone();
+        let peer_connections = peer_connections.clone();
         let conn = match ep.accept().await {
             Some(conn) => conn,
             None => {
@@ -24,17 +24,17 @@ pub async fn run(
                     return;
                 }
             };
-            // if let Err(e) = enqueue_connection(
-            //     conn.clone(),
-            //     client_pools.clone(),
-            //     peer_connections,
-            //     fastn_port,
-            // )
-            // .await
-            // {
-            //     tracing::error!("failed to enqueue connection: {:?}", e);
-            //     return;
-            // }
+            if let Err(e) = enqueue_connection(
+                conn.clone(),
+                client_pools.clone(),
+                peer_connections,
+                fastn_port,
+            )
+            .await
+            {
+                tracing::error!("failed to enqueue connection: {:?}", e);
+                return;
+            }
             if let Err(e) = handle_connection(conn, client_pools, fastn_port).await {
                 tracing::error!("connection error3: {:?}", e);
             }
@@ -46,7 +46,6 @@ pub async fn run(
     Ok(())
 }
 
-#[expect(dead_code)]
 async fn enqueue_connection(
     conn: iroh::endpoint::Connection,
     client_pools: ftnet::http::client::ConnectionPools,
@@ -152,7 +151,7 @@ pub async fn handle_connection(
                     break;
                 }
                 tracing::info!("sending PONG");
-                send.write_all(&serde_json::to_vec(&ftnet::client::PONG)?)
+                send.write_all(ftnet::client::PONG)
                     .await
                     .inspect_err(|e| tracing::error!("failed to write PONG: {e:?}"))?;
                 tracing::info!("sent");

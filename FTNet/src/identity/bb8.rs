@@ -60,7 +60,7 @@ impl bb8::ManageConnection for ftnet::PeerIdentity {
     fn connect(&self) -> impl Future<Output = Result<Self::Connection, Self::Error>> + Send {
         Box::pin(async move {
             tracing::info!("connect called");
-            // let fastn_port = self.fastn_port;
+            let fastn_port = self.fastn_port;
             tracing::info!("here");
 
             // creating a new endpoint takes about 30 milliseconds, so we can do it here.
@@ -80,18 +80,18 @@ impl bb8::ManageConnection for ftnet::PeerIdentity {
                 })?;
             tracing::info!("connected");
 
-            // let conn2 = conn.clone();
-            // let client_pools = self.client_pools.clone();
-            //
-            // tokio::spawn(async move {
-            //     let start = std::time::Instant::now();
-            //     if let Err(e) =
-            //         ftnet::peer_server::handle_connection(conn2, client_pools, fastn_port).await
-            //     {
-            //         tracing::error!("connection error2: {:?}", e);
-            //     }
-            //     tracing::info!("connection handled in {:?}", start.elapsed());
-            // });
+            let conn2 = conn.clone();
+            let client_pools = self.client_pools.clone();
+
+            tokio::spawn(async move {
+                let start = std::time::Instant::now();
+                if let Err(e) =
+                    ftnet::peer_server::handle_connection(conn2, client_pools, fastn_port).await
+                {
+                    tracing::error!("connection error2: {:?}", e);
+                }
+                tracing::info!("connection handled in {:?}", start.elapsed());
+            });
 
             Ok(conn)
         })
