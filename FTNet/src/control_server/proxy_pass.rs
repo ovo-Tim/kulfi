@@ -5,6 +5,7 @@ pub async fn proxy_pass(
     _patch: ftnet_common::RequestPatch,
 ) -> ftnet::http::Result {
     use eyre::WrapErr;
+    use http_body_util::BodyExt;
 
     let mut client = match pool.get().await {
         Ok(v) => v,
@@ -23,6 +24,8 @@ pub async fn proxy_pass(
     tracing::info!("proxying to {uri}");
 
     *req.uri_mut() = hyper::Uri::try_from(uri)?;
+
+    let req = req.map(|b| b.boxed());
 
     let resp = client
         .send_request(req)

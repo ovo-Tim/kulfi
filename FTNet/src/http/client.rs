@@ -13,7 +13,11 @@ impl ConnectionManager {
 
     pub async fn connect(
         &self,
-    ) -> eyre::Result<hyper::client::conn::http1::SendRequest<hyper::body::Incoming>> {
+    ) -> eyre::Result<
+        hyper::client::conn::http1::SendRequest<
+            http_body_util::combinators::BoxBody<hyper::body::Bytes, hyper::Error>,
+        >,
+    > {
         use eyre::WrapErr;
 
         let stream = tokio::net::TcpStream::connect(&self.addr)
@@ -35,7 +39,9 @@ impl ConnectionManager {
 }
 
 impl bb8::ManageConnection for ConnectionManager {
-    type Connection = hyper::client::conn::http1::SendRequest<hyper::body::Incoming>;
+    type Connection = hyper::client::conn::http1::SendRequest<
+        http_body_util::combinators::BoxBody<hyper::body::Bytes, hyper::Error>,
+    >;
     type Error = eyre::Error;
 
     fn connect(&self) -> impl Future<Output = Result<Self::Connection, Self::Error>> + Send {

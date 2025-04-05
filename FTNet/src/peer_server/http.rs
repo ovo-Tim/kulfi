@@ -5,6 +5,7 @@ pub async fn http(
     mut recv: ftnet::utils::FrameReader,
 ) -> eyre::Result<()> {
     use eyre::WrapErr;
+    use http_body_util::BodyExt;
     use tokio_stream::StreamExt;
 
     tracing::info!("http called with {addr}");
@@ -50,13 +51,24 @@ pub async fn http(
     tracing::info!("request: {r:?}");
 
     let pool = get_pool(addr, client_pools).await?;
-    let _conn = match pool.get().await {
+    let mut client = match pool.get().await {
         Ok(v) => v,
         Err(e) => {
             tracing::error!("failed to get connection: {e:?}");
             return Err(eyre::anyhow!("failed to get connection: {e:?}"));
         }
     };
+
+    let _resp = client
+        .send_request(
+            r.body(
+                http_body_util::Full::new(hyper::body::Bytes::from(body))
+                    .map_err(|e| match e {})
+                    .boxed(),
+            )?,
+        )
+        .await
+        .wrap_err_with(|| "failed to send request")?;
 
     todo!()
 }
