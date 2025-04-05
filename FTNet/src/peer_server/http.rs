@@ -23,5 +23,30 @@ pub async fn http(
 
     tracing::info!("got request: {req:?}");
 
+    let mut body = recv.read_buffer().to_vec();
+    let mut recv = recv.into_inner();
+
+    let mut buf = Vec::with_capacity(1024 * 64);
+
+    tracing::info!("reading body");
+    while let Some(v) = recv.read(&mut buf).await? {
+        if v == 0 {
+            tracing::info!("finished reading");
+            break;
+        }
+        tracing::info!("reading body, partial: {v}");
+        body.extend_from_slice(&buf);
+        buf.truncate(0);
+    }
+    tracing::info!("finished reading body");
+
+    let mut r = hyper::Request::builder()
+        .method(req.method.as_str())
+        .uri(req.uri);
+    for (name, value) in req.headers {
+        r = r.header(name, value);
+    }
+
+    tracing::info!("request: {r:?}");
     todo!()
 }
