@@ -2,11 +2,11 @@ pub async fn run(
     ep: iroh::Endpoint,
     fastn_port: u16,
     client_pools: ftnet::http::client::ConnectionPools,
-    peer_connections: ftnet::identity::PeerConnections,
+    _peer_connections: ftnet::identity::PeerConnections,
     _graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
 ) -> eyre::Result<()> {
     loop {
-        let peer_connections = peer_connections.clone();
+        // let peer_connections = peer_connections.clone();
         let conn = match ep.accept().await {
             Some(conn) => conn,
             None => {
@@ -24,17 +24,17 @@ pub async fn run(
                     return;
                 }
             };
-            if let Err(e) = enqueue_connection(
-                conn.clone(),
-                client_pools.clone(),
-                peer_connections,
-                fastn_port,
-            )
-            .await
-            {
-                tracing::error!("failed to enqueue connection: {:?}", e);
-                return;
-            }
+            // if let Err(e) = enqueue_connection(
+            //     conn.clone(),
+            //     client_pools.clone(),
+            //     peer_connections,
+            //     fastn_port,
+            // )
+            // .await
+            // {
+            //     tracing::error!("failed to enqueue connection: {:?}", e);
+            //     return;
+            // }
             if let Err(e) = handle_connection(conn, client_pools, fastn_port).await {
                 tracing::error!("connection error3: {:?}", e);
             }
@@ -46,6 +46,7 @@ pub async fn run(
     Ok(())
 }
 
+#[expect(dead_code)]
 async fn enqueue_connection(
     conn: iroh::endpoint::Connection,
     client_pools: ftnet::http::client::ConnectionPools,
@@ -115,10 +116,11 @@ pub async fn handle_connection(
         }
     };
     let remote_id52 = ftnet::utils::public_key_to_id52(&remote_node_id);
-    tracing::info!("new client: {remote_id52}");
+    tracing::info!("new client: {remote_id52}, waiting for bidirectional stream");
     loop {
         let client_pools = client_pools.clone();
         let (mut send, recv) = conn.accept_bi().await?;
+        tracing::info!("got bidirectional stream");
         let mut recv = ftnet::utils::frame_reader(recv);
         let msg = match recv.next().await {
             Some(v) => v?,

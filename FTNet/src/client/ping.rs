@@ -5,9 +5,10 @@ pub async fn ping(conn: &iroh::endpoint::Connection) -> eyre::Result<()> {
     send_stream
         .write_all(&serde_json::to_vec(&ftnet::Protocol::Ping)?)
         .await?;
+    send_stream.write_all("\n".as_bytes()).await?;
     tracing::info!("sent ping, waiting for reply");
     let msg = recv_stream
-        .read_to_end(10)
+        .read_to_end(1000)
         .await
         .inspect_err(|e| tracing::error!("failed to read: {e}"))?;
     tracing::info!("got {msg:?}, {PONG:?}");
