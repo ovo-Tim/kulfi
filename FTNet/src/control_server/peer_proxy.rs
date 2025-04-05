@@ -42,7 +42,7 @@ pub async fn peer_proxy(
     tracing::info!("sent body");
 
     let mut recv = ftnet::utils::frame_reader(recv);
-    let r: Request = match recv.next().await {
+    let r: ftnet::peer_server::http::Response = match recv.next().await {
         Some(v) => serde_json::from_str(&v?)?,
         None => {
             tracing::error!("failed to read from incoming connection");
@@ -69,7 +69,7 @@ pub async fn peer_proxy(
             .map_err(|e| match e {})
             .boxed(),
     );
-    *res.status_mut() = r.method.parse::<http::StatusCode>()?;
+    *res.status_mut() = http::StatusCode::from_u16(r.status)?;
     for (k, v) in r.headers {
         res.headers_mut().insert(
             http::header::HeaderName::from_bytes(k.as_bytes())?,

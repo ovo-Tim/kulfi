@@ -1,7 +1,7 @@
 pub async fn http(
     addr: &str,
     client_pools: ftnet::http::client::ConnectionPools,
-    _send: &mut iroh::endpoint::SendStream,
+    send: &mut iroh::endpoint::SendStream,
     mut recv: ftnet::utils::FrameReader,
 ) -> eyre::Result<()> {
     use eyre::WrapErr;
@@ -59,7 +59,7 @@ pub async fn http(
         }
     };
 
-    let _resp = client
+    let (resp, body) = client
         .send_request(
             r.body(
                 http_body_util::Full::new(hyper::body::Bytes::from(body))
@@ -68,9 +68,34 @@ pub async fn http(
             )?,
         )
         .await
-        .wrap_err_with(|| "failed to send request")?;
+        .wrap_err_with(|| "failed to send request")?
+        .into_parts();
 
-    todo!()
+    let r = Response {
+        status: resp.status.as_u16(),
+        headers: resp
+            .headers
+            .iter()
+            .map(|(k, v)| (k.to_string(), v.as_bytes().to_vec()))
+            .collect(),
+    };
+
+    send.write_all(
+        serde_json::to_string(&r)
+            .wrap_err_with(|| "failed to serialize json while writing http response")?
+            .as_bytes(),
+    )
+    .await?;
+    send.write_all(b"\n").await?;
+    send.write_all(&(body.collect().await?.to_bytes())).await?;
+
+    Ok(())
+}
+
+#[derive(serde::Deserialize, serde::Serialize, Debug)]
+pub struct Response {
+    pub status: u16,
+    pub headers: Vec<(String, Vec<u8>)>,
 }
 
 async fn get_pool(
