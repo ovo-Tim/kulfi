@@ -52,9 +52,14 @@ pub async fn peer_proxy(
 
     tracing::info!("got response header: {r:?}");
 
-    let mut body = Vec::new();
-    while let Some(v) = recv.next().await {
-        body.extend_from_slice(v?.as_bytes());
+    let mut body = recv.read_buffer().to_vec();
+    let mut recv = recv.into_inner();
+
+    let mut buf = Vec::with_capacity(1024 * 64);
+
+    while let Some(_v) = recv.read(&mut buf).await? {
+        body.extend_from_slice(&buf);
+        buf.truncate(0);
     }
 
     tracing::info!("read body");
