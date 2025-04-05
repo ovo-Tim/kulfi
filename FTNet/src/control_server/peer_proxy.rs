@@ -57,12 +57,16 @@ pub async fn peer_proxy(
 
     let mut buf = Vec::with_capacity(1024 * 64);
 
-    while let Some(_v) = recv.read(&mut buf).await? {
+    while let Some(v) = recv.read(&mut buf).await? {
+        if v == 0 {
+            tracing::info!("finished reading body");
+            break;
+        }
         body.extend_from_slice(&buf);
         buf.truncate(0);
     }
 
-    tracing::info!("read body");
+    tracing::info!("got body");
 
     let mut res = hyper::Response::new(
         http_body_util::Full::new(hyper::body::Bytes::from(body))

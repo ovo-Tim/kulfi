@@ -51,6 +51,7 @@ pub async fn http(
     tracing::info!("request: {r:?}");
 
     let pool = get_pool(addr, client_pools).await?;
+    // tracing::info!("got pool");
     let mut client = match pool.get().await {
         Ok(v) => v,
         Err(e) => {
@@ -58,6 +59,7 @@ pub async fn http(
             return Err(eyre::anyhow!("failed to get connection: {e:?}"));
         }
     };
+    // tracing::info!("got client");
 
     let (resp, body) = client
         .send_request(
