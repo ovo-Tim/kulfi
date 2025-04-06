@@ -46,6 +46,7 @@ pub async fn run(
     Ok(())
 }
 
+#[expect(unused)]
 async fn enqueue_connection(
     conn: iroh::endpoint::Connection,
     client_pools: ftnet::http::client::ConnectionPools,
@@ -174,7 +175,7 @@ pub async fn handle_connection(
                     &mut send,
                     recv,
                 )
-                .await
+                    .await
                 {
                     tracing::error!("failed to proxy http: {e:?}");
                 }

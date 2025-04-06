@@ -17,7 +17,7 @@ pub mod control_server;
 mod counters;
 pub mod http;
 mod identity;
-mod peer_server;
+pub mod peer_server;
 mod protocol;
 mod start;
 pub mod utils;
