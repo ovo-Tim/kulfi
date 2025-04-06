@@ -6,7 +6,7 @@ pub async fn run(
     _graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
 ) -> eyre::Result<()> {
     loop {
-        let peer_connections = peer_connections.clone();
+        let _peer_connections = peer_connections.clone();
         let conn = match ep.accept().await {
             Some(conn) => conn,
             None => {
@@ -24,17 +24,17 @@ pub async fn run(
                     return;
                 }
             };
-            if let Err(e) = enqueue_connection(
-                conn.clone(),
-                client_pools.clone(),
-                peer_connections,
-                fastn_port,
-            )
-            .await
-            {
-                tracing::error!("failed to enqueue connection: {:?}", e);
-                return;
-            }
+            // if let Err(e) = enqueue_connection(
+            //     conn.clone(),
+            //     client_pools.clone(),
+            //     peer_connections,
+            //     fastn_port,
+            // )
+            // .await
+            // {
+            //     tracing::error!("failed to enqueue connection: {:?}", e);
+            //     return;
+            // }
             if let Err(e) = handle_connection(conn, client_pools, fastn_port).await {
                 tracing::error!("connection error3: {:?}", e);
             }
