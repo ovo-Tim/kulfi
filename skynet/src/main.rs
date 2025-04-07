@@ -8,12 +8,16 @@ async fn main() -> eyre::Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
-        Command::ExposeHttp { port, secure, what_to_do } => {
+        Command::ExposeHttp {
+            port,
+            secure,
+            what_to_do,
+        } => {
             tracing::info!(
-                action="Exposing HTTP service on FTNet.",
-                port=port,
-                secure=secure,
-                what_to_do=what_to_do
+                action = "Exposing HTTP service on FTNet.",
+                port = port,
+                secure = secure,
+                what_to_do = what_to_do
             );
         }
     }
@@ -33,12 +37,14 @@ pub struct Cli {
 
 #[derive(clap::Subcommand, Debug)]
 pub enum Command {
-    #[clap(about = r#"
-    Expose HTTP Service on FTNet, connect using FTNet.
+    #[clap(
+        about = "Expose HTTP Service on FTNet, connect using FTNet.",
+        long_about = r#"
+Expose HTTP Service on FTNet, connect using FTNet.
 
-    By default it allows any peer to connecto to the HTTP(s) service. You can pass --what-to-do
-    argument to specify a What To Do service that can be used to add access control.
-    "#)]
+By default it allows any peer to connecto to the HTTP(s) service. You can pass --what-to-do
+argument to specify a What To Do service that can be used to add access control."#
+    )]
     ExposeHttp {
         port: u16,
         #[arg(
@@ -47,7 +53,10 @@ pub enum Command {
             help = "Use this if the service is HTTPS"
         )]
         secure: bool,
-        #[arg(long, help = "The What To Do Service that can be used to add access control.")]
+        #[arg(
+            long,
+            help = "The What To Do Service that can be used to add access control."
+        )]
         what_to_do: Option<String>,
     },
 }

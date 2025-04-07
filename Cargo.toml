@@ -8,7 +8,6 @@ authors = [
     "Siddhant Kumar <siddhantk232@gmail.com>",
 ]
 edition = "2024"
-description = "FTN: FifthTry Network"
 license = "UPL-1.0"
 repository = "https://github.com/FifthTry/ftnet"
 homepage = "https://ftnet.in"
