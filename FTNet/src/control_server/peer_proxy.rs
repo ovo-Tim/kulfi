@@ -22,7 +22,7 @@ pub async fn peer_proxy(
         id_map,
         fastn_port,
     )
-        .await?;
+    .await?;
 
     tracing::info!("got stream");
     send.write_all(&serde_json::to_vec(&ftnet::Protocol::Identity)?)
@@ -133,7 +133,13 @@ async fn get_stream(
     }
 
     let ep = get_endpoint(self_id52, id_map).await?;
-    let conn = match ep.connect(ftnet::utils::id52_to_public_key(remote_node_id52)?, ftnet::APNS_IDENTITY).await {
+    let conn = match ep
+        .connect(
+            ftnet::utils::id52_to_public_key(remote_node_id52)?,
+            ftnet::APNS_IDENTITY,
+        )
+        .await
+    {
         Ok(conn) => conn,
         Err(e) => {
             tracing::error!("failed to create connection: {e:?}");

@@ -15,8 +15,8 @@ impl ftnet::Identity {
             &self.id52,
             data_dir,
         )
-            .await
-            .wrap_err_with(|| "failed to start fastn")?;
+        .await
+        .wrap_err_with(|| "failed to start fastn")?;
         tracing::info!("fastn started on port {port}");
 
         let ep = ftnet::identity::get_endpoint(self.public_key.to_string().as_str())
@@ -24,10 +24,7 @@ impl ftnet::Identity {
             .wrap_err_with(|| "failed to bind to iroh network")?;
 
         {
-            id_map
-                .lock()
-                .await
-                .push((self.id52.to_string(), (port, ep.clone())));
+            id_map.lock().await.push((self.id52, (port, ep.clone())));
         }
 
         ftnet::peer_server::run(
@@ -37,7 +34,7 @@ impl ftnet::Identity {
             peer_connections,
             graceful_shutdown_rx,
         )
-            .await
+        .await
     }
 }
 
