@@ -1,12 +1,9 @@
-#[expect(clippy::too_many_arguments)]
 pub async fn peer_proxy(
     req: hyper::Request<hyper::body::Incoming>,
     self_id52: &str,
     remote_node_id52: &str,
     peer_connections: ftnet::identity::PeerConnections,
-    client_pools: ftnet::http::client::ConnectionPools,
     _patch: ftnet_common::RequestPatch,
-    fastn_port: u16,
     id_map: ftnet::identity::IDMap,
 ) -> ftnet::http::Result {
     use http_body_util::BodyExt;
@@ -14,15 +11,8 @@ pub async fn peer_proxy(
 
     tracing::info!("peer_proxy: {remote_node_id52}");
 
-    let (mut send, recv) = get_stream(
-        self_id52,
-        remote_node_id52,
-        peer_connections,
-        client_pools,
-        id_map,
-        fastn_port,
-    )
-    .await?;
+    let (mut send, recv) =
+        get_stream(self_id52, remote_node_id52, peer_connections, id_map).await?;
 
     tracing::info!("got stream");
     send.write_all(&serde_json::to_vec(&ftnet::Protocol::Identity)?)
@@ -118,10 +108,20 @@ async fn get_stream(
     self_id52: &str,
     remote_node_id52: &str,
     peer_connections: ftnet::identity::PeerConnections,
-    _client_pools: ftnet::http::client::ConnectionPools,
     id_map: ftnet::identity::IDMap,
-    _fastn_port: u16,
 ) -> eyre::Result<(iroh::endpoint::SendStream, iroh::endpoint::RecvStream)> {
+    let conn = get_connection(self_id52, remote_node_id52, id_map, peer_connections).await?;
+    // TODO: this is where we can check if the connection is healthy or not. if we fail to get the
+    //       bidirectional stream, probably we should try to recreate connection.
+    Ok(conn.open_bi().await?)
+}
+
+async fn get_connection(
+    self_id52: &str,
+    remote_node_id52: &str,
+    id_map: ftnet::identity::IDMap,
+    peer_connections: ftnet::identity::PeerConnections,
+) -> eyre::Result<iroh::endpoint::Connection> {
     let connections = peer_connections.lock().await;
     let connection = connections.get(remote_node_id52).map(ToOwned::to_owned);
 
@@ -129,7 +129,7 @@ async fn get_stream(
     drop(connections);
 
     if let Some(conn) = connection {
-        return Ok(conn.open_bi().await?);
+        return Ok(conn);
     }
 
     let ep = get_endpoint(self_id52, id_map).await?;
@@ -147,12 +147,10 @@ async fn get_stream(
         }
     };
 
-    {
-        let mut connections = peer_connections.lock().await;
-        connections.insert(remote_node_id52.to_string(), conn.clone());
-    }
+    let mut connections = peer_connections.lock().await;
+    connections.insert(remote_node_id52.to_string(), conn.clone());
 
-    Ok(conn.open_bi().await?)
+    Ok(conn)
 }
 
 async fn get_endpoint(
