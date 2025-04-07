@@ -13,7 +13,7 @@ async fn main() -> eyre::Result<()> {
             secure,
             what_to_do,
         } => {
-            tracing::info!(port, secure, what_to_do, "Exposing HTTP service on FTNet.");
+            tracing::info!(port, secure, what_to_do, verbose = ?cli.verbose, "Exposing HTTP service on FTNet.");
         }
     }
 
@@ -23,8 +23,8 @@ async fn main() -> eyre::Result<()> {
 #[derive(clap::Parser, Debug)]
 #[command(version, about, long_about = None)]
 pub struct Cli {
-    #[arg(long, global = true)]
-    pub trace: bool,
+    #[command(flatten)]
+    verbose: clap_verbosity_flag::Verbosity,
 
     #[command(subcommand)]
     pub command: Command,

@@ -12,6 +12,7 @@ rust-version.workspace = true
 
 [dependencies]
 clap.workspace = true
+clap-verbosity-flag.workspace = true
 eyre.workspace = true
 tokio.workspace = true
 tracing-subscriber.workspace = true
