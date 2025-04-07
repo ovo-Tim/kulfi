@@ -15,17 +15,20 @@ impl ftnet::Identity {
             &self.id52,
             data_dir,
         )
-        .await
-        .wrap_err_with(|| "failed to start fastn")?;
-
-        {
-            tracing::info!("fastn started on port {port}");
-            id_map.lock().await.push((self.id52, port));
-        }
+            .await
+            .wrap_err_with(|| "failed to start fastn")?;
+        tracing::info!("fastn started on port {port}");
 
         let ep = ftnet::identity::get_endpoint(self.public_key.to_string().as_str())
             .await
             .wrap_err_with(|| "failed to bind to iroh network")?;
+
+        {
+            id_map
+                .lock()
+                .await
+                .push((self.id52.to_string(), (port, ep.clone())));
+        }
 
         ftnet::peer_server::run(
             ep,
@@ -34,7 +37,7 @@ impl ftnet::Identity {
             peer_connections,
             graceful_shutdown_rx,
         )
-        .await
+            .await
     }
 }
 
@@ -47,7 +50,7 @@ async fn start_fastn(
     data_dir: &std::path::Path,
 ) -> eyre::Result<u16> {
     tracing::info!("Running `fastn serve` for {id52}");
-    let path = data_dir.join("identities").join(&id52).join("package");
+    let path = data_dir.join("identities").join(id52).join("package");
     let (port, _child) = spawn_fastn_serve_and_get_port(&path).await?;
 
     // TODO: store the child process as well. Use child.kill() to kill it when shutting down
@@ -66,7 +69,7 @@ pub async fn spawn_fastn_serve_and_get_port(
 
     let mut cmd = tokio::process::Command::new("fastn");
     cmd.current_dir(dir);
-    cmd.args(&["serve"]);
+    cmd.args(["serve"]);
     cmd.stdout(Stdio::piped());
     cmd.stderr(Stdio::null());
 

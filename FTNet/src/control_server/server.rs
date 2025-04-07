@@ -95,7 +95,7 @@ async fn handle_request_(
     }
 
     // TODO: maybe we should try all the identities not just default
-    let (default_id, default_port) = default_identity(id_map).await?;
+    let (default_id, default_port) = default_identity(id_map.clone()).await?;
     match what_to_do(default_port, id).await {
         // if the id belongs to a friend of an identity, send the request to the friend over iroh
         Ok(WhatToDo::ForwardToPeer { peer_id, patch }) => {
@@ -107,6 +107,7 @@ async fn handle_request_(
                 client_pools,
                 patch,
                 default_port,
+                id_map,
             )
             .await
         }
@@ -187,10 +188,10 @@ async fn what_to_do(_port: u16, id: &str) -> eyre::Result<WhatToDo> {
 }
 
 async fn find_identity(id: &str, id_map: ftnet::identity::IDMap) -> eyre::Result<Option<u16>> {
-    for (i, v) in id_map.lock().await.iter() {
+    for (i, (port, _ep)) in id_map.lock().await.iter() {
         // if i.starts_with(id) {
         if i == id {
-            return Ok(Some(*v));
+            return Ok(Some(*port));
         }
     }
 
@@ -202,6 +203,6 @@ async fn default_identity(id_map: ftnet::identity::IDMap) -> eyre::Result<(Strin
         .lock()
         .await
         .first()
-        .map(ToOwned::to_owned)
+        .map(|(ident, (port, _ep))| (ident.to_string(), *port))
         .expect("ftnet ensures there is at least one identity at the start"))
 }

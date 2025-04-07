@@ -1,3 +1,4 @@
+#[expect(clippy::too_many_arguments)]
 pub async fn peer_proxy(
     req: hyper::Request<hyper::body::Incoming>,
     self_id52: &str,
@@ -6,6 +7,7 @@ pub async fn peer_proxy(
     client_pools: ftnet::http::client::ConnectionPools,
     _patch: ftnet_common::RequestPatch,
     fastn_port: u16,
+    id_map: ftnet::identity::IDMap,
 ) -> ftnet::http::Result {
     use http_body_util::BodyExt;
     use tokio_stream::StreamExt;
@@ -17,9 +19,10 @@ pub async fn peer_proxy(
         remote_node_id52,
         peer_connections,
         client_pools,
+        id_map,
         fastn_port,
     )
-    .await?;
+        .await?;
 
     tracing::info!("got stream");
     send.write_all(&serde_json::to_vec(&ftnet::Protocol::Identity)?)
@@ -115,40 +118,51 @@ async fn get_stream(
     self_id52: &str,
     remote_node_id52: &str,
     peer_connections: ftnet::identity::PeerConnections,
-    client_pools: ftnet::http::client::ConnectionPools,
-    fastn_port: u16,
+    _client_pools: ftnet::http::client::ConnectionPools,
+    id_map: ftnet::identity::IDMap,
+    _fastn_port: u16,
 ) -> eyre::Result<(iroh::endpoint::SendStream, iroh::endpoint::RecvStream)> {
-    let pool = {
-        tracing::info!("get stream1");
-        let mut peers = peer_connections.lock().await;
-        tracing::info!("get stream1");
+    let connections = peer_connections.lock().await;
+    let connection = connections.get(remote_node_id52).map(ToOwned::to_owned);
 
-        let pool = match peers.get(remote_node_id52) {
-            Some(v) => v.clone(),
-            None => {
-                let pool = bb8::Pool::builder()
-                    .build(
-                        ftnet::Identity::from_id52(self_id52, client_pools)?
-                            .peer_identity(fastn_port, remote_node_id52)?,
-                    )
-                    .await?;
+    // we drop the connections mutex guard so that we do not hold lock across await point.
+    drop(connections);
 
-                peers.insert(remote_node_id52.to_string(), pool.clone());
-                pool
-            }
-        };
-        tracing::info!("get stream got pool");
-        pool
+    if let Some(conn) = connection {
+        return Ok(conn.open_bi().await?);
+    }
+
+    let ep = get_endpoint(self_id52, id_map).await?;
+    let conn = match ep.connect(ftnet::utils::id52_to_public_key(remote_node_id52)?, ftnet::APNS_IDENTITY).await {
+        Ok(conn) => conn,
+        Err(e) => {
+            tracing::error!("failed to create connection: {e:?}");
+            return Err(eyre::anyhow!("failed to create connection: {e:?}"));
+        }
     };
 
-    Ok(pool
-        .get()
-        .await
-        .inspect(|_v| tracing::info!("got connection"))
-        .map_err(|e| {
-            tracing::error!("failed to get connection: {e:?}");
-            eyre::anyhow!("failed to get connection: {e:?}")
-        })?
-        .open_bi()
-        .await?)
+    {
+        let mut connections = peer_connections.lock().await;
+        connections.insert(remote_node_id52.to_string(), conn.clone());
+    }
+
+    Ok(conn.open_bi().await?)
+}
+
+async fn get_endpoint(
+    self_id52: &str,
+    id_map: ftnet::identity::IDMap,
+) -> eyre::Result<iroh::endpoint::Endpoint> {
+    let map = id_map.lock().await;
+
+    for (id, (_port, ep)) in map.iter() {
+        if id == self_id52 {
+            return Ok(ep.clone());
+        }
+    }
+
+    tracing::error!("no entry for {self_id52} in the id_map: {id_map:?}");
+    Err(eyre::anyhow!(
+        "no entry for {self_id52} in the id_map: {id_map:?}"
+    ))
 }

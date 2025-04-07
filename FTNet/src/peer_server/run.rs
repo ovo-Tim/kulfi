@@ -6,7 +6,7 @@ pub async fn run(
     _graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
 ) -> eyre::Result<()> {
     loop {
-        let _peer_connections = peer_connections.clone();
+        let peer_connections = peer_connections.clone();
         let conn = match ep.accept().await {
             Some(conn) => conn,
             None => {
@@ -24,17 +24,10 @@ pub async fn run(
                     return;
                 }
             };
-            // if let Err(e) = enqueue_connection(
-            //     conn.clone(),
-            //     client_pools.clone(),
-            //     peer_connections,
-            //     fastn_port,
-            // )
-            // .await
-            // {
-            //     tracing::error!("failed to enqueue connection: {:?}", e);
-            //     return;
-            // }
+            if let Err(e) = enqueue_connection(conn.clone(), peer_connections).await {
+                tracing::error!("failed to enqueue connection: {:?}", e);
+                return;
+            }
             if let Err(e) = handle_connection(conn, client_pools, fastn_port).await {
                 tracing::error!("connection error3: {:?}", e);
             }
@@ -46,12 +39,9 @@ pub async fn run(
     Ok(())
 }
 
-#[expect(unused)]
 async fn enqueue_connection(
     conn: iroh::endpoint::Connection,
-    client_pools: ftnet::http::client::ConnectionPools,
     peer_connections: ftnet::identity::PeerConnections,
-    fastn_port: u16,
 ) -> eyre::Result<()> {
     let public_key = match conn.remote_node_id() {
         Ok(v) => v,
@@ -61,35 +51,8 @@ async fn enqueue_connection(
         }
     };
     let id = ftnet::utils::public_key_to_id52(&public_key);
-    let mut map = peer_connections.lock().await;
-    if let Some(v) = map.get_mut(&id) {
-        if let Err(e) = v.add(conn.clone()) {
-            tracing::error!("failed to add connection to peer_connections: {e:?}");
-            return Err(eyre::anyhow!(
-                "failed to add add connection to peer_connections: {e:?}"
-            ));
-        }
-        return Ok(());
-    };
-
-    let pool = bb8::Pool::builder()
-        .build(ftnet::PeerIdentity {
-            self_id52: id.clone(),
-            self_public_key: public_key,
-            client_pools,
-            peer_public_key: conn
-                .remote_node_id()
-                .map_err(|e| eyre::anyhow!("could not find remote node id: {e:?}"))?,
-            fastn_port,
-        })
-        .await?;
-    if let Err(e) = pool.add(conn.clone()) {
-        tracing::error!("failed to add connection to peer_connections: {e:?}");
-        return Err(eyre::anyhow!(
-            "failed to add add connection to peer_connections: {e:?}"
-        ));
-    }
-    map.insert(id.clone(), pool);
+    let mut connections = peer_connections.lock().await;
+    connections.insert(id.clone(), conn);
 
     Ok(())
 }

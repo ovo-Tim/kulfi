@@ -62,11 +62,23 @@ pub struct PeerIdentity {
     pub client_pools: ftnet::http::client::ConnectionPools,
 }
 
+impl ftnet::Identity {
+    pub fn peer_identity(&self, fastn_port: u16, peer_id: &str) -> eyre::Result<PeerIdentity> {
+        Ok(PeerIdentity {
+            fastn_port,
+            self_id52: self.id52.clone(),
+            self_public_key: self.public_key,
+            peer_public_key: ftnet::utils::id52_to_public_key(peer_id)?,
+            client_pools: self.client_pools.clone(),
+        })
+    }
+}
+
 impl bb8::ManageConnection for PeerIdentity {
     type Connection = iroh::endpoint::Connection;
     type Error = eyre::Error;
 
-    fn connect(&self) -> impl Future<Output = Result<Self::Connection, Self::Error>> + Send {
+    fn connect(&self) -> impl Future<Output=Result<Self::Connection, Self::Error>> + Send {
         Box::pin(async move {
             tracing::info!("connect called");
             // let fastn_port = self.fastn_port;
@@ -110,32 +122,11 @@ impl bb8::ManageConnection for PeerIdentity {
     fn is_valid(
         &self,
         conn: &mut Self::Connection,
-    ) -> impl Future<Output = Result<(), Self::Error>> + Send {
+    ) -> impl Future<Output=Result<(), Self::Error>> + Send {
         Box::pin(async move { ftnet::client::ping(conn).await })
     }
 
     fn has_broken(&self, _conn: &mut Self::Connection) -> bool {
         false
-    }
-}
-
-pub async fn get_endpoint(id: &str) -> eyre::Result<iroh::Endpoint> {
-    let secret_key = ftnet::utils::get_secret(id)
-        .wrap_err_with(|| format!("failed to get secret key from keychain for {id}"))?;
-
-    match iroh::Endpoint::builder()
-        .discovery_n0()
-        .discovery_local_network()
-        .alpns(vec![ftnet::APNS_IDENTITY.into()])
-        .secret_key(secret_key)
-        .bind()
-        .await
-    {
-        Ok(ep) => Ok(ep),
-        Err(e) => {
-            // https://github.com/n0-computer/iroh/issues/2741
-            // this is why you MUST NOT use anyhow::Error etc. in library code.
-            Err(eyre::anyhow!("failed to bind to iroh network2: {e:?}"))
-        }
     }
 }
