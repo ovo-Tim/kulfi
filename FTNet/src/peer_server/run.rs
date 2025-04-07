@@ -20,7 +20,7 @@ pub async fn run(
             let conn = match conn.await {
                 Ok(c) => c,
                 Err(e) => {
-                    tracing::error!("failed to convert connecting to connection: {:?}", e);
+                    tracing::error!("failed to convert incoming to connection: {:?}", e);
                     return;
                 }
             };

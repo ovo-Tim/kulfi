@@ -1,7 +1,7 @@
 pub async fn peer_proxy(
     req: hyper::Request<hyper::body::Incoming>,
-    requesting_id: &str,
-    peer_id: &str,
+    self_id52: &str,
+    remote_node_id52: &str,
     peer_connections: ftnet::identity::PeerConnections,
     client_pools: ftnet::http::client::ConnectionPools,
     _patch: ftnet_common::RequestPatch,
@@ -10,16 +10,16 @@ pub async fn peer_proxy(
     use http_body_util::BodyExt;
     use tokio_stream::StreamExt;
 
-    tracing::info!("peer_proxy: {peer_id}");
+    tracing::info!("peer_proxy: {remote_node_id52}");
 
     let (mut send, recv) = get_stream(
-        requesting_id,
-        peer_id,
+        self_id52,
+        remote_node_id52,
         peer_connections,
         client_pools,
         fastn_port,
     )
-    .await?;
+        .await?;
 
     tracing::info!("got stream");
     send.write_all(&serde_json::to_vec(&ftnet::Protocol::Identity)?)
@@ -112,31 +112,34 @@ impl From<http::request::Parts> for Request {
 }
 
 async fn get_stream(
-    self_id: &str,
-    peer_id: &str,
+    self_id52: &str,
+    remote_node_id52: &str,
     peer_connections: ftnet::identity::PeerConnections,
     client_pools: ftnet::http::client::ConnectionPools,
     fastn_port: u16,
 ) -> eyre::Result<(iroh::endpoint::SendStream, iroh::endpoint::RecvStream)> {
-    tracing::info!("get stream1");
-    let mut peers = peer_connections.lock().await;
-    tracing::info!("get stream1");
+    let pool = {
+        tracing::info!("get stream1");
+        let mut peers = peer_connections.lock().await;
+        tracing::info!("get stream1");
 
-    let pool = match peers.get(peer_id) {
-        Some(v) => v.clone(),
-        None => {
-            let pool = bb8::Pool::builder()
-                .build(
-                    ftnet::Identity::from_id52(self_id, client_pools)?
-                        .peer_identity(fastn_port, peer_id)?,
-                )
-                .await?;
+        let pool = match peers.get(remote_node_id52) {
+            Some(v) => v.clone(),
+            None => {
+                let pool = bb8::Pool::builder()
+                    .build(
+                        ftnet::Identity::from_id52(self_id52, client_pools)?
+                            .peer_identity(fastn_port, remote_node_id52)?,
+                    )
+                    .await?;
 
-            peers.insert(peer_id.to_string(), pool.clone());
-            pool
-        }
+                peers.insert(remote_node_id52.to_string(), pool.clone());
+                pool
+            }
+        };
+        tracing::info!("get stream got pool");
+        pool
     };
-    tracing::info!("get stream got pool");
 
     Ok(pool
         .get()

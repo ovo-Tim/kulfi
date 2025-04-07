@@ -53,11 +53,20 @@
 
 use eyre::WrapErr;
 
-impl bb8::ManageConnection for ftnet::PeerIdentity {
+#[derive(Clone, Debug)]
+pub struct PeerIdentity {
+    pub self_id52: String,
+    pub fastn_port: u16,
+    pub self_public_key: iroh::PublicKey,
+    pub peer_public_key: iroh::PublicKey,
+    pub client_pools: ftnet::http::client::ConnectionPools,
+}
+
+impl bb8::ManageConnection for PeerIdentity {
     type Connection = iroh::endpoint::Connection;
     type Error = eyre::Error;
 
-    fn connect(&self) -> impl Future<Output = Result<Self::Connection, Self::Error>> + Send {
+    fn connect(&self) -> impl Future<Output=Result<Self::Connection, Self::Error>> + Send {
         Box::pin(async move {
             tracing::info!("connect called");
             // let fastn_port = self.fastn_port;
@@ -66,6 +75,7 @@ impl bb8::ManageConnection for ftnet::PeerIdentity {
             // creating a new endpoint takes about 30 milliseconds, so we can do it here.
             // since we create just a single connection via this endpoint, the overhead is
             // negligible, compared to 800 milliseconds or so it takes to create a new connection.
+            // TODO: store ep in a global map instead of creating a new ep for every connection.
             let ep = get_endpoint(self.self_public_key.to_string().as_str())
                 .await
                 .wrap_err_with(|| "failed to bind to iroh network1")?;
@@ -100,7 +110,7 @@ impl bb8::ManageConnection for ftnet::PeerIdentity {
     fn is_valid(
         &self,
         conn: &mut Self::Connection,
-    ) -> impl Future<Output = Result<(), Self::Error>> + Send {
+    ) -> impl Future<Output=Result<(), Self::Error>> + Send {
         Box::pin(async move { ftnet::client::ping(conn).await })
     }
 
