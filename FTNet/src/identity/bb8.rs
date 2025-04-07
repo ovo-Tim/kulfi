@@ -66,7 +66,7 @@ impl bb8::ManageConnection for PeerIdentity {
     type Connection = iroh::endpoint::Connection;
     type Error = eyre::Error;
 
-    fn connect(&self) -> impl Future<Output=Result<Self::Connection, Self::Error>> + Send {
+    fn connect(&self) -> impl Future<Output = Result<Self::Connection, Self::Error>> + Send {
         Box::pin(async move {
             tracing::info!("connect called");
             // let fastn_port = self.fastn_port;
@@ -110,7 +110,7 @@ impl bb8::ManageConnection for PeerIdentity {
     fn is_valid(
         &self,
         conn: &mut Self::Connection,
-    ) -> impl Future<Output=Result<(), Self::Error>> + Send {
+    ) -> impl Future<Output = Result<(), Self::Error>> + Send {
         Box::pin(async move { ftnet::client::ping(conn).await })
     }
 

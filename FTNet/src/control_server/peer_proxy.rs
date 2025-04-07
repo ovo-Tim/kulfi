@@ -19,7 +19,7 @@ pub async fn peer_proxy(
         client_pools,
         fastn_port,
     )
-        .await?;
+    .await?;
 
     tracing::info!("got stream");
     send.write_all(&serde_json::to_vec(&ftnet::Protocol::Identity)?)

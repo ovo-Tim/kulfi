@@ -3,7 +3,7 @@ mod create;
 mod read;
 mod run;
 
-pub use bb8::{get_endpoint, PeerIdentity};
+pub use bb8::{PeerIdentity, get_endpoint};
 
 #[derive(Debug)]
 pub struct Identity {
@@ -11,7 +11,6 @@ pub struct Identity {
     pub public_key: iroh::PublicKey,
     pub client_pools: ftnet::http::client::ConnectionPools,
 }
-
 
 impl Identity {
     pub fn peer_identity(&self, fastn_port: u16, peer_id: &str) -> eyre::Result<PeerIdentity> {
