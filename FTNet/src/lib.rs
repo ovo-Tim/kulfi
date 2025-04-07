@@ -8,10 +8,10 @@
 use directories as _;
 use fastn_observer as _;
 use tracing_subscriber as _;
+use clap as _;
 
 extern crate self as ftnet;
 
-mod cli;
 mod client;
 mod config;
 pub mod control_server;
@@ -23,7 +23,6 @@ mod protocol;
 mod start;
 pub mod utils;
 
-pub use cli::{Cli, Command};
 pub use config::Config;
 pub use counters::{
     CONTROL_CONNECTION_COUNT, CONTROL_REQUEST_COUNT, IN_FLIGHT_REQUESTS,

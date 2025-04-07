@@ -6,10 +6,10 @@ async fn main() -> eyre::Result<()> {
     tracing_subscriber::fmt::init();
     // configure_tracing_subscriber();
 
-    let cli = ftnet::Cli::parse();
+    let cli = Cli::parse();
 
     match cli.command {
-        ftnet::Command::Start {
+        Command::Start {
             foreground,
             data_dir,
             control_port,
@@ -29,7 +29,7 @@ async fn main() -> eyre::Result<()> {
 
             ftnet::start(foreground, data_dir, control_port).await
         }
-        ftnet::Command::TcpProxy { id, port } => {
+        Command::TcpProxy { id, port } => {
             tracing::info!(
                 "Proxying TCP server to remote FTNet service with id: {id}, port: {port}"
             );
@@ -47,5 +47,35 @@ fn configure_tracing_subscriber() {
             .with(fastn_observer::Layer::default())
             .with(tracing_subscriber::EnvFilter::from_default_env()),
     )
-    .unwrap();
+        .unwrap();
+}
+
+
+#[derive(clap::Parser, Debug)]
+#[command(version, about, long_about = None)]
+pub struct Cli {
+    #[command(subcommand)]
+    pub command: Command,
+
+    #[arg(long, global = true)]
+    pub trace: bool,
+}
+
+#[derive(clap::Subcommand, Debug)]
+pub enum Command {
+    #[clap(about = "Start the FTNet service.")]
+    Start {
+        #[arg(default_value_t = false, short = 'f')]
+        foreground: bool,
+        #[arg(long, short = 'd')]
+        data_dir: Option<String>,
+        #[arg(default_value_t = 80, long, short = 'p')]
+        control_port: u16,
+    },
+    #[clap(about = "Proxy TCP server to a remote FTNet service.")]
+    TcpProxy {
+        id: String,
+        #[arg(default_value_t = 2345)]
+        port: u16,
+    },
 }
