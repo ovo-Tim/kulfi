@@ -13,12 +13,7 @@ async fn main() -> eyre::Result<()> {
             secure,
             what_to_do,
         } => {
-            tracing::info!(
-                action = "Exposing HTTP service on FTNet.",
-                port = port,
-                secure = secure,
-                what_to_do = what_to_do
-            );
+            tracing::info!(port, secure, what_to_do, "Exposing HTTP service on FTNet.");
         }
     }
 
