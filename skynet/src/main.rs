@@ -7,14 +7,18 @@ async fn main() -> eyre::Result<()> {
 
     let cli = Cli::parse();
 
-    match cli.command {
+    if let Err(e) = match cli.command {
         Command::ExposeHttp {
             port,
             secure,
             what_to_do,
         } => {
             tracing::info!(port, secure, what_to_do, verbose = ?cli.verbose, "Exposing HTTP service on FTNet.");
+            skynet::expose_http(port, secure, what_to_do).await
         }
+    } {
+        tracing::error!("Error: {e}");
+        return Err(e);
     }
 
     Ok(())
