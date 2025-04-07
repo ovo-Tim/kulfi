@@ -3817,8 +3817,11 @@ dependencies = [
 name = "skynet"
 version = "0.1.0"
 dependencies = [
+ "clap",
  "eyre",
  "tokio",
+ "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]
