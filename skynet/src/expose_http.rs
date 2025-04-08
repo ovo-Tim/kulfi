@@ -7,7 +7,7 @@ pub async fn expose_http(host: String, port: u16) -> eyre::Result<()> {
         .await
         .wrap_err_with(|| "failed to bind to iroh network")?;
 
-    println!("Connect to {port} by visiting http://{id52}.localhost.direct", );
+    println!("Connect to {port} by visiting http://{id52}.localhost.direct",);
 
     let client_pools = ftnet_utils::ConnectionPools::default();
 
@@ -105,7 +105,7 @@ async fn handle_connection(
                     &mut send,
                     recv,
                 )
-                    .await
+                .await
                 {
                     tracing::error!("failed to proxy http: {e:?}");
                 }

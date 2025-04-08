@@ -14,8 +14,13 @@ pub async fn peer_to_peer(
 
     tracing::info!("peer_proxy: {remote_node_id52}");
 
-    let (mut send, recv) =
-        get_stream(self_id52, remote_node_id52, peer_connections.clone(), id_map).await?;
+    let (mut send, recv) = get_stream(
+        self_id52,
+        remote_node_id52,
+        peer_connections.clone(),
+        id_map,
+    )
+    .await?;
 
     tracing::info!("got stream");
     send.write_all(&serde_json::to_vec(&Protocol::Identity)?)
@@ -100,7 +105,13 @@ async fn get_stream(
     id_map: IDMap,
 ) -> eyre::Result<(iroh::endpoint::SendStream, iroh::endpoint::RecvStream)> {
     tracing::trace!("getting stream");
-    let conn = get_connection(self_id52, remote_node_id52, id_map, peer_connections.clone()).await?;
+    let conn = get_connection(
+        self_id52,
+        remote_node_id52,
+        id_map,
+        peer_connections.clone(),
+    )
+    .await?;
     // TODO: this is where we can check if the connection is healthy or not. if we fail to get the
     //       bidirectional stream, probably we should try to recreate connection.
     tracing::trace!("getting stream - got connection");
@@ -115,7 +126,10 @@ async fn get_stream(
     }
 }
 
-async fn forget_connection(remote_node_id52: &str, peer_connections: PeerConnections) -> eyre::Result<()> {
+async fn forget_connection(
+    remote_node_id52: &str,
+    peer_connections: PeerConnections,
+) -> eyre::Result<()> {
     tracing::trace!("forgetting connection");
     let mut connections = peer_connections.lock().await;
     connections.remove(remote_node_id52);

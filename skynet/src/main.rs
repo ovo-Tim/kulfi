@@ -47,7 +47,11 @@ argument to specify a What To Do service that can be used to add access control.
     )]
     ExposeHttp {
         port: u16,
-        #[arg(long, default_value = "127.0.0.1", help = "Host serving the http service.")]
+        #[arg(
+            long,
+            default_value = "127.0.0.1",
+            help = "Host serving the http service."
+        )]
         host: String,
         // #[arg(
         //     long,
