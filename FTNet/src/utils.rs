@@ -58,11 +58,9 @@ pub enum Key {
 
 pub async fn get_endpoint(key: Key) -> eyre::Result<iroh::Endpoint> {
     let secret_key = match key {
-        Key::ID(id) => {
-            get_secret(id.as_str())
-                .wrap_err_with(|| format!("failed to get secret key from keychain for {id}"))?
-        }
-        Key::SecretKey(key) => key
+        Key::ID(id) => get_secret(id.as_str())
+            .wrap_err_with(|| format!("failed to get secret key from keychain for {id}"))?,
+        Key::SecretKey(key) => key,
     };
 
     match iroh::Endpoint::builder()
@@ -83,7 +81,7 @@ pub async fn get_endpoint(key: Key) -> eyre::Result<iroh::Endpoint> {
 }
 
 pub type FrameReader =
-tokio_util::codec::FramedRead<iroh::endpoint::RecvStream, tokio_util::codec::LinesCodec>;
+    tokio_util::codec::FramedRead<iroh::endpoint::RecvStream, tokio_util::codec::LinesCodec>;
 
 pub fn frame_reader(recv: iroh::endpoint::RecvStream) -> FrameReader {
     tokio_util::codec::FramedRead::new(recv, tokio_util::codec::LinesCodec::new())

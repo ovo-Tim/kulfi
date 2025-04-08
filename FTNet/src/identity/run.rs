@@ -15,8 +15,9 @@ impl ftnet::Identity {
             &self.id52,
             data_dir,
         )
-            .await
-            .wrap_err_with(|| "failed to start fastn").unwrap_or_else(|e| {
+        .await
+        .wrap_err_with(|| "failed to start fastn")
+        .unwrap_or_else(|e| {
             tracing::error!("failed to start fastn: {e:?}, using 8000 for now");
             8000
         });
@@ -37,7 +38,7 @@ impl ftnet::Identity {
             peer_connections,
             graceful_shutdown_rx,
         )
-            .await
+        .await
     }
 }
 
@@ -84,7 +85,11 @@ pub async fn spawn_fastn_serve_and_get_port(
 
     tracing::info!("Waiting for fastn server to start...");
 
-    while let Some(line) = reader.next_line().await.wrap_err_with(|| "failed to read next line")? {
+    while let Some(line) = reader
+        .next_line()
+        .await
+        .wrap_err_with(|| "failed to read next line")?
+    {
         tracing::info!("fastn output: {}", line);
         if let Some(port_str) = line.trim().strip_prefix(prefix) {
             let port: u16 = port_str

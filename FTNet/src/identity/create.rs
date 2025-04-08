@@ -50,7 +50,7 @@ impl ftnet::Identity {
             &package_template_folder,
             "ftnet-template".to_string(),
         )
-            .await?;
+        .await?;
 
         // copy package-template/template/ to package
         ftnet::utils::copy_dir(
