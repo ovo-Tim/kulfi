@@ -3830,7 +3830,11 @@ dependencies = [
  "clap",
  "clap-verbosity-flag",
  "eyre",
+ "ftnet",
+ "iroh",
+ "serde_json",
  "tokio",
+ "tokio-stream",
  "tracing",
  "tracing-subscriber",
 ]

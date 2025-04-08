@@ -8,16 +8,19 @@ pub fn mkdir(parent: &std::path::Path, name: &str) -> eyre::Result<std::path::Pa
     Ok(path)
 }
 
+// TODO: convert it to use id52 (we will store id52 in keyring)
 fn keyring_entry(id: &str) -> eyre::Result<keyring::Entry> {
     keyring::Entry::new("FTNet", id)
         .wrap_err_with(|| format!("failed to create keyring Entry for {id}"))
 }
 
+// TODO: convert it to use id52 (we will store id52 in keyring)
 pub fn save_secret(secret_key: &iroh::SecretKey) -> eyre::Result<()> {
     let public = secret_key.public().to_string();
     Ok(keyring_entry(public.as_str())?.set_secret(&secret_key.to_bytes())?)
 }
 
+// TODO: convert it to use id52 (we will store id52 in keyring)
 pub fn get_secret(id: &str) -> eyre::Result<iroh::SecretKey> {
     let entry = keyring_entry(id)?;
     let secret = entry
@@ -35,6 +38,37 @@ pub fn get_secret(id: &str) -> eyre::Result<iroh::SecretKey> {
     Ok(iroh::SecretKey::from_bytes(&bytes))
 }
 
+pub fn create_public_key(store: bool) -> eyre::Result<iroh::PublicKey> {
+    let mut rng = rand::rngs::OsRng;
+    let secret_key = iroh::SecretKey::generate(&mut rng);
+    // we do not want to keep secret key in memory, only in keychain
+    if store {
+        save_secret(&secret_key).wrap_err_with(|| "failed to store secret key to keychain")?;
+    }
+    Ok(secret_key.public())
+}
+
+pub async fn get_endpoint(id: &str) -> eyre::Result<iroh::Endpoint> {
+    let secret_key = ftnet::utils::get_secret(id)
+        .wrap_err_with(|| format!("failed to get secret key from keychain for {id}"))?;
+
+    match iroh::Endpoint::builder()
+        .discovery_n0()
+        .discovery_local_network()
+        .alpns(vec![ftnet::APNS_IDENTITY.into()])
+        .secret_key(secret_key)
+        .bind()
+        .await
+    {
+        Ok(ep) => Ok(ep),
+        Err(e) => {
+            // https://github.com/n0-computer/iroh/issues/2741
+            // this is why you MUST NOT use anyhow::Error etc. in library code.
+            Err(eyre::anyhow!("failed to bind to iroh network2: {e:?}"))
+        }
+    }
+}
+
 pub type FrameReader =
     tokio_util::codec::FramedRead<iroh::endpoint::RecvStream, tokio_util::codec::LinesCodec>;
 
@@ -43,8 +77,6 @@ pub fn frame_reader(recv: iroh::endpoint::RecvStream) -> FrameReader {
 }
 
 pub fn id52_to_public_key(id: &str) -> eyre::Result<iroh::PublicKey> {
-    use eyre::WrapErr;
-
     let bytes = data_encoding::BASE32_DNSSEC.decode(id.as_bytes())?;
     if bytes.len() != 32 {
         return Err(eyre::anyhow!(

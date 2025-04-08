@@ -43,26 +43,3 @@ pub type IDMap = std::sync::Arc<tokio::sync::Mutex<Vec<(String, (u16, iroh::endp
 pub type PeerConnections = std::sync::Arc<
     tokio::sync::Mutex<std::collections::HashMap<String, iroh::endpoint::Connection>>,
 >;
-
-pub async fn get_endpoint(id: &str) -> eyre::Result<iroh::Endpoint> {
-    use eyre::WrapErr;
-
-    let secret_key = ftnet::utils::get_secret(id)
-        .wrap_err_with(|| format!("failed to get secret key from keychain for {id}"))?;
-
-    match iroh::Endpoint::builder()
-        .discovery_n0()
-        .discovery_local_network()
-        .alpns(vec![ftnet::APNS_IDENTITY.into()])
-        .secret_key(secret_key)
-        .bind()
-        .await
-    {
-        Ok(ep) => Ok(ep),
-        Err(e) => {
-            // https://github.com/n0-computer/iroh/issues/2741
-            // this is why you MUST NOT use anyhow::Error etc. in library code.
-            Err(eyre::anyhow!("failed to bind to iroh network2: {e:?}"))
-        }
-    }
-}

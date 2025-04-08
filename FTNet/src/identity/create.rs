@@ -31,14 +31,7 @@ impl ftnet::Identity {
     ) -> eyre::Result<Self> {
         use eyre::WrapErr;
 
-        let public_key = {
-            let mut rng = rand::rngs::OsRng;
-            let secret_key = iroh::SecretKey::generate(&mut rng);
-            // we do not want to keep secret key in memory, only in keychain
-            ftnet::utils::save_secret(&secret_key)
-                .wrap_err_with(|| "failed to store secret key to keychain")?;
-            secret_key.public()
-        };
+        let public_key = ftnet::utils::create_public_key(true)?;
 
         let now = std::time::SystemTime::now();
         let unixtime = now

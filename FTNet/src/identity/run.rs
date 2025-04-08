@@ -19,7 +19,7 @@ impl ftnet::Identity {
         .wrap_err_with(|| "failed to start fastn")?;
         tracing::info!("fastn started on port {port}");
 
-        let ep = ftnet::identity::get_endpoint(self.public_key.to_string().as_str())
+        let ep = ftnet::utils::get_endpoint(self.public_key.to_string().as_str())
             .await
             .wrap_err_with(|| "failed to bind to iroh network")?;
 
