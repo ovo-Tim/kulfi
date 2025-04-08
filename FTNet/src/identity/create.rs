@@ -31,7 +31,7 @@ impl ftnet::Identity {
     ) -> eyre::Result<Self> {
         use eyre::WrapErr;
 
-        let public_key = ftnet::utils::create_public_key(true)?;
+        let public_key = ftnet::utils::create_public_key()?;
 
         let now = std::time::SystemTime::now();
         let unixtime = now
@@ -50,7 +50,7 @@ impl ftnet::Identity {
             &package_template_folder,
             "ftnet-template".to_string(),
         )
-        .await?;
+            .await?;
 
         // copy package-template/template/ to package
         ftnet::utils::copy_dir(

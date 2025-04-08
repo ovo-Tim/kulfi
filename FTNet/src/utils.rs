@@ -38,19 +38,32 @@ pub fn get_secret(id: &str) -> eyre::Result<iroh::SecretKey> {
     Ok(iroh::SecretKey::from_bytes(&bytes))
 }
 
-pub fn create_public_key(store: bool) -> eyre::Result<iroh::PublicKey> {
+pub fn create_public_key() -> eyre::Result<iroh::PublicKey> {
     let mut rng = rand::rngs::OsRng;
     let secret_key = iroh::SecretKey::generate(&mut rng);
     // we do not want to keep secret key in memory, only in keychain
-    if store {
-        save_secret(&secret_key).wrap_err_with(|| "failed to store secret key to keychain")?;
-    }
+    save_secret(&secret_key).wrap_err_with(|| "failed to store secret key to keychain")?;
     Ok(secret_key.public())
 }
 
-pub async fn get_endpoint(id: &str) -> eyre::Result<iroh::Endpoint> {
-    let secret_key = ftnet::utils::get_secret(id)
-        .wrap_err_with(|| format!("failed to get secret key from keychain for {id}"))?;
+pub fn create_secret_key() -> iroh::SecretKey {
+    let mut rng = rand::rngs::OsRng;
+    iroh::SecretKey::generate(&mut rng)
+}
+
+pub enum Key {
+    ID(String),
+    SecretKey(iroh::SecretKey),
+}
+
+pub async fn get_endpoint(key: Key) -> eyre::Result<iroh::Endpoint> {
+    let secret_key = match key {
+        Key::ID(id) => {
+            get_secret(id.as_str())
+                .wrap_err_with(|| format!("failed to get secret key from keychain for {id}"))?
+        }
+        Key::SecretKey(key) => key
+    };
 
     match iroh::Endpoint::builder()
         .discovery_n0()
@@ -70,7 +83,7 @@ pub async fn get_endpoint(id: &str) -> eyre::Result<iroh::Endpoint> {
 }
 
 pub type FrameReader =
-    tokio_util::codec::FramedRead<iroh::endpoint::RecvStream, tokio_util::codec::LinesCodec>;
+tokio_util::codec::FramedRead<iroh::endpoint::RecvStream, tokio_util::codec::LinesCodec>;
 
 pub fn frame_reader(recv: iroh::endpoint::RecvStream) -> FrameReader {
     tokio_util::codec::FramedRead::new(recv, tokio_util::codec::LinesCodec::new())

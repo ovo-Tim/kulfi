@@ -15,11 +15,14 @@ impl ftnet::Identity {
             &self.id52,
             data_dir,
         )
-        .await
-        .wrap_err_with(|| "failed to start fastn")?;
+            .await
+            .wrap_err_with(|| "failed to start fastn").unwrap_or_else(|e| {
+            tracing::error!("failed to start fastn: {e:?}, using 8000 for now");
+            8000
+        });
         tracing::info!("fastn started on port {port}");
 
-        let ep = ftnet::utils::get_endpoint(self.public_key.to_string().as_str())
+        let ep = ftnet::utils::get_endpoint(ftnet::utils::Key::ID(self.public_key.to_string()))
             .await
             .wrap_err_with(|| "failed to bind to iroh network")?;
 
@@ -34,7 +37,7 @@ impl ftnet::Identity {
             peer_connections,
             graceful_shutdown_rx,
         )
-        .await
+            .await
     }
 }
 
@@ -66,7 +69,7 @@ pub async fn spawn_fastn_serve_and_get_port(
 
     let mut cmd = tokio::process::Command::new("fastn");
     cmd.current_dir(dir);
-    cmd.args(["serve"]);
+    cmd.args(["serve", "--offline"]);
     cmd.stdout(Stdio::piped());
     cmd.stderr(Stdio::null());
 
@@ -81,8 +84,8 @@ pub async fn spawn_fastn_serve_and_get_port(
 
     tracing::info!("Waiting for fastn server to start...");
 
-    while let Some(line) = reader.next_line().await? {
-        tracing::debug!("fastn output: {}", line);
+    while let Some(line) = reader.next_line().await.wrap_err_with(|| "failed to read next line")? {
+        tracing::info!("fastn output: {}", line);
         if let Some(port_str) = line.trim().strip_prefix(prefix) {
             let port: u16 = port_str
                 .trim()
