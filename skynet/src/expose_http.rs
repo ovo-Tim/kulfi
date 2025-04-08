@@ -1,4 +1,4 @@
-pub async fn expose_http(port: u16) -> eyre::Result<()> {
+pub async fn expose_http(host: String, port: u16) -> eyre::Result<()> {
     use eyre::WrapErr;
 
     let id52 = read_or_create_key().await?;
@@ -7,7 +7,7 @@ pub async fn expose_http(port: u16) -> eyre::Result<()> {
         .await
         .wrap_err_with(|| "failed to bind to iroh network")?;
 
-    println!("Connect to {port} by visiting http://{id52}.localhost.direct",);
+    println!("Connect to {port} by visiting http://{id52}.localhost.direct", );
 
     let client_pools = ftnet_utils::ConnectionPools::default();
 
@@ -20,6 +20,7 @@ pub async fn expose_http(port: u16) -> eyre::Result<()> {
             }
         };
         let client_pools = client_pools.clone();
+        let host = host.clone();
 
         tokio::spawn(async move {
             let start = std::time::Instant::now();
@@ -30,7 +31,7 @@ pub async fn expose_http(port: u16) -> eyre::Result<()> {
                     return;
                 }
             };
-            if let Err(e) = handle_connection(conn, client_pools, port).await {
+            if let Err(e) = handle_connection(conn, client_pools, host, port).await {
                 tracing::error!("connection error3: {:?}", e);
             }
             tracing::info!("connection handled in {:?}", start.elapsed());
@@ -60,6 +61,7 @@ async fn read_or_create_key() -> eyre::Result<String> {
 async fn handle_connection(
     conn: iroh::endpoint::Connection,
     client_pools: ftnet_utils::ConnectionPools,
+    host: String,
     port: u16,
 ) -> eyre::Result<()> {
     use tokio_stream::StreamExt;
@@ -98,12 +100,12 @@ async fn handle_connection(
         match msg {
             ftnet_utils::Protocol::Identity => {
                 if let Err(e) = ftnet_utils::http_peer_proxy::http(
-                    &format!("127.0.0.1:{port}"),
+                    &format!("{host}:{port}"),
                     client_pools,
                     &mut send,
                     recv,
                 )
-                .await
+                    .await
                 {
                     tracing::error!("failed to proxy http: {e:?}");
                 }

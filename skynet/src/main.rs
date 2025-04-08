@@ -10,11 +10,12 @@ async fn main() -> eyre::Result<()> {
     if let Err(e) = match cli.command {
         Command::ExposeHttp {
             port,
+            host,
             // secure,
             // what_to_do,
         } => {
-            tracing::info!(port, verbose = ?cli.verbose, "Exposing HTTP service on FTNet.");
-            skynet::expose_http(port).await
+            tracing::info!(port, host, verbose = ?cli.verbose, "Exposing HTTP service on FTNet.");
+            skynet::expose_http(host, port).await
         }
     } {
         tracing::error!("Error: {e}");
@@ -46,6 +47,8 @@ argument to specify a What To Do service that can be used to add access control.
     )]
     ExposeHttp {
         port: u16,
+        #[arg(long, default_value = "127.0.0.1", help = "Host serving the http service.")]
+        host: String,
         // #[arg(
         //     long,
         //     default_value_t = false,
@@ -56,6 +59,7 @@ argument to specify a What To Do service that can be used to add access control.
         //     long,
         //     help = "The What To Do Service that can be used to add access control."
         // )]
+        // this will be the id52 of the identity server that should be consulted
         // what_to_do: Option<String>,
     },
 }

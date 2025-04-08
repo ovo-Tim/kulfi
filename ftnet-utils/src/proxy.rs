@@ -15,7 +15,7 @@ pub async fn peer_to_peer(
     tracing::info!("peer_proxy: {remote_node_id52}");
 
     let (mut send, recv) =
-        get_stream(self_id52, remote_node_id52, peer_connections, id_map).await?;
+        get_stream(self_id52, remote_node_id52, peer_connections.clone(), id_map).await?;
 
     tracing::info!("got stream");
     send.write_all(&serde_json::to_vec(&Protocol::Identity)?)
@@ -39,7 +39,12 @@ pub async fn peer_to_peer(
 
     let mut recv = crate::utils::frame_reader(recv);
     let r: crate::http::Response = match recv.next().await {
-        Some(v) => serde_json::from_str(&v?)?,
+        Some(Ok(v)) => serde_json::from_str(&v)?,
+        Some(Err(e)) => {
+            forget_connection(remote_node_id52, peer_connections.clone()).await?;
+            tracing::error!("failed to get bidirectional stream: {e:?}");
+            return Err(eyre::anyhow!("failed to get bidirectional stream: {e:?}"));
+        }
         None => {
             tracing::error!("failed to read from incoming connection");
             return Err(eyre::anyhow!("failed to read from incoming connection"));
@@ -53,7 +58,14 @@ pub async fn peer_to_peer(
 
     let mut buf = Vec::with_capacity(1024 * 64);
 
-    while let Some(v) = recv.read(&mut buf).await? {
+    while let Some(v) = match recv.read(&mut buf).await {
+        Ok(v) => Ok(v),
+        Err(e) => {
+            forget_connection(remote_node_id52, peer_connections.clone()).await?;
+            tracing::error!("failed to get bidirectional stream: {e:?}");
+            Err(eyre::anyhow!("failed to get bidirectional stream: {e:?}"))
+        }
+    }? {
         if v == 0 {
             tracing::info!("finished reading body");
             break;
@@ -87,10 +99,28 @@ async fn get_stream(
     peer_connections: PeerConnections,
     id_map: IDMap,
 ) -> eyre::Result<(iroh::endpoint::SendStream, iroh::endpoint::RecvStream)> {
-    let conn = get_connection(self_id52, remote_node_id52, id_map, peer_connections).await?;
+    tracing::trace!("getting stream");
+    let conn = get_connection(self_id52, remote_node_id52, id_map, peer_connections.clone()).await?;
     // TODO: this is where we can check if the connection is healthy or not. if we fail to get the
     //       bidirectional stream, probably we should try to recreate connection.
-    Ok(conn.open_bi().await?)
+    tracing::trace!("getting stream - got connection");
+    match conn.open_bi().await {
+        Ok(v) => Ok(v),
+        Err(e) => {
+            tracing::trace!("get-stream forgetting connection: {e}");
+            forget_connection(remote_node_id52, peer_connections).await?;
+            tracing::error!("failed to get bidirectional stream: {e:?}");
+            Err(eyre::anyhow!("failed to get bidirectional stream: {e:?}"))
+        }
+    }
+}
+
+async fn forget_connection(remote_node_id52: &str, peer_connections: PeerConnections) -> eyre::Result<()> {
+    tracing::trace!("forgetting connection");
+    let mut connections = peer_connections.lock().await;
+    connections.remove(remote_node_id52);
+    tracing::trace!("forgot connection");
+    Ok(())
 }
 
 async fn get_connection(
@@ -99,7 +129,9 @@ async fn get_connection(
     id_map: IDMap,
     peer_connections: PeerConnections,
 ) -> eyre::Result<iroh::endpoint::Connection> {
+    tracing::trace!("getting connections lock");
     let connections = peer_connections.lock().await;
+    tracing::trace!("got connections lock");
     let connection = connections.get(remote_node_id52).map(ToOwned::to_owned);
 
     // we drop the connections mutex guard so that we do not hold lock across await point.
@@ -109,7 +141,10 @@ async fn get_connection(
         return Ok(conn);
     }
 
+    tracing::trace!("getting ep");
     let ep = get_endpoint(self_id52, id_map).await?;
+    tracing::trace!("got ep");
+
     let conn = match ep
         .connect(
             utils::id52_to_public_key(remote_node_id52)?,
@@ -124,8 +159,10 @@ async fn get_connection(
         }
     };
 
+    tracing::trace!("storing connection");
     let mut connections = peer_connections.lock().await;
     connections.insert(remote_node_id52.to_string(), conn.clone());
+    tracing::trace!("stored connection");
 
     Ok(conn)
 }
