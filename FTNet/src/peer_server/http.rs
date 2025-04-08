@@ -87,7 +87,7 @@ pub async fn http(
             .wrap_err_with(|| "failed to serialize json while writing http response")?
             .as_bytes(),
     )
-    .await?;
+        .await?;
     send.write_all(b"\n").await?;
     send.write_all(&(body.collect().await?.to_bytes())).await?;
 
@@ -96,31 +96,23 @@ pub async fn http(
 
 async fn get_pool(
     addr: &str,
-    _client_pools: ftnet::http::client::ConnectionPools,
+    client_pools: ftnet::http::client::ConnectionPools,
 ) -> eyre::Result<bb8::Pool<ftnet::http::client::ConnectionManager>> {
-    // tracing::info!("get client");
-    // let mut pools = client_pools.lock().await;
-    // tracing::info!("get client1");
-    //
-    // let pool = match pools.get(addr) {
-    //     Some(v) => v.clone(),
-    //     None => {
-    //         let pool = bb8::Pool::builder()
-    //             .build(ftnet::http::client::ConnectionManager::new(
-    //                 addr.to_string(),
-    //             ))
-    //             .await?;
-    //
-    //         pools.insert(addr.to_string(), pool.clone());
-    //         pool
-    //     }
-    // };
-    //
-    // tracing::info!("get client got pool");
+    tracing::info!("get client");
+    let mut pools = client_pools.lock().await;
+    tracing::info!("get client1");
 
-    bb8::Pool::builder()
-        .build(ftnet::http::client::ConnectionManager::new(
-            addr.to_string(),
-        ))
-        .await
+    Ok(match pools.get(addr) {
+        Some(v) => v.clone(),
+        None => {
+            let pool = bb8::Pool::builder()
+                .build(ftnet::http::client::ConnectionManager::new(
+                    addr.to_string(),
+                ))
+                .await?;
+
+            pools.insert(addr.to_string(), pool.clone());
+            pool
+        }
+    })
 }
