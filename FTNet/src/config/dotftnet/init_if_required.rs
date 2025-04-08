@@ -2,7 +2,7 @@
 #[tracing::instrument(skip(client_pools))]
 pub async fn init_if_required(
     dir: &std::path::Path,
-    client_pools: ftnet::http::client::ConnectionPools,
+    client_pools: ftnet_utils::ConnectionPools,
 ) -> eyre::Result<std::path::PathBuf> {
     use eyre::WrapErr;
 

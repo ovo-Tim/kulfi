@@ -8,7 +8,6 @@ description = "FTNet: FifthTry Network"
 
 
 [dependencies]
-bb8.workspace = true
 clap.workspace = true
 directories.workspace = true
 eyre.workspace = true
@@ -17,12 +16,9 @@ file-guard.workspace = true
 ftnet-common.workspace = true
 ftnet-utils.workspace = true
 http-body-util.workspace = true
-http.workspace = true
 hyper-util.workspace = true
 hyper.workspace = true
 iroh.workspace = true
-keyring.workspace = true
-rand.workspace = true
 reqwest.workspace = true
 serde.workspace = true
 serde_json.workspace = true

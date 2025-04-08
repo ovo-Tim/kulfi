@@ -40,7 +40,6 @@ directories = "6.0.0"
 eyre = "0.6"
 file-guard = "0.2.0"
 ft-sdk = { version = "0.6.3", features = ["sqlite-default", "auth-provider", "field-extractors"] }
-ftnet = { path = "FTNet" }
 ftnet-common = { path = "common" }
 ftnet-utils = { path = "ftnet-utils" }
 http = "1"

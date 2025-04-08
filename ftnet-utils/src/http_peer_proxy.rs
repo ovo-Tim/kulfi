@@ -1,6 +1,6 @@
 pub async fn http(
     addr: &str,
-    client_pools: ftnet::http::client::ConnectionPools,
+    client_pools: ftnet_utils::ConnectionPools,
     send: &mut iroh::endpoint::SendStream,
     mut recv: ftnet_utils::utils::FrameReader,
 ) -> eyre::Result<()> {
@@ -96,8 +96,8 @@ pub async fn http(
 
 async fn get_pool(
     addr: &str,
-    client_pools: ftnet::http::client::ConnectionPools,
-) -> eyre::Result<bb8::Pool<ftnet::http::client::ConnectionManager>> {
+    client_pools: ftnet_utils::ConnectionPools,
+) -> eyre::Result<bb8::Pool<ftnet_utils::ConnectionManager>> {
     tracing::info!("get client");
     let mut pools = client_pools.lock().await;
     tracing::info!("get client1");
@@ -106,9 +106,7 @@ async fn get_pool(
         Some(v) => v.clone(),
         None => {
             let pool = bb8::Pool::builder()
-                .build(ftnet::http::client::ConnectionManager::new(
-                    addr.to_string(),
-                ))
+                .build(ftnet_utils::ConnectionManager::new(addr.to_string()))
                 .await?;
 
             pools.insert(addr.to_string(), pool.clone());

@@ -9,7 +9,7 @@
 pub async fn start(_fg: bool, data_dir: std::path::PathBuf, control_port: u16) -> eyre::Result<()> {
     use eyre::WrapErr;
 
-    let client_pools = ftnet::http::client::ConnectionPools::default();
+    let client_pools = ftnet_utils::ConnectionPools::default();
     let peer_connections = ftnet_utils::PeerConnections::default();
 
     let config = ftnet::Config::read(&data_dir, client_pools.clone())

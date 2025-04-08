@@ -23,9 +23,11 @@ impl ftnet::Identity {
         });
         tracing::info!("fastn started on port {port}");
 
-        let ep = ftnet::utils::get_endpoint(ftnet::utils::Key::ID(self.public_key.to_string()))
-            .await
-            .wrap_err_with(|| "failed to bind to iroh network")?;
+        let ep = ftnet_utils::get_endpoint(ftnet_utils::get_endpoint::Key::ID(
+            self.public_key.to_string(),
+        ))
+        .await
+        .wrap_err_with(|| "failed to bind to iroh network")?;
 
         {
             id_map.lock().await.push((self.id52, (port, ep.clone())));

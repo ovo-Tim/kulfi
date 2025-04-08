@@ -2,7 +2,7 @@ pub async fn handle_connection(
     stream: tokio::net::TcpStream,
     mut graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
     id_map: ftnet_utils::IDMap,
-    client_pools: ftnet::http::client::ConnectionPools,
+    client_pools: ftnet_utils::ConnectionPools,
     peer_connections: ftnet_utils::PeerConnections,
 ) {
     ftnet::OPEN_CONTROL_CONNECTION_COUNT.incr();
@@ -51,7 +51,7 @@ pub async fn handle_connection(
 async fn handle_request(
     r: hyper::Request<hyper::body::Incoming>,
     id_map: ftnet_utils::IDMap,
-    client_pools: ftnet::http::client::ConnectionPools,
+    client_pools: ftnet_utils::ConnectionPools,
     peer_connections: ftnet_utils::PeerConnections,
 ) -> ftnet_utils::http::ProxyResult {
     ftnet::CONTROL_REQUEST_COUNT.incr();
@@ -64,7 +64,7 @@ async fn handle_request(
 async fn handle_request_(
     r: hyper::Request<hyper::body::Incoming>,
     id_map: ftnet_utils::IDMap,
-    client_pools: ftnet::http::client::ConnectionPools,
+    client_pools: ftnet_utils::ConnectionPools,
     peer_connections: ftnet_utils::PeerConnections,
 ) -> ftnet_utils::http::ProxyResult {
     let id = match r
@@ -138,9 +138,9 @@ async fn handle_request_(
 }
 
 pub async fn find_pool(
-    client_pools: ftnet::http::client::ConnectionPools,
+    client_pools: ftnet_utils::ConnectionPools,
     addr: &str,
-) -> eyre::Result<ftnet::http::client::ConnectionPool> {
+) -> eyre::Result<ftnet_utils::ConnectionPool> {
     {
         let pools = client_pools.lock().await;
         if let Some(v) = pools.get(addr) {
@@ -148,10 +148,8 @@ pub async fn find_pool(
         }
     }
 
-    let c = ftnet::http::client::ConnectionPool::builder()
-        .build(ftnet::http::client::ConnectionManager::new(
-            addr.to_string(),
-        ))
+    let c = ftnet_utils::ConnectionPool::builder()
+        .build(ftnet_utils::ConnectionManager::new(addr.to_string()))
         .await?;
 
     {

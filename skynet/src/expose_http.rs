@@ -3,13 +3,13 @@ pub async fn expose_http(port: u16) -> eyre::Result<()> {
 
     let id52 = read_or_create_key().await?;
 
-    let ep = ftnet::utils::get_endpoint(ftnet::utils::Key::ID52(id52.clone()))
+    let ep = ftnet_utils::get_endpoint(ftnet_utils::get_endpoint::Key::ID52(id52.clone()))
         .await
         .wrap_err_with(|| "failed to bind to iroh network")?;
 
     println!("Connect to {port} by visiting http://{id52}.localhost.direct",);
 
-    let client_pools = ftnet::http::client::ConnectionPools::default();
+    let client_pools = ftnet_utils::ConnectionPools::default();
 
     loop {
         let conn = match ep.accept().await {
@@ -46,7 +46,7 @@ async fn read_or_create_key() -> eyre::Result<String> {
         Ok(v) => Ok(v),
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
             tracing::info!("no key found, creating new one");
-            let v = ftnet_utils::utils::public_key_to_id52(&ftnet::utils::create_public_key()?);
+            let v = ftnet_utils::utils::public_key_to_id52(&ftnet_utils::create_public_key()?);
             tokio::fs::write(".skynet.id52", v.as_str()).await?;
             Ok(v)
         }
@@ -59,7 +59,7 @@ async fn read_or_create_key() -> eyre::Result<String> {
 
 async fn handle_connection(
     conn: iroh::endpoint::Connection,
-    client_pools: ftnet::http::client::ConnectionPools,
+    client_pools: ftnet_utils::ConnectionPools,
     port: u16,
 ) -> eyre::Result<()> {
     use tokio_stream::StreamExt;
@@ -97,7 +97,7 @@ async fn handle_connection(
         tracing::info!("{remote_id52}: {msg:?}");
         match msg {
             ftnet_utils::Protocol::Identity => {
-                if let Err(e) = ftnet::peer_server::http(
+                if let Err(e) = ftnet_utils::http_peer_proxy::http(
                     &format!("127.0.0.1:{port}"),
                     client_pools,
                     &mut send,

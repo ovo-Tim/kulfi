@@ -27,11 +27,11 @@ impl ftnet::Identity {
     #[tracing::instrument(skip(client_pools))]
     pub async fn create(
         identities_folder: &std::path::Path,
-        client_pools: ftnet::http::client::ConnectionPools,
+        client_pools: ftnet_utils::ConnectionPools,
     ) -> eyre::Result<Self> {
         use eyre::WrapErr;
 
-        let public_key = ftnet::utils::create_public_key()?;
+        let public_key = ftnet_utils::create_public_key()?;
 
         let now = std::time::SystemTime::now();
         let unixtime = now

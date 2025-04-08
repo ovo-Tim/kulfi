@@ -1,7 +1,7 @@
 pub async fn run(
     ep: iroh::Endpoint,
     fastn_port: u16,
-    client_pools: ftnet::http::client::ConnectionPools,
+    client_pools: ftnet_utils::ConnectionPools,
     peer_connections: ftnet_utils::PeerConnections,
     _graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
 ) -> eyre::Result<()> {
@@ -59,7 +59,7 @@ async fn enqueue_connection(
 
 pub async fn handle_connection(
     conn: iroh::endpoint::Connection,
-    client_pools: ftnet::http::client::ConnectionPools,
+    client_pools: ftnet_utils::ConnectionPools,
     fastn_port: u16,
 ) -> eyre::Result<()> {
     use ftnet_utils::Protocol;
@@ -133,7 +133,7 @@ pub async fn handle_connection(
                 }
             }
             Protocol::Identity => {
-                if let Err(e) = ftnet::peer_server::http(
+                if let Err(e) = ftnet_utils::http_peer_proxy::http(
                     &format!("127.0.0.1:{fastn_port}"),
                     client_pools,
                     &mut send,

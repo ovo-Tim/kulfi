@@ -14,7 +14,6 @@ rust-version.workspace = true
 clap-verbosity-flag.workspace = true
 clap.workspace = true
 eyre.workspace = true
-ftnet.workspace = true
 ftnet-utils.workspace = true
 iroh.workspace = true
 tokio-stream.workspace = true
