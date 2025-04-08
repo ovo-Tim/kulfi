@@ -8,10 +8,10 @@ impl ftnet::Config {
     }
 
     pub async fn read(
-        dir: &std::path::Path,
+        data_dir: &std::path::Path,
         client_pools: ftnet::http::client::ConnectionPools,
     ) -> eyre::Result<Self> {
-        let dir = ftnet::config::dotftnet::init_if_required(dir, client_pools)
+        let dir = ftnet::config::dotftnet::init_if_required(data_dir, client_pools)
             .await
             .wrap_err_with(|| "Config: failed to get init directory")?;
         let lock_file = ftnet::config::dotftnet::lock_file(&dir)

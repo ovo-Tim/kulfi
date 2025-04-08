@@ -16,10 +16,12 @@ pub async fn start(_fg: bool, data_dir: std::path::PathBuf, control_port: u16) -
         .await
         .wrap_err_with(|| "failed to run config")?;
 
-    let _lock = config
-        .lock()
-        .await
-        .wrap_err_with(|| "looks like there is another instance of FTNet running")?;
+    let _lock = config.lock().await.wrap_err_with(|| {
+        format!(
+            "looks like there is another instance of FTNet running at {}",
+            data_dir.display()
+        )
+    })?;
 
     let identities = config.identities(client_pools.clone()).await?;
     tracing::info!(
@@ -107,3 +109,5 @@ pub async fn start(_fg: bool, data_dir: std::path::PathBuf, control_port: u16) -
 
     Ok(())
 }
+
+fn init_identities() {}
