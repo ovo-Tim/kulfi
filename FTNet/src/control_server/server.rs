@@ -91,7 +91,7 @@ async fn handle_request_(
             &addr,
             Default::default(),
         )
-        .await;
+            .await;
     }
 
     // TODO: maybe we should try all the identities not just default
@@ -107,14 +107,14 @@ async fn handle_request_(
                 patch,
                 id_map,
             )
-            .await
+                .await
         }
         // if not identity, find if the id is an http device owned by identity, if so proxy-pass the
         // request to that device
         Ok(WhatToDo::ProxyPass {
-            port,
-            extra_headers,
-        }) => {
+               port,
+               extra_headers,
+           }) => {
             let addr = format!("127.0.0.1:{port}");
             ftnet::control_server::proxy_pass(
                 r,
@@ -122,7 +122,7 @@ async fn handle_request_(
                 &addr,
                 extra_headers,
             )
-            .await
+                .await
         }
         Ok(WhatToDo::UnknownPeer) => {
             tracing::error!("unknown peer: {id}");
@@ -166,11 +166,11 @@ pub async fn find_pool(
 pub enum WhatToDo {
     ForwardToPeer {
         peer_id: String,
-        patch: ftnet_common::RequestPatch,
+        patch: ftnet_sdk::RequestPatch,
     },
     ProxyPass {
         port: u16,
-        extra_headers: ftnet_common::RequestPatch,
+        extra_headers: ftnet_sdk::RequestPatch,
     },
     UnknownPeer,
 }

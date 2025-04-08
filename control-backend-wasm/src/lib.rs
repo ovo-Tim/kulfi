@@ -17,7 +17,7 @@ fn v1_what_to_do(
 ) -> ft_sdk::data::Result {
     // TODO: find device id from db and decide if we can do local ProxyPass or ForwardToPeer
 
-    let res = ftnet_common::WhatToDo::UnknownPeer;
+    let res = ftnet_sdk::WhatToDo::UnknownPeer;
 
     ft_sdk::data::json(res)
 }

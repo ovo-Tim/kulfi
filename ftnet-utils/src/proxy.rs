@@ -6,7 +6,7 @@ pub async fn peer_to_peer(
     self_id52: &str,
     remote_node_id52: &str,
     peer_connections: PeerConnections,
-    _patch: ftnet_common::RequestPatch,
+    _patch: ftnet_sdk::RequestPatch,
     id_map: IDMap,
 ) -> crate::http::ProxyResult {
     use http_body_util::BodyExt;

@@ -13,6 +13,6 @@ crate-type = ["cdylib"]
 [dependencies]
 # diesel.workspace = true
 # serde.workspace = true
-ftnet-common.workspace = true
+ftnet-sdk.workspace = true
 ft-sdk.workspace = true
 serde_json.workspace = true

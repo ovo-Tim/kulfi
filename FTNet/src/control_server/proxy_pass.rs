@@ -2,7 +2,7 @@ pub async fn proxy_pass(
     mut req: hyper::Request<hyper::body::Incoming>,
     pool: ftnet_utils::ConnectionPool,
     addr: &str,
-    _patch: ftnet_common::RequestPatch,
+    _patch: ftnet_sdk::RequestPatch,
 ) -> ftnet_utils::ProxyResult {
     use eyre::WrapErr;
     use http_body_util::BodyExt;

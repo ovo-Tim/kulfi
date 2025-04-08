@@ -8,7 +8,7 @@ description = "ftnet utilities p2p"
 [dependencies]
 data-encoding.workspace = true
 eyre.workspace = true
-ftnet-common.workspace = true
+ftnet-sdk.workspace = true
 http-body-util.workspace = true
 hyper.workspace = true
 iroh.workspace = true
