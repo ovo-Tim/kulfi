@@ -1,16 +1,13 @@
 pub async fn expose_http(port: u16) -> eyre::Result<()> {
     use eyre::WrapErr;
 
-    let secret_key = ftnet::utils::create_secret_key();
+    let id52 = read_or_create_key().await?;
 
-    let ep = ftnet::utils::get_endpoint(ftnet::utils::Key::SecretKey(secret_key.clone()))
+    let ep = ftnet::utils::get_endpoint(ftnet::utils::Key::ID52(id52.clone()))
         .await
         .wrap_err_with(|| "failed to bind to iroh network")?;
 
-    println!(
-        "Connect to {port} by visiting http://{}.localhost.direct",
-        ftnet::utils::public_key_to_id52(&secret_key.public())
-    );
+    println!("Connect to {port} by visiting http://{id52}.localhost.direct",);
 
     let client_pools = ftnet::http::client::ConnectionPools::default();
 
@@ -44,7 +41,23 @@ pub async fn expose_http(port: u16) -> eyre::Result<()> {
     Ok(())
 }
 
-pub async fn handle_connection(
+async fn read_or_create_key() -> eyre::Result<String> {
+    match tokio::fs::read_to_string(".skynet.id52").await {
+        Ok(v) => Ok(v),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+            tracing::info!("no key found, creating new one");
+            let v = ftnet_utils::utils::public_key_to_id52(&ftnet::utils::create_public_key()?);
+            tokio::fs::write(".skynet.id52", v.as_str()).await?;
+            Ok(v)
+        }
+        Err(e) => {
+            tracing::error!("failed to read key: {e}");
+            Err(e.into())
+        }
+    }
+}
+
+async fn handle_connection(
     conn: iroh::endpoint::Connection,
     client_pools: ftnet::http::client::ConnectionPools,
     port: u16,
@@ -65,13 +78,13 @@ pub async fn handle_connection(
             return Err(eyre::anyhow!("could not read remote node id: {e}"));
         }
     };
-    let remote_id52 = ftnet::utils::public_key_to_id52(&remote_node_id);
+    let remote_id52 = ftnet_utils::utils::public_key_to_id52(&remote_node_id);
     tracing::info!("new client: {remote_id52}, waiting for bidirectional stream");
     loop {
         let client_pools = client_pools.clone();
         let (mut send, recv) = conn.accept_bi().await?;
         tracing::info!("got bidirectional stream");
-        let mut recv = ftnet::utils::frame_reader(recv);
+        let mut recv = ftnet_utils::utils::frame_reader(recv);
         let msg = match recv.next().await {
             Some(v) => v?,
             None => {
@@ -79,11 +92,11 @@ pub async fn handle_connection(
                 continue;
             }
         };
-        let msg = serde_json::from_str::<ftnet::Protocol>(&msg)
+        let msg = serde_json::from_str::<ftnet_utils::Protocol>(&msg)
             .inspect_err(|e| tracing::error!("json error for {msg}: {e}"))?;
         tracing::info!("{remote_id52}: {msg:?}");
         match msg {
-            ftnet::Protocol::Identity => {
+            ftnet_utils::Protocol::Identity => {
                 if let Err(e) = ftnet::peer_server::http(
                     &format!("127.0.0.1:{port}"),
                     client_pools,

@@ -87,7 +87,7 @@ pub async fn http(
             .wrap_err_with(|| "failed to serialize json while writing http response")?
             .as_bytes(),
     )
-        .await?;
+    .await?;
     send.write_all(b"\n").await?;
     send.write_all(&(body.collect().await?.to_bytes())).await?;
 

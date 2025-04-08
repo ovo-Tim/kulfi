@@ -3703,6 +3703,7 @@ dependencies = [
  "clap-verbosity-flag",
  "eyre",
  "ftnet",
+ "ftnet-utils",
  "iroh",
  "serde_json",
  "tokio",

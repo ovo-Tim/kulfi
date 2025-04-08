@@ -53,6 +53,7 @@ pub fn create_secret_key() -> iroh::SecretKey {
 
 pub enum Key {
     ID(String),
+    ID52(String),
     SecretKey(iroh::SecretKey),
 }
 
@@ -61,6 +62,10 @@ pub async fn get_endpoint(key: Key) -> eyre::Result<iroh::Endpoint> {
         Key::ID(id) => get_secret(id.as_str())
             .wrap_err_with(|| format!("failed to get secret key from keychain for {id}"))?,
         Key::SecretKey(key) => key,
+        Key::ID52(v) => {
+            let public_key = ftnet_utils::utils::id52_to_public_key(&v)?;
+            get_secret(public_key.to_string().as_str())?
+        }
     };
 
     match iroh::Endpoint::builder()

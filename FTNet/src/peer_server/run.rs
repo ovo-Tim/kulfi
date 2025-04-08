@@ -62,8 +62,8 @@ pub async fn handle_connection(
     client_pools: ftnet::http::client::ConnectionPools,
     fastn_port: u16,
 ) -> eyre::Result<()> {
-    use tokio_stream::StreamExt;
     use ftnet_utils::Protocol;
+    use tokio_stream::StreamExt;
 
     tracing::info!("got connection from: {:?}", conn.remote_node_id());
     let remote_node_id = match conn.remote_node_id() {

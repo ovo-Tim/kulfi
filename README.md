@@ -84,7 +84,7 @@ accessed by which other identities and devices.
 ## Licence
 
 FTNet is licensed under the [UPL](LICENSE) license. UPL is MIT like license,
-with Apache 2.0 patent grant clause.
+with Apache 2.0 like patent grant clause.
 
 ## Contributing
 
