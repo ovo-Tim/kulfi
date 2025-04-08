@@ -14,9 +14,9 @@ pub struct Identity {
 
 impl Identity {
     pub fn from_id52(id: &str, client_pools: ftnet_utils::ConnectionPools) -> eyre::Result<Self> {
-        let public_key = ftnet_utils::utils::id52_to_public_key(id)?;
+        let public_key = ftnet_utils::id52_to_public_key(id)?;
         Ok(Self {
-            id52: ftnet_utils::utils::public_key_to_id52(&public_key),
+            id52: ftnet_utils::public_key_to_id52(&public_key),
             public_key,
             client_pools,
         })

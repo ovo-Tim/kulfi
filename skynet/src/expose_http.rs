@@ -46,7 +46,7 @@ async fn read_or_create_key() -> eyre::Result<String> {
         Ok(v) => Ok(v),
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
             tracing::info!("no key found, creating new one");
-            let v = ftnet_utils::utils::public_key_to_id52(&ftnet_utils::create_public_key()?);
+            let v = ftnet_utils::public_key_to_id52(&ftnet_utils::create_public_key()?);
             tokio::fs::write(".skynet.id52", v.as_str()).await?;
             Ok(v)
         }
@@ -78,13 +78,13 @@ async fn handle_connection(
             return Err(eyre::anyhow!("could not read remote node id: {e}"));
         }
     };
-    let remote_id52 = ftnet_utils::utils::public_key_to_id52(&remote_node_id);
+    let remote_id52 = ftnet_utils::public_key_to_id52(&remote_node_id);
     tracing::info!("new client: {remote_id52}, waiting for bidirectional stream");
     loop {
         let client_pools = client_pools.clone();
         let (mut send, recv) = conn.accept_bi().await?;
         tracing::info!("got bidirectional stream");
-        let mut recv = ftnet_utils::utils::frame_reader(recv);
+        let mut recv = ftnet_utils::frame_reader(recv);
         let msg = match recv.next().await {
             Some(v) => v?,
             None => {

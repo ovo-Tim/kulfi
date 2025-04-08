@@ -8,13 +8,14 @@ pub mod http;
 mod http_connection;
 pub mod http_peer_proxy;
 pub mod protocol;
-pub mod utils;
+mod utils;
 
 pub use connection::{IDMap, PeerConnections};
 pub use get_endpoint::get_endpoint;
 pub use http::ProxyResult;
 pub use http_connection::{ConnectionManager, ConnectionPool, ConnectionPools};
 pub use protocol::{APNS_IDENTITY, Protocol};
+pub use utils::{FrameReader, frame_reader, id52_to_public_key, public_key_to_id52};
 
 use eyre::WrapErr;
 

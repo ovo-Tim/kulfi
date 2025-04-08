@@ -50,7 +50,7 @@ async fn enqueue_connection(
             return Err(eyre::anyhow!("can not get remote id: {e:?}"));
         }
     };
-    let id = ftnet_utils::utils::public_key_to_id52(&public_key);
+    let id = ftnet_utils::public_key_to_id52(&public_key);
     let mut connections = peer_connections.lock().await;
     connections.insert(id.clone(), conn);
 
@@ -79,13 +79,13 @@ pub async fn handle_connection(
             return Err(eyre::anyhow!("could not read remote node id: {e}"));
         }
     };
-    let remote_id52 = ftnet_utils::utils::public_key_to_id52(&remote_node_id);
+    let remote_id52 = ftnet_utils::public_key_to_id52(&remote_node_id);
     tracing::info!("new client: {remote_id52}, waiting for bidirectional stream");
     loop {
         let client_pools = client_pools.clone();
         let (mut send, recv) = conn.accept_bi().await?;
         tracing::info!("got bidirectional stream");
-        let mut recv = ftnet_utils::utils::frame_reader(recv);
+        let mut recv = ftnet_utils::frame_reader(recv);
         let msg = match recv.next().await {
             Some(v) => v?,
             None => {
