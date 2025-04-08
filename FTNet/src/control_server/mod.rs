@@ -59,20 +59,18 @@
 //! request before you send, such extra headers and other "manipulation hints" can also be returned
 //! by the fastn's api call.
 
-mod peer_proxy;
 mod proxy_pass;
 mod server;
 
-pub use peer_proxy::{Request, peer_proxy};
 pub use proxy_pass::proxy_pass;
 
 pub async fn start(
     control_port: u16,
     id: String,
     mut graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
-    id_map: ftnet::identity::IDMap,
+    id_map: ftnet_utils::IDMap,
     client_pools: ftnet::http::client::ConnectionPools,
-    peer_connections: ftnet::identity::PeerConnections,
+    peer_connections: ftnet_utils::PeerConnections,
 ) -> eyre::Result<()> {
     use eyre::WrapErr;
 

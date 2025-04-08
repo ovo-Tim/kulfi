@@ -2,7 +2,7 @@ pub async fn run(
     ep: iroh::Endpoint,
     fastn_port: u16,
     client_pools: ftnet::http::client::ConnectionPools,
-    peer_connections: ftnet::identity::PeerConnections,
+    peer_connections: ftnet_utils::PeerConnections,
     _graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
 ) -> eyre::Result<()> {
     loop {
@@ -41,7 +41,7 @@ pub async fn run(
 
 async fn enqueue_connection(
     conn: iroh::endpoint::Connection,
-    peer_connections: ftnet::identity::PeerConnections,
+    peer_connections: ftnet_utils::PeerConnections,
 ) -> eyre::Result<()> {
     let public_key = match conn.remote_node_id() {
         Ok(v) => v,
@@ -50,7 +50,7 @@ async fn enqueue_connection(
             return Err(eyre::anyhow!("can not get remote id: {e:?}"));
         }
     };
-    let id = ftnet::utils::public_key_to_id52(&public_key);
+    let id = ftnet_utils::utils::public_key_to_id52(&public_key);
     let mut connections = peer_connections.lock().await;
     connections.insert(id.clone(), conn);
 
@@ -63,6 +63,7 @@ pub async fn handle_connection(
     fastn_port: u16,
 ) -> eyre::Result<()> {
     use tokio_stream::StreamExt;
+    use ftnet_utils::Protocol;
 
     tracing::info!("got connection from: {:?}", conn.remote_node_id());
     let remote_node_id = match conn.remote_node_id() {
@@ -78,13 +79,13 @@ pub async fn handle_connection(
             return Err(eyre::anyhow!("could not read remote node id: {e}"));
         }
     };
-    let remote_id52 = ftnet::utils::public_key_to_id52(&remote_node_id);
+    let remote_id52 = ftnet_utils::utils::public_key_to_id52(&remote_node_id);
     tracing::info!("new client: {remote_id52}, waiting for bidirectional stream");
     loop {
         let client_pools = client_pools.clone();
         let (mut send, recv) = conn.accept_bi().await?;
         tracing::info!("got bidirectional stream");
-        let mut recv = ftnet::utils::frame_reader(recv);
+        let mut recv = ftnet_utils::utils::frame_reader(recv);
         let msg = match recv.next().await {
             Some(v) => v?,
             None => {
@@ -92,11 +93,11 @@ pub async fn handle_connection(
                 continue;
             }
         };
-        let msg = serde_json::from_str::<ftnet::Protocol>(&msg)
+        let msg = serde_json::from_str::<Protocol>(&msg)
             .inspect_err(|e| tracing::error!("json error for {msg}: {e}"))?;
         tracing::info!("{remote_id52}: {msg:?}");
         match msg {
-            ftnet::Protocol::Quit => {
+            Protocol::Quit => {
                 if !recv.read_buffer().is_empty() {
                     send.write_all(b"error: quit message should not have payload\n")
                         .await?;
@@ -107,7 +108,7 @@ pub async fn handle_connection(
                 // quit should close the connection, so we are breaking the for loop.
                 break;
             }
-            ftnet::Protocol::Ping => {
+            Protocol::Ping => {
                 tracing::info!("got ping");
                 if !recv.read_buffer().is_empty() {
                     send.write_all(b"error: ping message should not have payload\n")
@@ -120,7 +121,7 @@ pub async fn handle_connection(
                     .inspect_err(|e| tracing::error!("failed to write PONG: {e:?}"))?;
                 tracing::info!("sent");
             }
-            ftnet::Protocol::WhatTimeIsIt => {
+            Protocol::WhatTimeIsIt => {
                 if !recv.read_buffer().is_empty() {
                     send.write_all(b"error: quit message should not have payload\n")
                         .await?;
@@ -131,7 +132,7 @@ pub async fn handle_connection(
                         .await?;
                 }
             }
-            ftnet::Protocol::Identity => {
+            Protocol::Identity => {
                 if let Err(e) = ftnet::peer_server::http(
                     &format!("127.0.0.1:{fastn_port}"),
                     client_pools,
@@ -143,9 +144,9 @@ pub async fn handle_connection(
                     tracing::error!("failed to proxy http: {e:?}");
                 }
             }
-            ftnet::Protocol::Http { .. } => todo!(),
-            ftnet::Protocol::Socks5 { .. } => todo!(),
-            ftnet::Protocol::Tcp { id } => {
+            Protocol::Http { .. } => todo!(),
+            Protocol::Socks5 { .. } => todo!(),
+            Protocol::Tcp { id } => {
                 if let Err(e) = ftnet::peer_server::tcp(&remote_id52, &id, &mut send, recv).await {
                     tracing::error!("tcp error: {e}");
                 }

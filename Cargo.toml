@@ -1,5 +1,5 @@
 [workspace]
-members = ["FTNet", "control-backend-wasm", "common", "skynet"]
+members = ["FTNet", "control-backend-wasm", "common", "skynet", "ftnet-utils"]
 resolver = "2"
 
 [workspace.package]
@@ -42,6 +42,7 @@ file-guard = "0.2.0"
 ft-sdk = { version = "0.6.3", features = ["sqlite-default", "auth-provider", "field-extractors"] }
 ftnet = { path = "FTNet" }
 ftnet-common = { path = "common" }
+ftnet-utils = { path = "ftnet-utils" }
 http = "1"
 http-body-util = "0.1"
 hyper = { version = "1", features = ["full"] }

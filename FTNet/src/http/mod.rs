@@ -1,10 +1,8 @@
+use ftnet_utils::http::ProxyResponse;
+
 pub mod client;
 
-pub type Response =
-    hyper::Response<http_body_util::combinators::BoxBody<hyper::body::Bytes, hyper::Error>>;
-pub type Result<E = eyre::Error> = std::result::Result<Response, E>;
-
-pub fn json<T: serde::Serialize>(o: T) -> Response {
+pub fn json<T: serde::Serialize>(o: T) -> ProxyResponse {
     let bytes = match serde_json::to_vec(&o) {
         Ok(v) => v,
         Err(e) => return server_error_(format!("failed to serialize json: {e:?}")),
@@ -12,15 +10,15 @@ pub fn json<T: serde::Serialize>(o: T) -> Response {
     bytes_to_resp(bytes, hyper::StatusCode::OK)
 }
 
-pub fn server_error_(s: String) -> Response {
+pub fn server_error_(s: String) -> ProxyResponse {
     bytes_to_resp(s.into_bytes(), hyper::StatusCode::INTERNAL_SERVER_ERROR)
 }
 
-pub fn not_found_(m: String) -> Response {
+pub fn not_found_(m: String) -> ProxyResponse {
     bytes_to_resp(m.into_bytes(), hyper::StatusCode::NOT_FOUND)
 }
 
-pub fn bad_request_(m: String) -> Response {
+pub fn bad_request_(m: String) -> ProxyResponse {
     bytes_to_resp(m.into_bytes(), hyper::StatusCode::BAD_REQUEST)
 }
 
@@ -45,13 +43,13 @@ macro_rules! bad_request {
     }};
 }
 
-pub fn redirect<S: AsRef<str>>(url: S) -> Response {
+pub fn redirect<S: AsRef<str>>(url: S) -> ProxyResponse {
     let mut r = bytes_to_resp(vec![], hyper::StatusCode::PERMANENT_REDIRECT);
     *r.headers_mut().get_mut(hyper::header::LOCATION).unwrap() = url.as_ref().parse().unwrap();
     r
 }
 
-pub fn bytes_to_resp(bytes: Vec<u8>, status: hyper::StatusCode) -> Response {
+pub fn bytes_to_resp(bytes: Vec<u8>, status: hyper::StatusCode) -> ProxyResponse {
     use http_body_util::BodyExt;
 
     let mut r = hyper::Response::new(

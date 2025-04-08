@@ -5,8 +5,8 @@ impl ftnet::Identity {
     pub async fn run(
         self,
         graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
-        id_map: ftnet::identity::IDMap,
-        peer_connections: ftnet::identity::PeerConnections,
+        id_map: ftnet_utils::IDMap,
+        peer_connections: ftnet_utils::PeerConnections,
         data_dir: &std::path::Path,
     ) -> eyre::Result<()> {
         let port = start_fastn(
@@ -45,7 +45,7 @@ impl ftnet::Identity {
 /// launch fastn from the package directory and return the port
 #[tracing::instrument(skip_all)]
 async fn start_fastn(
-    _id_map: ftnet::identity::IDMap,
+    _id_map: ftnet_utils::IDMap,
     _graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
     id52: &str,
     data_dir: &std::path::Path,

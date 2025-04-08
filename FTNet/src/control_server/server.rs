@@ -1,9 +1,9 @@
 pub async fn handle_connection(
     stream: tokio::net::TcpStream,
     mut graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
-    id_map: ftnet::identity::IDMap,
+    id_map: ftnet_utils::IDMap,
     client_pools: ftnet::http::client::ConnectionPools,
-    peer_connections: ftnet::identity::PeerConnections,
+    peer_connections: ftnet_utils::PeerConnections,
 ) {
     ftnet::OPEN_CONTROL_CONNECTION_COUNT.incr();
     ftnet::CONTROL_CONNECTION_COUNT.incr();
@@ -50,10 +50,10 @@ pub async fn handle_connection(
 
 async fn handle_request(
     r: hyper::Request<hyper::body::Incoming>,
-    id_map: ftnet::identity::IDMap,
+    id_map: ftnet_utils::IDMap,
     client_pools: ftnet::http::client::ConnectionPools,
-    peer_connections: ftnet::identity::PeerConnections,
-) -> ftnet::http::Result {
+    peer_connections: ftnet_utils::PeerConnections,
+) -> ftnet_utils::http::ProxyResult {
     ftnet::CONTROL_REQUEST_COUNT.incr();
     ftnet::IN_FLIGHT_REQUESTS.incr();
     let r = handle_request_(r, id_map, client_pools, peer_connections).await;
@@ -63,10 +63,10 @@ async fn handle_request(
 
 async fn handle_request_(
     r: hyper::Request<hyper::body::Incoming>,
-    id_map: ftnet::identity::IDMap,
+    id_map: ftnet_utils::IDMap,
     client_pools: ftnet::http::client::ConnectionPools,
-    peer_connections: ftnet::identity::PeerConnections,
-) -> ftnet::http::Result {
+    peer_connections: ftnet_utils::PeerConnections,
+) -> ftnet_utils::http::ProxyResult {
     let id = match r
         .headers()
         .get("Host")
@@ -99,7 +99,7 @@ async fn handle_request_(
     match what_to_do(default_port, id).await {
         // if the id belongs to a friend of an identity, send the request to the friend over iroh
         Ok(WhatToDo::ForwardToPeer { peer_id, patch }) => {
-            ftnet::control_server::peer_proxy(
+            ftnet_utils::proxy::peer_to_peer(
                 r,
                 default_id.as_str(),
                 peer_id.as_str(),
@@ -185,7 +185,7 @@ async fn what_to_do(_port: u16, id: &str) -> eyre::Result<WhatToDo> {
     })
 }
 
-async fn find_identity(id: &str, id_map: ftnet::identity::IDMap) -> eyre::Result<Option<u16>> {
+async fn find_identity(id: &str, id_map: ftnet_utils::IDMap) -> eyre::Result<Option<u16>> {
     for (i, (port, _ep)) in id_map.lock().await.iter() {
         // if i.starts_with(id) {
         if i == id {
@@ -196,7 +196,7 @@ async fn find_identity(id: &str, id_map: ftnet::identity::IDMap) -> eyre::Result
     Ok(None)
 }
 
-async fn default_identity(id_map: ftnet::identity::IDMap) -> eyre::Result<(String, u16)> {
+async fn default_identity(id_map: ftnet_utils::IDMap) -> eyre::Result<(String, u16)> {
     Ok(id_map
         .lock()
         .await

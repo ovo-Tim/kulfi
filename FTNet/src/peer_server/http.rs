@@ -2,14 +2,14 @@ pub async fn http(
     addr: &str,
     client_pools: ftnet::http::client::ConnectionPools,
     send: &mut iroh::endpoint::SendStream,
-    mut recv: ftnet::utils::FrameReader,
+    mut recv: ftnet_utils::utils::FrameReader,
 ) -> eyre::Result<()> {
     use eyre::WrapErr;
     use http_body_util::BodyExt;
     use tokio_stream::StreamExt;
 
     tracing::info!("http called with {addr}");
-    let req: ftnet::control_server::Request = match recv.next().await {
+    let req: ftnet_utils::http::Request = match recv.next().await {
         Some(Ok(v)) => serde_json::from_str(&v)
             .wrap_err_with(|| "failed to serialize json while reading http request")?,
         Some(Err(e)) => {
@@ -73,7 +73,7 @@ pub async fn http(
         .wrap_err_with(|| "failed to send request")?
         .into_parts();
 
-    let r = Response {
+    let r = ftnet_utils::http::Response {
         status: resp.status.as_u16(),
         headers: resp
             .headers
@@ -92,12 +92,6 @@ pub async fn http(
     send.write_all(&(body.collect().await?.to_bytes())).await?;
 
     Ok(())
-}
-
-#[derive(serde::Deserialize, serde::Serialize, Debug)]
-pub struct Response {
-    pub status: u16,
-    pub headers: Vec<(String, Vec<u8>)>,
 }
 
 async fn get_pool(

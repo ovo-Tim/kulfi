@@ -1,11 +1,14 @@
-pub async fn peer_proxy(
+use crate::utils;
+use crate::{IDMap, PeerConnections, Protocol};
+
+pub async fn peer_to_peer(
     req: hyper::Request<hyper::body::Incoming>,
     self_id52: &str,
     remote_node_id52: &str,
-    peer_connections: ftnet::identity::PeerConnections,
+    peer_connections: PeerConnections,
     _patch: ftnet_common::RequestPatch,
-    id_map: ftnet::identity::IDMap,
-) -> ftnet::http::Result {
+    id_map: IDMap,
+) -> crate::http::ProxyResult {
     use http_body_util::BodyExt;
     use tokio_stream::StreamExt;
 
@@ -15,14 +18,14 @@ pub async fn peer_proxy(
         get_stream(self_id52, remote_node_id52, peer_connections, id_map).await?;
 
     tracing::info!("got stream");
-    send.write_all(&serde_json::to_vec(&ftnet::Protocol::Identity)?)
+    send.write_all(&serde_json::to_vec(&Protocol::Identity)?)
         .await?;
     send.write(b"\n").await?;
 
     tracing::info!("wrote protocol");
 
     let (head, body) = req.into_parts();
-    send.write_all(&serde_json::to_vec(&Request::from(head))?)
+    send.write_all(&serde_json::to_vec(&crate::http::Request::from(head))?)
         .await?;
     send.write_all("\n".as_bytes()).await?;
     tracing::info!("sent request header");
@@ -34,8 +37,8 @@ pub async fn peer_proxy(
 
     tracing::info!("sent body");
 
-    let mut recv = ftnet::utils::frame_reader(recv);
-    let r: ftnet::peer_server::http::Response = match recv.next().await {
+    let mut recv = crate::utils::frame_reader(recv);
+    let r: crate::http::Response = match recv.next().await {
         Some(v) => serde_json::from_str(&v?)?,
         None => {
             tracing::error!("failed to read from incoming connection");
@@ -66,11 +69,11 @@ pub async fn peer_proxy(
             .map_err(|e| match e {})
             .boxed(),
     );
-    *res.status_mut() = http::StatusCode::from_u16(r.status)?;
+    *res.status_mut() = hyper::http::StatusCode::from_u16(r.status)?;
     for (k, v) in r.headers {
         res.headers_mut().insert(
-            http::header::HeaderName::from_bytes(k.as_bytes())?,
-            http::header::HeaderValue::from_bytes(&v)?,
+            hyper::http::header::HeaderName::from_bytes(k.as_bytes())?,
+            hyper::http::header::HeaderValue::from_bytes(&v)?,
         );
     }
 
@@ -78,37 +81,11 @@ pub async fn peer_proxy(
     Ok(res)
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
-pub struct Request {
-    pub uri: String,
-    pub method: String,
-    pub headers: Vec<(String, Vec<u8>)>,
-}
-
-impl From<http::request::Parts> for Request {
-    fn from(r: http::request::Parts) -> Self {
-        let mut headers = vec![];
-        for (k, v) in r.headers {
-            let k = match k {
-                Some(v) => v.to_string(),
-                None => continue,
-            };
-            headers.push((k, v.as_bytes().to_vec()));
-        }
-
-        Request {
-            uri: r.uri.to_string(),
-            method: r.method.to_string(),
-            headers,
-        }
-    }
-}
-
 async fn get_stream(
     self_id52: &str,
     remote_node_id52: &str,
-    peer_connections: ftnet::identity::PeerConnections,
-    id_map: ftnet::identity::IDMap,
+    peer_connections: PeerConnections,
+    id_map: IDMap,
 ) -> eyre::Result<(iroh::endpoint::SendStream, iroh::endpoint::RecvStream)> {
     let conn = get_connection(self_id52, remote_node_id52, id_map, peer_connections).await?;
     // TODO: this is where we can check if the connection is healthy or not. if we fail to get the
@@ -119,8 +96,8 @@ async fn get_stream(
 async fn get_connection(
     self_id52: &str,
     remote_node_id52: &str,
-    id_map: ftnet::identity::IDMap,
-    peer_connections: ftnet::identity::PeerConnections,
+    id_map: IDMap,
+    peer_connections: PeerConnections,
 ) -> eyre::Result<iroh::endpoint::Connection> {
     let connections = peer_connections.lock().await;
     let connection = connections.get(remote_node_id52).map(ToOwned::to_owned);
@@ -135,8 +112,8 @@ async fn get_connection(
     let ep = get_endpoint(self_id52, id_map).await?;
     let conn = match ep
         .connect(
-            ftnet::utils::id52_to_public_key(remote_node_id52)?,
-            ftnet::APNS_IDENTITY,
+            utils::id52_to_public_key(remote_node_id52)?,
+            crate::APNS_IDENTITY,
         )
         .await
     {
@@ -153,10 +130,7 @@ async fn get_connection(
     Ok(conn)
 }
 
-async fn get_endpoint(
-    self_id52: &str,
-    id_map: ftnet::identity::IDMap,
-) -> eyre::Result<iroh::endpoint::Endpoint> {
+async fn get_endpoint(self_id52: &str, id_map: IDMap) -> eyre::Result<iroh::endpoint::Endpoint> {
     let map = id_map.lock().await;
 
     for (id, (_port, ep)) in map.iter() {

@@ -10,7 +10,7 @@ pub async fn start(_fg: bool, data_dir: std::path::PathBuf, control_port: u16) -
     use eyre::WrapErr;
 
     let client_pools = ftnet::http::client::ConnectionPools::default();
-    let peer_connections = ftnet::identity::PeerConnections::default();
+    let peer_connections = ftnet_utils::PeerConnections::default();
 
     let config = ftnet::Config::read(&data_dir, client_pools.clone())
         .await
@@ -38,7 +38,7 @@ pub async fn start(_fg: bool, data_dir: std::path::PathBuf, control_port: u16) -
         .map(|v| v.id52.clone())
         .ok_or_else(|| eyre::eyre!("no identities found"))?;
 
-    let id_map = ftnet::identity::IDMap::default();
+    let id_map = ftnet_utils::IDMap::default();
 
     for identity in identities {
         use std::sync::Arc;
