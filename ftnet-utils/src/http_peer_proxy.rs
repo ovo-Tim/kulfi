@@ -8,7 +8,9 @@ pub async fn http(
     use http_body_util::BodyExt;
     use tokio_stream::StreamExt;
 
-    tracing::info!("http called with {addr}");
+    tracing::info!("http request with {addr}");
+    let start = std::time::Instant::now();
+
     let req: ftnet_utils::http::Request = match recv.next().await {
         Some(Ok(v)) => serde_json::from_str(&v)
             .wrap_err_with(|| "failed to serialize json while reading http request")?,
@@ -29,17 +31,17 @@ pub async fn http(
 
     let mut buf = Vec::with_capacity(1024 * 64);
 
-    tracing::info!("reading body");
+    tracing::trace!("reading body");
     while let Some(v) = recv.read(&mut buf).await? {
         if v == 0 {
-            tracing::info!("finished reading");
+            tracing::trace!("finished reading");
             break;
         }
-        tracing::info!("reading body, partial: {v}");
+        tracing::trace!("reading body, partial: {v}");
         body.extend_from_slice(&buf);
         buf.truncate(0);
     }
-    tracing::info!("finished reading body");
+    tracing::debug!("read {} bytes of body", body.len());
 
     let mut r = hyper::Request::builder()
         .method(req.method.as_str())
@@ -48,10 +50,10 @@ pub async fn http(
         r = r.header(name, value);
     }
 
-    tracing::info!("request: {r:?}");
+    tracing::debug!("request: {r:?}");
 
     let pool = get_pool(addr, client_pools).await?;
-    // tracing::info!("got pool");
+    tracing::trace!("got pool");
     let mut client = match pool.get().await {
         Ok(v) => v,
         Err(e) => {
@@ -89,8 +91,11 @@ pub async fn http(
     )
     .await?;
     send.write_all(b"\n").await?;
-    send.write_all(&(body.collect().await?.to_bytes())).await?;
+    let bytes = body.collect().await?.to_bytes();
+    tracing::debug!("got response body: {} bytes", bytes.len());
+    send.write_all(&bytes).await?;
 
+    tracing::info!("handled http request in {:?}", start.elapsed());
     Ok(())
 }
 
@@ -98,13 +103,17 @@ async fn get_pool(
     addr: &str,
     client_pools: ftnet_utils::ConnectionPools,
 ) -> eyre::Result<bb8::Pool<ftnet_utils::ConnectionManager>> {
-    tracing::info!("get client");
+    tracing::trace!("get pool called");
     let mut pools = client_pools.lock().await;
-    tracing::info!("get client1");
 
     Ok(match pools.get(addr) {
-        Some(v) => v.clone(),
+        Some(v) => {
+            tracing::debug!("found existing pool for {addr}");
+            v.clone()
+        }
         None => {
+            tracing::debug!("creating new pool for {addr}");
+
             let pool = bb8::Pool::builder()
                 .build(ftnet_utils::ConnectionManager::new(addr.to_string()))
                 .await?;

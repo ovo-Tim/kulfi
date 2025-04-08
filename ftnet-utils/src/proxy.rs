@@ -58,12 +58,12 @@ pub async fn peer_to_peer(
 
     tracing::info!("got response header: {r:?}");
 
-    let mut body = recv.read_buffer().to_vec();
+    let mut body = recv.read_buffer().to_owned();
     let mut recv = recv.into_inner();
 
-    let mut buf = Vec::with_capacity(1024 * 64);
+    tracing::trace!("reading body");
 
-    while let Some(v) = match recv.read(&mut buf).await {
+    while let Some(v) = match recv.read_chunk(1024 * 64, true).await {
         Ok(v) => Ok(v),
         Err(e) => {
             forget_connection(remote_node_id52, peer_connections.clone()).await?;
@@ -71,18 +71,19 @@ pub async fn peer_to_peer(
             Err(eyre::anyhow!("failed to get bidirectional stream: {e:?}"))
         }
     }? {
-        if v == 0 {
-            tracing::info!("finished reading body");
-            break;
-        }
-        body.extend_from_slice(&buf);
-        buf.truncate(0);
+        body.extend_from_slice(&v.bytes);
+        tracing::trace!(
+            "reading body, partial: {}, new body size: {} bytes",
+            v.bytes.len(),
+            body.len()
+        );
     }
 
-    tracing::info!("got body");
+    let body = body.freeze();
+    tracing::debug!("got {} bytes of body", body.len());
 
     let mut res = hyper::Response::new(
-        http_body_util::Full::new(hyper::body::Bytes::from(body))
+        http_body_util::Full::new(body)
             .map_err(|e| match e {})
             .boxed(),
     );
