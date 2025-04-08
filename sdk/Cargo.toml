@@ -5,6 +5,7 @@ edition.workspace = true
 authors.workspace = true
 description = "shared code for control-backend-wasm and FTNet"
 homepage.workspace = true
+license.workspace = true
 
 [dependencies]
 serde.workspace = true

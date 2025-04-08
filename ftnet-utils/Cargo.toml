@@ -3,7 +3,9 @@ name = "ftnet-utils"
 version = "0.1.0"
 edition.workspace = true
 authors.workspace = true
-description = "ftnet utilities p2p"
+description = "ftnet utilities"
+homepage.workspace = true
+license.workspace = true
 
 [dependencies]
 data-encoding.workspace = true
