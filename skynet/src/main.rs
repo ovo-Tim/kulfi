@@ -1,3 +1,5 @@
+use eyre::WrapErr;
+
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
     use clap::Parser;
@@ -16,6 +18,26 @@ async fn main() -> eyre::Result<()> {
         } => {
             tracing::info!(port, host, verbose = ?cli.verbose, "Exposing HTTP service on FTNet.");
             skynet::expose_http(host, port).await
+        }
+
+        Command::HttpBridge { proxy_target, port } => {
+            tracing::info!(port, proxy_target, verbose = ?cli.verbose, "Starting HTTP bridge.");
+
+            let (graceful_shutdown_tx, graceful_shutdown_rx) = tokio::sync::watch::channel(false);
+
+            tokio::spawn(async move { skynet::http_bridge(port, graceful_shutdown_rx).await });
+
+            tokio::signal::ctrl_c()
+                .await
+                .wrap_err_with(|| "failed to get ctrl-c signal handler")?;
+
+            graceful_shutdown_tx
+                .send(true)
+                .wrap_err_with(|| "failed to send graceful shutdown signal")?;
+
+            tracing::info!("Stopping HTTP bridge.");
+
+            Ok(())
         }
     } {
         tracing::error!("Error: {e}");
@@ -65,5 +87,20 @@ argument to specify a What To Do service that can be used to add access control.
         // )]
         // this will be the id52 of the identity server that should be consulted
         // what_to_do: Option<String>,
+    },
+    HttpBridge {
+        #[arg(
+            long,
+            short('t'),
+            help = "The id52 to which this bridge will forward incoming HTTP request. By default it fowards to every id52"
+        )]
+        proxy_target: Option<String>,
+        #[arg(
+            long,
+            short('p'),
+            help = "The port on which this bridge will listen for incoming http requests",
+            default_value = "8080"
+        )]
+        port: u16,
     },
 }
