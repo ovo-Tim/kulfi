@@ -99,13 +99,13 @@ async fn handle_request_(
     match what_to_do(default_port, id).await {
         // if the id belongs to a friend of an identity, send the request to the friend over iroh
         Ok(WhatToDo::ForwardToPeer { peer_id, patch }) => {
+            let self_endpoint = get_endpoint(default_id.as_str(), id_map).await?;
             ftnet_utils::proxy::peer_to_peer(
                 r,
-                default_id.as_str(),
+                self_endpoint,
                 peer_id.as_str(),
                 peer_connections,
                 patch,
-                id_map,
             )
             .await
         }
@@ -201,4 +201,22 @@ async fn default_identity(id_map: ftnet_utils::IDMap) -> eyre::Result<(String, u
         .first()
         .map(|(ident, (port, _ep))| (ident.to_string(), *port))
         .expect("ftnet ensures there is at least one identity at the start"))
+}
+
+async fn get_endpoint(
+    self_id52: &str,
+    id_map: ftnet_utils::IDMap,
+) -> eyre::Result<iroh::endpoint::Endpoint> {
+    let map = id_map.lock().await;
+
+    for (id, (_port, ep)) in map.iter() {
+        if id == self_id52 {
+            return Ok(ep.clone());
+        }
+    }
+
+    tracing::error!("no entry for {self_id52} in the id_map: {id_map:?}");
+    Err(eyre::anyhow!(
+        "no entry for {self_id52} in the id_map: {id_map:?}"
+    ))
 }

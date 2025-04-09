@@ -1,26 +1,20 @@
 use crate::utils;
-use crate::{IDMap, PeerConnections, Protocol};
+use crate::{PeerConnections, Protocol};
 
 pub async fn peer_to_peer(
     req: hyper::Request<hyper::body::Incoming>,
-    self_id52: &str,
+    self_endpoint: iroh::Endpoint,
     remote_node_id52: &str,
     peer_connections: PeerConnections,
     _patch: ftnet_sdk::RequestPatch,
-    id_map: IDMap,
 ) -> crate::http::ProxyResult {
     use http_body_util::BodyExt;
     use tokio_stream::StreamExt;
 
     tracing::info!("peer_proxy: {remote_node_id52}");
 
-    let (mut send, recv) = get_stream(
-        self_id52,
-        remote_node_id52,
-        peer_connections.clone(),
-        id_map,
-    )
-    .await?;
+    let (mut send, recv) =
+        get_stream(self_endpoint, remote_node_id52, peer_connections.clone()).await?;
 
     tracing::info!("got stream");
     send.write_all(&serde_json::to_vec(&Protocol::Identity)?)
@@ -100,19 +94,12 @@ pub async fn peer_to_peer(
 }
 
 async fn get_stream(
-    self_id52: &str,
+    self_endpoint: iroh::Endpoint,
     remote_node_id52: &str,
     peer_connections: PeerConnections,
-    id_map: IDMap,
 ) -> eyre::Result<(iroh::endpoint::SendStream, iroh::endpoint::RecvStream)> {
     tracing::trace!("getting stream");
-    let conn = get_connection(
-        self_id52,
-        remote_node_id52,
-        id_map,
-        peer_connections.clone(),
-    )
-    .await?;
+    let conn = get_connection(self_endpoint, remote_node_id52, peer_connections.clone()).await?;
     // TODO: this is where we can check if the connection is healthy or not. if we fail to get the
     //       bidirectional stream, probably we should try to recreate connection.
     tracing::trace!("getting stream - got connection");
@@ -139,9 +126,8 @@ async fn forget_connection(
 }
 
 async fn get_connection(
-    self_id52: &str,
+    self_endpoint: iroh::Endpoint,
     remote_node_id52: &str,
-    id_map: IDMap,
     peer_connections: PeerConnections,
 ) -> eyre::Result<iroh::endpoint::Connection> {
     tracing::trace!("getting connections lock");
@@ -156,11 +142,7 @@ async fn get_connection(
         return Ok(conn);
     }
 
-    tracing::trace!("getting ep");
-    let ep = get_endpoint(self_id52, id_map).await?;
-    tracing::trace!("got ep");
-
-    let conn = match ep
+    let conn = match self_endpoint
         .connect(
             utils::id52_to_public_key(remote_node_id52)?,
             crate::APNS_IDENTITY,
@@ -180,19 +162,4 @@ async fn get_connection(
     tracing::trace!("stored connection");
 
     Ok(conn)
-}
-
-async fn get_endpoint(self_id52: &str, id_map: IDMap) -> eyre::Result<iroh::endpoint::Endpoint> {
-    let map = id_map.lock().await;
-
-    for (id, (_port, ep)) in map.iter() {
-        if id == self_id52 {
-            return Ok(ep.clone());
-        }
-    }
-
-    tracing::error!("no entry for {self_id52} in the id_map: {id_map:?}");
-    Err(eyre::anyhow!(
-        "no entry for {self_id52} in the id_map: {id_map:?}"
-    ))
 }
