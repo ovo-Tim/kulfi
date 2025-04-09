@@ -1,14 +1,19 @@
 use crate::utils;
 use crate::{PeerConnections, Protocol};
 
-pub async fn peer_to_peer(
-    req: hyper::Request<hyper::body::Incoming>,
+pub async fn peer_to_peer<T>(
+    req: hyper::Request<T>,
     self_endpoint: iroh::Endpoint,
     remote_node_id52: &str,
     peer_connections: PeerConnections,
     _patch: ftnet_sdk::RequestPatch,
-) -> crate::http::ProxyResult {
-    use http_body_util::BodyExt;
+) -> crate::http::ProxyResult
+where
+    T: hyper::body::Body + Unpin + Send,
+    T::Data: Into<hyper::body::Bytes> + Send,
+    T::Error: std::error::Error + Send + Sync + 'static,
+{
+    use http_body_util::{BodyDataStream, BodyExt};
     use tokio_stream::StreamExt;
 
     tracing::info!("peer_proxy: {remote_node_id52}");
@@ -26,12 +31,15 @@ pub async fn peer_to_peer(
     let (head, body) = req.into_parts();
     send.write_all(&serde_json::to_vec(&crate::http::Request::from(head))?)
         .await?;
-    send.write_all("\n".as_bytes()).await?;
+    send.write_all(b"\n").await?;
+
     tracing::info!("sent request header");
 
-    let mut body = http_body_util::BodyDataStream::new(body);
-    while let Some(v) = body.next().await {
-        send.write_all(&v?).await?;
+    let mut stream = BodyDataStream::new(body);
+
+    while let Some(chunk) = stream.next().await {
+        let bytes: hyper::body::Bytes = chunk?.into(); // requires T::Data: Into<Bytes>
+        send.write_all(&bytes).await?;
     }
 
     tracing::info!("sent body");
@@ -61,8 +69,8 @@ pub async fn peer_to_peer(
         Ok(v) => Ok(v),
         Err(e) => {
             forget_connection(remote_node_id52, peer_connections.clone()).await?;
-            tracing::error!("failed to get bidirectional stream: {e:?}");
-            Err(eyre::anyhow!("failed to get bidirectional stream: {e:?}"))
+            tracing::error!("error reading chunk: {e:?}");
+            Err(eyre::anyhow!("read_chunk error: {e:?}"))
         }
     }? {
         body.extend_from_slice(&v.bytes);
