@@ -90,6 +90,8 @@ async fn handle_request(
                 return Ok(crate::bad_request!("got http request with invalid peer id"));
             }
 
+            // TODO: check first == --proxy-target and return error if not.
+
             first.to_string()
         }
         None => {
