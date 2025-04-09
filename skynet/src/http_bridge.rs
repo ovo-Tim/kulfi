@@ -42,14 +42,73 @@ pub async fn http_bridge(
 }
 
 pub async fn handle_connection(
-    _self_endpoint: iroh::Endpoint,
-    _stream: tokio::net::TcpStream,
-    mut _graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
-    _peer_connections: ftnet_utils::PeerConnections,
+    self_endpoint: iroh::Endpoint,
+    stream: tokio::net::TcpStream,
+    mut graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
+    peer_connections: ftnet_utils::PeerConnections,
 ) {
-    todo!()
+    let io = hyper_util::rt::TokioIo::new(stream);
+
+    let builder =
+        hyper_util::server::conn::auto::Builder::new(hyper_util::rt::tokio::TokioExecutor::new());
+    // the following builder runs only http2 service, whereas the hyper_util auto Builder runs an
+    // http1.1 server that upgrades to http2 if the client requests.
+    // let builder = hyper::server::conn::http2::Builder::new(hyper_util::rt::tokio::TokioExecutor::new());
+    tokio::pin! {
+        let conn = builder
+            .serve_connection(
+                io,
+                hyper::service::service_fn(|r| handle_request(r, self_endpoint.clone(), peer_connections.clone())),
+            );
+    }
+
+    if let Err(e) = tokio::select! {
+        _ = graceful_shutdown_rx.changed() => {
+            conn.as_mut().graceful_shutdown();
+            conn.await
+        }
+        r = &mut conn => r,
+    } {
+        tracing::error!("connection error1: {e:?}");
+    }
 }
 
+async fn handle_request(
+    r: hyper::Request<hyper::body::Incoming>,
+    self_endpoint: iroh::Endpoint,
+    peer_connections: ftnet_utils::PeerConnections,
+) -> ftnet_utils::http::ProxyResult {
+    let peer_id = match r
+        .headers()
+        .get("Host")
+        .and_then(|h| h.to_str().ok())
+        .and_then(|h| h.split_once('.'))
+    {
+        Some((first, _)) => {
+            if first.len() != 52 {
+                tracing::error!(peer_id = %first, "request received for invalid peer id");
+                return Ok(crate::bad_request!("got http request with invalid peer id"));
+            }
+
+            first.to_string()
+        }
+        None => {
+            tracing::error!("got http request without Host header");
+            return Ok(crate::bad_request!("got http request without Host header"));
+        }
+    };
+
+    tracing::info!("got request for {peer_id}");
+
+    ftnet_utils::proxy::peer_to_peer(
+        r,
+        self_endpoint,
+        &peer_id,
+        peer_connections,
+        Default::default(), /* RequestPatch */
+    )
+    .await
+}
 
 async fn new_iroh_endpoint() -> iroh::Endpoint {
     // TODO: read secret key from ENV VAR

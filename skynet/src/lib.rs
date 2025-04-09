@@ -4,6 +4,7 @@
 
 extern crate self as skynet;
 
+mod http;
 mod expose_http;
 mod http_bridge;
 
