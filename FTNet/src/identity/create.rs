@@ -30,8 +30,9 @@ impl ftnet::Identity {
         client_pools: ftnet_utils::ConnectionPools,
     ) -> eyre::Result<Self> {
         use eyre::WrapErr;
+        use ftnet_utils::SecretStore;
 
-        let public_key = ftnet_utils::create_public_key()?;
+        let public_key = ftnet_utils::KeyringSecretStore::generate(rand::rngs::OsRng)?;
 
         let now = std::time::SystemTime::now();
         let unixtime = now

@@ -1,21 +1,7 @@
-pub enum Key {
-    ID(String),
-    ID52(String),
-    SecretKey(iroh::SecretKey),
-}
+pub async fn get_endpoint(id52: String) -> eyre::Result<iroh::Endpoint> {
+    use crate::SecretStore;
 
-pub async fn get_endpoint(key: Key) -> eyre::Result<iroh::Endpoint> {
-    use eyre::WrapErr;
-
-    let secret_key = match key {
-        Key::ID(id) => ftnet_utils::get_secret(id.as_str())
-            .wrap_err_with(|| format!("failed to get secret key from keychain for {id}"))?,
-        Key::SecretKey(key) => key,
-        Key::ID52(v) => {
-            let public_key = ftnet_utils::utils::id52_to_public_key(&v)?;
-            ftnet_utils::get_secret(public_key.to_string().as_str())?
-        }
-    };
+    let secret_key = ftnet_utils::KeyringSecretStore::new(id52).get()?;
 
     match iroh::Endpoint::builder()
         .discovery_n0()
