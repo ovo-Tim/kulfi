@@ -1,8 +1,4 @@
-pub async fn get_endpoint(id52: String) -> eyre::Result<iroh::Endpoint> {
-    use crate::SecretStore;
-
-    let secret_key = ftnet_utils::KeyringSecretStore::new(id52).get()?;
-
+pub async fn get_endpoint(secret_key: iroh::SecretKey) -> eyre::Result<iroh::Endpoint> {
     match iroh::Endpoint::builder()
         .discovery_n0()
         .discovery_local_network()

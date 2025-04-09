@@ -1,9 +1,11 @@
+use ftnet_utils::SecretStore;
+
 pub async fn expose_http(host: String, port: u16) -> eyre::Result<()> {
     use eyre::WrapErr;
 
     let id52 = read_or_create_key().await?;
-
-    let ep = ftnet_utils::get_endpoint(id52.clone())
+    let secret_key = ftnet_utils::KeyringSecretStore::new(id52.clone()).get()?;
+    let ep = ftnet_utils::get_endpoint(secret_key)
         .await
         .wrap_err_with(|| "failed to bind to iroh network")?;
 

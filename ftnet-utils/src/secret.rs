@@ -11,10 +11,12 @@ pub trait SecretStore {
     fn generate(rng: impl rand_core::CryptoRngCore) -> eyre::Result<iroh::PublicKey>;
 }
 
+#[cfg(feature = "keyring")]
 pub struct KeyringSecretStore {
     id52: String,
 }
 
+#[cfg(feature = "keyring")]
 impl SecretStore for KeyringSecretStore {
     fn get(&self) -> eyre::Result<iroh::SecretKey> {
         let entry = self.keyring_entry()?;
@@ -50,6 +52,7 @@ impl SecretStore for KeyringSecretStore {
     }
 }
 
+#[cfg(feature = "keyring")]
 impl KeyringSecretStore {
     pub fn new(id52: String) -> Self {
         KeyringSecretStore { id52 }

@@ -14,7 +14,7 @@ ftnet-sdk.workspace = true
 http-body-util.workspace = true
 hyper.workspace = true
 iroh.workspace = true
-keyring.workspace = true
+keyring = { workspace = true, optional = true }
 rand.workspace = true
 serde.workspace = true
 serde_json.workspace = true
@@ -25,3 +25,7 @@ tracing.workspace = true
 hyper-util.workspace = true
 bb8.workspace = true
 rand_core.workspace = true
+
+[features]
+default = []
+keyring = ["dep:keyring"]

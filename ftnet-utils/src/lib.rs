@@ -16,5 +16,7 @@ pub use get_endpoint::get_endpoint;
 pub use http::ProxyResult;
 pub use http_connection::{ConnectionManager, ConnectionPool, ConnectionPools};
 pub use protocol::{APNS_IDENTITY, Protocol};
-pub use secret::{KeyringSecretStore, SecretStore};
+#[cfg(feature = "keyring")]
+pub use secret::KeyringSecretStore;
+pub use secret::SecretStore;
 pub use utils::{FrameReader, frame_reader, id52_to_public_key, public_key_to_id52};

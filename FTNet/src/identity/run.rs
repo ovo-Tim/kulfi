@@ -1,4 +1,5 @@
 use eyre::WrapErr;
+use ftnet_utils::SecretStore;
 
 impl ftnet::Identity {
     #[tracing::instrument(skip_all)]
@@ -23,7 +24,8 @@ impl ftnet::Identity {
         });
         tracing::info!("fastn started on port {port}");
 
-        let ep = ftnet_utils::get_endpoint(self.id52.clone())
+        let secret_key = ftnet_utils::KeyringSecretStore::new(self.id52.clone()).get()?;
+        let ep = ftnet_utils::get_endpoint(secret_key)
             .await
             .wrap_err_with(|| "failed to bind to iroh network")?;
 
