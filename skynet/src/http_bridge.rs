@@ -5,9 +5,7 @@ pub async fn http_bridge(proxy_target: Option<String>, port: u16) -> eyre::Resul
 
     let (graceful_shutdown_tx, graceful_shutdown_rx) = tokio::sync::watch::channel(false);
 
-    tokio::spawn(async move {
-        http_bridge_(port, graceful_shutdown_rx, proxy_target).await
-    });
+    tokio::spawn(async move { http_bridge_(port, graceful_shutdown_rx, proxy_target).await });
 
     tokio::signal::ctrl_c()
         .await
@@ -139,14 +137,14 @@ async fn handle_request(
 
     tracing::info!("got request for {peer_id}");
 
-    ftnet_utils::proxy::peer_to_peer(
+    ftnet_utils::http_to_peer(
         r,
         self_endpoint,
         &peer_id,
         peer_connections,
         Default::default(), /* RequestPatch */
     )
-        .await
+    .await
 }
 
 async fn new_iroh_endpoint() -> iroh::Endpoint {

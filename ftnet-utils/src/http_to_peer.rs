@@ -1,4 +1,4 @@
-pub async fn peer_to_peer<T>(
+pub async fn http_to_peer<T>(
     req: hyper::Request<T>,
     self_endpoint: iroh::Endpoint,
     remote_node_id52: &str,

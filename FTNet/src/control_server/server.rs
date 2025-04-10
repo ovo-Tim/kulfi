@@ -102,14 +102,8 @@ async fn handle_request_(
         // if the id belongs to a friend of an identity, send the request to the friend over iroh
         Ok(WhatToDo::ForwardToPeer { peer_id, patch }) => {
             let self_endpoint = get_endpoint(default_id.as_str(), id_map).await?;
-            ftnet_utils::proxy::peer_to_peer(
-                r,
-                self_endpoint,
-                peer_id.as_str(),
-                peer_connections,
-                patch,
-            )
-            .await
+            ftnet_utils::http_to_peer(r, self_endpoint, peer_id.as_str(), peer_connections, patch)
+                .await
         }
         // if not identity, find if the id is an http device owned by identity, if so proxy-pass the
         // request to that device

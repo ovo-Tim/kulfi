@@ -104,7 +104,7 @@ async fn handle_connection(
         tracing::info!("{remote_id52}: {msg:?}");
         match msg {
             ftnet_utils::Protocol::Identity => {
-                if let Err(e) = ftnet_utils::http_peer_proxy::http(
+                if let Err(e) = ftnet_utils::peer_to_http(
                     &format!("{host}:{port}"),
                     client_pools,
                     &mut send,

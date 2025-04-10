@@ -133,7 +133,7 @@ pub async fn handle_connection(
                 }
             }
             Protocol::Identity => {
-                if let Err(e) = ftnet_utils::http_peer_proxy::http(
+                if let Err(e) = ftnet_utils::peer_to_http(
                     &format!("127.0.0.1:{fastn_port}"),
                     client_pools,
                     &mut send,

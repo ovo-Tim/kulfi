@@ -1,4 +1,4 @@
-pub async fn http(
+pub async fn peer_to_http(
     addr: &str,
     client_pools: ftnet_utils::ConnectionPools,
     send: &mut iroh::endpoint::SendStream,
