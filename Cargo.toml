@@ -60,6 +60,9 @@ zip = { version = "2", default-features = false }
 # iroh is on 0.6 so we use the same to avoid building multiple crates
 rand_core = "0.6"
 
+[target.'cfg(target_os = "linux")'.dependencies]
+libdbus-sys = { version = "0.2", features = ["vendored"] }
+
 [workspace.dependencies.fastn-observer]
 git = "https://github.com/fastn-stack/fastn-observer"
 rev = "5f64c7b"
