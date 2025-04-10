@@ -1,13 +1,10 @@
-use crate::utils;
-use crate::{PeerConnections, Protocol};
-
 pub async fn peer_to_peer<T>(
     req: hyper::Request<T>,
     self_endpoint: iroh::Endpoint,
     remote_node_id52: &str,
-    peer_connections: PeerConnections,
+    peer_connections: ftnet_utils::PeerConnections,
     _patch: ftnet_sdk::RequestPatch,
-) -> crate::http::ProxyResult
+) -> ftnet_utils::http::ProxyResult
 where
     T: hyper::body::Body + Unpin + Send,
     T::Data: Into<hyper::body::Bytes> + Send,
@@ -22,7 +19,7 @@ where
         get_stream(self_endpoint, remote_node_id52, peer_connections.clone()).await?;
 
     tracing::info!("got stream");
-    send.write_all(&serde_json::to_vec(&Protocol::Identity)?)
+    send.write_all(&serde_json::to_vec(&ftnet_utils::Protocol::Identity)?)
         .await?;
     send.write(b"\n").await?;
 
@@ -44,8 +41,8 @@ where
 
     tracing::info!("sent body");
 
-    let mut recv = crate::utils::frame_reader(recv);
-    let r: crate::http::Response = match recv.next().await {
+    let mut recv = ftnet_utils::frame_reader(recv);
+    let r: ftnet_utils::http::Response = match recv.next().await {
         Some(Ok(v)) => serde_json::from_str(&v)?,
         Some(Err(e)) => {
             forget_connection(remote_node_id52, peer_connections.clone()).await?;
@@ -104,7 +101,7 @@ where
 async fn get_stream(
     self_endpoint: iroh::Endpoint,
     remote_node_id52: &str,
-    peer_connections: PeerConnections,
+    peer_connections: ftnet_utils::PeerConnections,
 ) -> eyre::Result<(iroh::endpoint::SendStream, iroh::endpoint::RecvStream)> {
     tracing::trace!("getting stream");
     let conn = get_connection(self_endpoint, remote_node_id52, peer_connections.clone()).await?;
@@ -124,7 +121,7 @@ async fn get_stream(
 
 async fn forget_connection(
     remote_node_id52: &str,
-    peer_connections: PeerConnections,
+    peer_connections: ftnet_utils::PeerConnections,
 ) -> eyre::Result<()> {
     tracing::trace!("forgetting connection");
     let mut connections = peer_connections.lock().await;
@@ -136,7 +133,7 @@ async fn forget_connection(
 async fn get_connection(
     self_endpoint: iroh::Endpoint,
     remote_node_id52: &str,
-    peer_connections: PeerConnections,
+    peer_connections: ftnet_utils::PeerConnections,
 ) -> eyre::Result<iroh::endpoint::Connection> {
     tracing::trace!("getting connections lock");
     let connections = peer_connections.lock().await;
@@ -152,8 +149,8 @@ async fn get_connection(
 
     let conn = match self_endpoint
         .connect(
-            utils::id52_to_public_key(remote_node_id52)?,
-            crate::APNS_IDENTITY,
+            ftnet_utils::id52_to_public_key(remote_node_id52)?,
+            ftnet_utils::APNS_IDENTITY,
         )
         .await
     {

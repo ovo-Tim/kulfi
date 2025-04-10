@@ -2,7 +2,7 @@ pub async fn http(
     addr: &str,
     client_pools: ftnet_utils::ConnectionPools,
     send: &mut iroh::endpoint::SendStream,
-    mut recv: ftnet_utils::utils::FrameReader,
+    mut recv: ftnet_utils::FrameReader,
 ) -> eyre::Result<()> {
     use eyre::WrapErr;
     use http_body_util::BodyExt;

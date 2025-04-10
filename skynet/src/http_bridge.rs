@@ -91,13 +91,17 @@ async fn handle_request(
         Some((first, _)) => {
             if first.len() != 52 {
                 tracing::error!(peer_id = %first, "request received for invalid peer id");
-                return Ok(crate::bad_request!("got http request with invalid peer id"));
+                return Ok(ftnet_utils::bad_request!(
+                    "got http request with invalid peer id"
+                ));
             }
 
             if let Some(target) = proxy_target {
                 if first != target {
                     tracing::error!(peer_id = %first, proxy_target = %target, "request for peer_id is not allowed");
-                    return Ok(crate::bad_request!("got http request with invalid peer id"));
+                    return Ok(ftnet_utils::bad_request!(
+                        "got http request with invalid peer id"
+                    ));
                 }
             }
 
@@ -105,7 +109,9 @@ async fn handle_request(
         }
         None => {
             tracing::error!("got http request without Host header");
-            return Ok(crate::bad_request!("got http request without Host header"));
+            return Ok(ftnet_utils::bad_request!(
+                "got http request without Host header"
+            ));
         }
     };
 

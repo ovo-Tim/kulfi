@@ -16,7 +16,6 @@ mod client;
 mod config;
 pub mod control_server;
 mod counters;
-pub mod http;
 mod identity;
 pub mod peer_server;
 mod start;

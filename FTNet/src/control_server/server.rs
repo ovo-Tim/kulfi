@@ -76,7 +76,9 @@ async fn handle_request_(
         Some((first, _)) => first,
         None => {
             tracing::error!("got http request without Host header");
-            return Ok(ftnet::bad_request!("got http request without Host header"));
+            return Ok(ftnet_utils::bad_request!(
+                "got http request without Host header"
+            ));
         }
     };
 
@@ -126,11 +128,11 @@ async fn handle_request_(
         }
         Ok(WhatToDo::UnknownPeer) => {
             tracing::error!("unknown peer: {id}");
-            Ok(ftnet::server_error!("unknown peer"))
+            Ok(ftnet_utils::server_error!("unknown peer"))
         }
         Err(e) => {
             tracing::error!("proxy error: {e}");
-            Ok(ftnet::server_error!(
+            Ok(ftnet_utils::server_error!(
                 "failed to contact default identity service"
             ))
         }
