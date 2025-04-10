@@ -1,5 +1,3 @@
-use eyre::WrapErr;
-
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
     use clap::Parser;
@@ -22,24 +20,7 @@ async fn main() -> eyre::Result<()> {
 
         Command::HttpBridge { proxy_target, port } => {
             tracing::info!(port, proxy_target, verbose = ?cli.verbose, "Starting HTTP bridge.");
-
-            let (graceful_shutdown_tx, graceful_shutdown_rx) = tokio::sync::watch::channel(false);
-
-            tokio::spawn(async move {
-                skynet::http_bridge(port, graceful_shutdown_rx, proxy_target).await
-            });
-
-            tokio::signal::ctrl_c()
-                .await
-                .wrap_err_with(|| "failed to get ctrl-c signal handler")?;
-
-            graceful_shutdown_tx
-                .send(true)
-                .wrap_err_with(|| "failed to send graceful shutdown signal")?;
-
-            tracing::info!("Stopping HTTP bridge.");
-
-            Ok(())
+            skynet::http_bridge(proxy_target, port).await
         }
     } {
         tracing::error!("Error: {e}");

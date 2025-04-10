@@ -5,7 +5,6 @@
 extern crate self as skynet;
 
 mod expose_http;
-mod http;
 mod http_bridge;
 
 pub use expose_http::expose_http;

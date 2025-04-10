@@ -1,6 +1,28 @@
 static IROH_ENDPOINT: tokio::sync::OnceCell<iroh::Endpoint> = tokio::sync::OnceCell::const_new();
 
-pub async fn http_bridge(
+pub async fn http_bridge(proxy_target: Option<String>, port: u16) -> eyre::Result<()> {
+    use eyre::WrapErr;
+
+    let (graceful_shutdown_tx, graceful_shutdown_rx) = tokio::sync::watch::channel(false);
+
+    tokio::spawn(async move {
+        http_bridge_(port, graceful_shutdown_rx, proxy_target).await
+    });
+
+    tokio::signal::ctrl_c()
+        .await
+        .wrap_err_with(|| "failed to get ctrl-c signal handler")?;
+
+    graceful_shutdown_tx
+        .send(true)
+        .wrap_err_with(|| "failed to send graceful shutdown signal")?;
+
+    tracing::info!("Stopping HTTP bridge.");
+
+    Ok(())
+}
+
+async fn http_bridge_(
     port: u16,
     mut graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
     proxy_target: Option<String>,
@@ -124,7 +146,7 @@ async fn handle_request(
         peer_connections,
         Default::default(), /* RequestPatch */
     )
-    .await
+        .await
 }
 
 async fn new_iroh_endpoint() -> iroh::Endpoint {
