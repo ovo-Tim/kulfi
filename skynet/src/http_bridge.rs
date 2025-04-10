@@ -3,6 +3,7 @@ static IROH_ENDPOINT: tokio::sync::OnceCell<iroh::Endpoint> = tokio::sync::OnceC
 pub async fn http_bridge(
     port: u16,
     mut graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
+    proxy_target: Option<String>,
 ) -> eyre::Result<()> {
     use eyre::WrapErr;
 
@@ -26,9 +27,10 @@ pub async fn http_bridge(
                 let self_endpoint = IROH_ENDPOINT.get_or_init(new_iroh_endpoint).await.clone();
                 let graceful_shutdown_rx = graceful_shutdown_rx.clone();
                 let peer_connections = peer_connections.clone();
+                let proxy_target = proxy_target.clone();
                 match val {
                     Ok((stream, _addr)) => {
-                        tokio::spawn(async move { handle_connection(self_endpoint, stream, graceful_shutdown_rx, peer_connections).await });
+                        tokio::spawn(async move { handle_connection(self_endpoint, stream, graceful_shutdown_rx, peer_connections, proxy_target).await });
                     },
                     Err(e) => {
                         tracing::error!("failed to accept: {e:?}");
@@ -46,6 +48,7 @@ pub async fn handle_connection(
     stream: tokio::net::TcpStream,
     mut graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
     peer_connections: ftnet_utils::PeerConnections,
+    proxy_target: Option<String>,
 ) {
     let io = hyper_util::rt::TokioIo::new(stream);
 
@@ -58,7 +61,7 @@ pub async fn handle_connection(
         let conn = builder
             .serve_connection(
                 io,
-                hyper::service::service_fn(|r| handle_request(r, self_endpoint.clone(), peer_connections.clone())),
+                hyper::service::service_fn(|r| handle_request(r, self_endpoint.clone(), peer_connections.clone(), proxy_target.clone())),
             );
     }
 
@@ -77,6 +80,7 @@ async fn handle_request(
     r: hyper::Request<hyper::body::Incoming>,
     self_endpoint: iroh::Endpoint,
     peer_connections: ftnet_utils::PeerConnections,
+    proxy_target: Option<String>,
 ) -> ftnet_utils::http::ProxyResult {
     let peer_id = match r
         .headers()
@@ -90,7 +94,12 @@ async fn handle_request(
                 return Ok(crate::bad_request!("got http request with invalid peer id"));
             }
 
-            // TODO: check first == --proxy-target and return error if not.
+            if let Some(target) = proxy_target {
+                if first != target {
+                    tracing::error!(peer_id = %first, proxy_target = %target, "request for peer_id is not allowed");
+                    return Ok(crate::bad_request!("got http request with invalid peer id"));
+                }
+            }
 
             first.to_string()
         }

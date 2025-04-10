@@ -25,7 +25,9 @@ async fn main() -> eyre::Result<()> {
 
             let (graceful_shutdown_tx, graceful_shutdown_rx) = tokio::sync::watch::channel(false);
 
-            tokio::spawn(async move { skynet::http_bridge(port, graceful_shutdown_rx).await });
+            tokio::spawn(async move {
+                skynet::http_bridge(port, graceful_shutdown_rx, proxy_target).await
+            });
 
             tokio::signal::ctrl_c()
                 .await
