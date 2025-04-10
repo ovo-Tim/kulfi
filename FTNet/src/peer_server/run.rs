@@ -66,20 +66,9 @@ pub async fn handle_connection(
     use tokio_stream::StreamExt;
 
     tracing::info!("got connection from: {:?}", conn.remote_node_id());
-    let remote_node_id = match conn.remote_node_id() {
-        Ok(id) => id,
-        Err(e) => {
-            tracing::error!("could not read remote node id: {e}, closing connection");
-            // TODO: is this how we close the connection in error cases or do we send some error
-            //       and wait for other side to close the connection?
-            let e2 = conn.closed().await;
-            tracing::info!("connection closed: {e2}");
-            // TODO: send another error_code to indicate bad remote node id?
-            conn.close(0u8.into(), &[]);
-            return Err(eyre::anyhow!("could not read remote node id: {e}"));
-        }
-    };
-    let remote_id52 = ftnet_utils::public_key_to_id52(&remote_node_id);
+    let remote_id52 = ftnet_utils::get_remote_id52(&conn)
+        .await
+        .inspect_err(|e| tracing::error!("failed to get remote id: {e:?}"))?;
     tracing::info!("new client: {remote_id52}, waiting for bidirectional stream");
     loop {
         let client_pools = client_pools.clone();
@@ -139,7 +128,7 @@ pub async fn handle_connection(
                     &mut send,
                     recv,
                 )
-                .await
+                    .await
                 {
                     tracing::error!("failed to proxy http: {e:?}");
                 }
