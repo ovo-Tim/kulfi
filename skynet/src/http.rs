@@ -17,21 +17,21 @@ pub fn bad_request_(m: String) -> ProxyResponse {
 #[macro_export]
 macro_rules! server_error {
     ($($t:tt)*) => {{
-        crate::http::server_error_(format!($($t)*))
+        $crate::http::server_error_(format!($($t)*))
     }};
 }
 
 #[macro_export]
 macro_rules! not_found {
     ($($t:tt)*) => {{
-        crate::http::not_found_(format!($($t)*))
+        $crate::http::not_found_(format!($($t)*))
     }};
 }
 
 #[macro_export]
 macro_rules! bad_request {
     ($($t:tt)*) => {{
-        crate::http::bad_request_(format!($($t)*))
+        $crate::http::bad_request_(format!($($t)*))
     }};
 }
 
