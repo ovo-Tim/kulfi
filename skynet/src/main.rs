@@ -75,13 +75,13 @@ argument to specify a What To Do service that can be used to add access control.
         #[arg(
             long,
             short('t'),
-            help = "The id52 to which this bridge will forward incoming HTTP request. By default it fowards to every id52"
+            help = "The id52 to which this bridge will forward incoming HTTP request. By default it forwards to every id52."
         )]
         proxy_target: Option<String>,
         #[arg(
             long,
             short('p'),
-            help = "The port on which this bridge will listen for incoming http requests",
+            help = "The port on which this bridge will listen for incoming http requests.",
             default_value = "8080"
         )]
         port: u16,
