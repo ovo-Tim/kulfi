@@ -91,6 +91,7 @@ async fn handle_connection(
         let msg = serde_json::from_str::<ftnet_utils::Protocol>(&msg)
             .inspect_err(|e| tracing::error!("json error for {msg}: {e}"))?;
         tracing::info!("{remote_id52}: {msg:?}");
+        ftnet_utils::ack(&mut send).await?;
         match msg {
             ftnet_utils::Protocol::Identity => {
                 if let Err(e) = ftnet_utils::peer_to_http(

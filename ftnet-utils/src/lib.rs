@@ -42,3 +42,12 @@ pub async fn get_remote_id52(conn: &iroh::endpoint::Connection) -> eyre::Result<
 
     Ok(public_key_to_id52(&remote_node_id))
 }
+
+const ACK: &str = "ack";
+
+pub async fn ack(
+    send: &mut iroh::endpoint::SendStream,
+) -> eyre::Result<()> {
+    send.write_all(format!("{}\n", ACK).as_bytes()).await?;
+    Ok(())
+}

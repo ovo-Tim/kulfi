@@ -85,6 +85,7 @@ pub async fn handle_connection(
         let msg = serde_json::from_str::<Protocol>(&msg)
             .inspect_err(|e| tracing::error!("json error for {msg}: {e}"))?;
         tracing::info!("{remote_id52}: {msg:?}");
+        ftnet_utils::ack(&mut send).await?;
         match msg {
             Protocol::Quit => {
                 if !recv.read_buffer().is_empty() {
