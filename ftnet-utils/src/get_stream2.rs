@@ -190,10 +190,12 @@ async fn connection_manager_(
 
 async fn handle_request(
     conn: &iroh::endpoint::Connection,
-    _protocol: ftnet_utils::Protocol,
-    _reply_channel: ReplyChannel,
+    protocol: ftnet_utils::Protocol,
+    reply_channel: ReplyChannel,
 ) -> eyre::Result<()> {
-    let (_send, _recv) = match conn.open_bi().await {
+    use tokio_stream::StreamExt;
+
+    let (mut send, recv) = match conn.open_bi().await {
         Ok(v) => v,
         Err(e) => {
             tracing::error!("failed to open_bi: {e:?}");
@@ -201,5 +203,26 @@ async fn handle_request(
         }
     };
 
-    todo!()
+    send.write_all(&serde_json::to_vec(&protocol)?).await?;
+    send.write(b"\n").await?;
+    let mut recv = ftnet_utils::frame_reader(recv);
+
+    let msg = match recv.next().await {
+        Some(v) => v?,
+        None => {
+            tracing::error!("failed to read from incoming connection");
+            return Err(eyre::anyhow!("failed to read from incoming connection"));
+        }
+    };
+
+    if msg != ftnet_utils::ACK {
+        tracing::error!("failed to read ack: {msg:?}");
+        return Err(eyre::anyhow!("failed to read ack: {msg:?}"));
+    }
+
+    reply_channel.send(Ok((send, recv))).unwrap_or_else(|_| {
+        tracing::error!("failed to send reply");
+    });
+
+    Ok(())
 }
