@@ -43,11 +43,40 @@ pub async fn expose_tcp(host: String, port: u16) -> eyre::Result<()> {
 }
 
 async fn handle_connection(
-    _conn: iroh::endpoint::Connection,
-    _host: String,
-    _port: u16,
+    conn: iroh::endpoint::Connection,
+    host: String,
+    port: u16,
 ) -> eyre::Result<()> {
-    // tracing::info!("new client: {remote_id52}, waiting for bidirectional stream");
+    let remote_id52 = ftnet_utils::get_remote_id52(&conn)
+        .await
+        .inspect_err(|e| tracing::error!("failed to get remote id: {e:?}"))?;
 
-    todo!()
+    tracing::info!("new client: {remote_id52}, waiting for bidirectional stream");
+    loop {
+        let (mut send, recv, msg) = ftnet_utils::accept_bi(&conn)
+            .await
+            .inspect_err(|e| tracing::error!("failed to accept bidirectional stream: {e:?}"))?;
+        tracing::info!("{remote_id52}: {msg:?}");
+        match msg {
+            ftnet_utils::Protocol::Identity => {
+                if let Err(e) =
+                    ftnet_utils::tcp(&remote_id52, &format!("{host}:{port}"), &mut send, recv).await
+                {
+                    tracing::error!("failed to proxy http: {e:?}");
+                }
+            }
+            _ => {
+                tracing::error!("unsupported protocol: {msg:?}");
+                send.write_all(b"error: unsupported protocol\n").await?;
+                break;
+            }
+        };
+        tracing::info!("closing send stream");
+        send.finish()?;
+    }
+
+    let e = conn.closed().await;
+    tracing::info!("connection closed by peer: {e}");
+    conn.close(0u8.into(), &[]);
+    Ok(())
 }

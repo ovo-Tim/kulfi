@@ -16,15 +16,13 @@ use tokio::io::AsyncWriteExt;
 /// to tcp connection's `recv` and `send` side respectively.
 pub async fn tcp(
     _remote_id: &str,
-    _id: &str,
+    addr: &str,
     send: &mut iroh::endpoint::SendStream,
     recv: ftnet_utils::FrameReader,
 ) -> eyre::Result<()> {
     // todo: call identity server (fastn server running on behalf of identity
     //       /api/v1/identity/{id}/tcp/ with remote_id and id and get the ip:port
     //       to connect to.
-    let addr = "127.0.0.1:8000";
-
     let stream = tokio::net::TcpStream::connect(addr).await?;
     let (mut tcp_recv, tcp_send) = tokio::io::split(stream);
 

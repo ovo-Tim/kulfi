@@ -1,5 +1,3 @@
-use ftnet_utils::get_remote_id52;
-
 pub async fn expose_http(host: String, port: u16) -> eyre::Result<()> {
     use eyre::WrapErr;
     use ftnet_utils::SecretStore;
@@ -51,7 +49,7 @@ async fn handle_connection(
     host: String,
     port: u16,
 ) -> eyre::Result<()> {
-    let remote_id52 = get_remote_id52(&conn)
+    let remote_id52 = ftnet_utils::get_remote_id52(&conn)
         .await
         .inspect_err(|e| tracing::error!("failed to get remote id: {e:?}"))?;
 
