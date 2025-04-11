@@ -1,9 +1,8 @@
-use ftnet_utils::SecretStore;
-
 pub async fn expose_http(host: String, port: u16) -> eyre::Result<()> {
     use eyre::WrapErr;
+    use ftnet_utils::SecretStore;
 
-    let id52 = read_or_create_key().await?;
+    let id52 = ftnet_utils::read_or_create_key().await?;
     let secret_key = ftnet_utils::KeyringSecretStore::new(id52.clone()).get()?;
     let ep = ftnet_utils::get_endpoint(secret_key)
         .await
@@ -42,25 +41,6 @@ pub async fn expose_http(host: String, port: u16) -> eyre::Result<()> {
 
     ep.close().await;
     Ok(())
-}
-
-async fn read_or_create_key() -> eyre::Result<String> {
-    use ftnet_utils::SecretStore;
-
-    match tokio::fs::read_to_string(".skynet.id52").await {
-        Ok(v) => Ok(v),
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
-            tracing::info!("no key found, creating new one");
-            let public_key = ftnet_utils::KeyringSecretStore::generate(rand::rngs::OsRng)?;
-            let public_key = ftnet_utils::public_key_to_id52(&public_key);
-            tokio::fs::write(".skynet.id52", public_key.as_str()).await?;
-            Ok(public_key)
-        }
-        Err(e) => {
-            tracing::error!("failed to read key: {e}");
-            Err(e.into())
-        }
-    }
 }
 
 async fn handle_connection(

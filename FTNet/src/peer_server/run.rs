@@ -127,7 +127,7 @@ pub async fn handle_connection(
                     &mut send,
                     recv,
                 )
-                .await
+                    .await
                 {
                     tracing::error!("failed to proxy http: {e:?}");
                 }
@@ -135,7 +135,7 @@ pub async fn handle_connection(
             Protocol::Http { .. } => todo!(),
             Protocol::Socks5 { .. } => todo!(),
             Protocol::Tcp { id } => {
-                if let Err(e) = ftnet::peer_server::tcp(&remote_id52, &id, &mut send, recv).await {
+                if let Err(e) = ftnet_utils::tcp(&remote_id52, &id, &mut send, recv).await {
                     tracing::error!("tcp error: {e}");
                 }
             }

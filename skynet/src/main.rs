@@ -17,10 +17,17 @@ async fn main() -> eyre::Result<()> {
             tracing::info!(port, host, verbose = ?cli.verbose, "Exposing HTTP service on FTNet.");
             skynet::expose_http(host, port).await
         }
-
         Command::HttpBridge { proxy_target, port } => {
             tracing::info!(port, proxy_target, verbose = ?cli.verbose, "Starting HTTP bridge.");
             skynet::http_bridge(proxy_target, port).await
+        }
+        Command::ExposeTcp { port, host } => {
+            tracing::info!(port, host, verbose = ?cli.verbose, "Exposing TCP service on FTNet.");
+            skynet::expose_tcp(host, port).await
+        }
+        t => {
+            tracing::error!("Unsupported command: {t:?}");
+            return Err(eyre::eyre!("Unsupported command: {t:?}"));
         }
     } {
         tracing::error!("Error: {e}");
@@ -81,8 +88,26 @@ argument to specify a What To Do service that can be used to add access control.
         #[arg(
             long,
             short('p'),
-            help = "The port on which this bridge will listen for incoming http requests.",
+            help = "The port on which this bridge will listen for incoming HTTP requests.",
             default_value = "8080"
+        )]
+        port: u16,
+    },
+    ExposeTcp {
+        port: u16,
+        #[arg(
+            long,
+            default_value = "127.0.0.1",
+            help = "Host serving the TCP service."
+        )]
+        host: String,
+    },
+    TcpBridge {
+        #[arg(help = "The id52 to which this bridge will forward incoming TCP request.")]
+        proxy_target: String,
+        #[arg(
+            help = "The port on which this bridge will listen for incoming TCP requests.",
+            default_value = "8081"
         )]
         port: u16,
     },
