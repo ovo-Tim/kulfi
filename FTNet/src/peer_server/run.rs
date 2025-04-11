@@ -2,11 +2,9 @@ pub async fn run(
     ep: iroh::Endpoint,
     fastn_port: u16,
     client_pools: ftnet_utils::HttpConnectionPools,
-    peer_connections: ftnet_utils::PeerStreamSenders,
     _graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
 ) -> eyre::Result<()> {
     loop {
-        let peer_connections = peer_connections.clone();
         let conn = match ep.accept().await {
             Some(conn) => conn,
             None => {
@@ -24,10 +22,10 @@ pub async fn run(
                     return;
                 }
             };
-            if let Err(e) = enqueue_connection(conn.clone(), peer_connections).await {
-                tracing::error!("failed to enqueue connection: {:?}", e);
-                return;
-            }
+            // if let Err(e) = enqueue_connection(conn.clone(), peer_connections).await {
+            //     tracing::error!("failed to enqueue connection: {:?}", e);
+            //     return;
+            // }
             if let Err(e) = handle_connection(conn, client_pools, fastn_port).await {
                 tracing::error!("connection error3: {:?}", e);
             }
@@ -39,23 +37,23 @@ pub async fn run(
     Ok(())
 }
 
-async fn enqueue_connection(
-    conn: iroh::endpoint::Connection,
-    peer_connections: ftnet_utils::PeerStreamSenders,
-) -> eyre::Result<()> {
-    let public_key = match conn.remote_node_id() {
-        Ok(v) => v,
-        Err(e) => {
-            tracing::error!("can not get remote id: {e:?}");
-            return Err(eyre::anyhow!("can not get remote id: {e:?}"));
-        }
-    };
-    let id = ftnet_utils::public_key_to_id52(&public_key);
-    let mut connections = peer_connections.lock().await;
-    connections.insert(id.clone(), conn);
-
-    Ok(())
-}
+// async fn enqueue_connection(
+//     conn: iroh::endpoint::Connection,
+//     peer_connections: ftnet_utils::get_stream2::PeerStreamSenders,
+// ) -> eyre::Result<()> {
+//     let public_key = match conn.remote_node_id() {
+//         Ok(v) => v,
+//         Err(e) => {
+//             tracing::error!("can not get remote id: {e:?}");
+//             return Err(eyre::anyhow!("can not get remote id: {e:?}"));
+//         }
+//     };
+//     let id = ftnet_utils::public_key_to_id52(&public_key);
+//     let mut connections = peer_connections.lock().await;
+//     connections.insert(id.clone(), conn);
+//
+//     Ok(())
+// }
 
 pub async fn handle_connection(
     conn: iroh::endpoint::Connection,

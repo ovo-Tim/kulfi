@@ -10,7 +10,7 @@ pub async fn start(_fg: bool, data_dir: std::path::PathBuf, control_port: u16) -
     use eyre::WrapErr;
 
     let client_pools = ftnet_utils::HttpConnectionPools::default();
-    let peer_connections = ftnet_utils::PeerStreamSenders::default();
+    let peer_connections = ftnet_utils::get_stream2::PeerStreamSenders::default();
 
     let config = ftnet::Config::read(&data_dir, client_pools.clone())
         .await
@@ -45,14 +45,10 @@ pub async fn start(_fg: bool, data_dir: std::path::PathBuf, control_port: u16) -
 
         let graceful_shutdown_rx = graceful_shutdown_rx.clone();
         let id_map = Arc::clone(&id_map);
-        let peer_connections = Arc::clone(&peer_connections);
         let data_dir = data_dir.clone();
         tokio::spawn(async move {
             let public_key = identity.public_key;
-            if let Err(e) = identity
-                .run(graceful_shutdown_rx, id_map, peer_connections, &data_dir)
-                .await
-            {
+            if let Err(e) = identity.run(graceful_shutdown_rx, id_map, &data_dir).await {
                 tracing::error!("failed to run identity: {public_key}: {e:?}");
             }
         });

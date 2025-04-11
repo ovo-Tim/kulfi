@@ -7,7 +7,6 @@ impl ftnet::Identity {
         self,
         graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
         id_map: ftnet_utils::IDMap,
-        peer_connections: ftnet_utils::PeerStreamSenders,
         data_dir: &std::path::Path,
     ) -> eyre::Result<()> {
         let port = start_fastn(
@@ -33,14 +32,7 @@ impl ftnet::Identity {
             id_map.lock().await.push((self.id52, (port, ep.clone())));
         }
 
-        ftnet::peer_server::run(
-            ep,
-            port,
-            self.client_pools.clone(),
-            peer_connections,
-            graceful_shutdown_rx,
-        )
-        .await
+        ftnet::peer_server::run(ep, port, self.client_pools.clone(), graceful_shutdown_rx).await
     }
 }
 

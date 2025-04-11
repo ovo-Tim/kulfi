@@ -3,7 +3,7 @@ pub async fn handle_connection(
     mut graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
     id_map: ftnet_utils::IDMap,
     client_pools: ftnet_utils::HttpConnectionPools,
-    peer_connections: ftnet_utils::PeerStreamSenders,
+    peer_connections: ftnet_utils::get_stream2::PeerStreamSenders,
 ) {
     ftnet::OPEN_CONTROL_CONNECTION_COUNT.incr();
     ftnet::CONTROL_CONNECTION_COUNT.incr();
@@ -52,7 +52,7 @@ async fn handle_request(
     r: hyper::Request<hyper::body::Incoming>,
     id_map: ftnet_utils::IDMap,
     client_pools: ftnet_utils::HttpConnectionPools,
-    peer_connections: ftnet_utils::PeerStreamSenders,
+    peer_connections: ftnet_utils::get_stream2::PeerStreamSenders,
 ) -> ftnet_utils::http::ProxyResult {
     ftnet::CONTROL_REQUEST_COUNT.incr();
     ftnet::IN_FLIGHT_REQUESTS.incr();
@@ -65,7 +65,7 @@ async fn handle_request_(
     r: hyper::Request<hyper::body::Incoming>,
     id_map: ftnet_utils::IDMap,
     client_pools: ftnet_utils::HttpConnectionPools,
-    peer_connections: ftnet_utils::PeerStreamSenders,
+    peer_connections: ftnet_utils::get_stream2::PeerStreamSenders,
 ) -> ftnet_utils::http::ProxyResult {
     let id = match r
         .headers()

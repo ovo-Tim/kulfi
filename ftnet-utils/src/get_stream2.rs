@@ -8,8 +8,6 @@ pub type PeerStreamSenders = std::sync::Arc<
 type Stream = (iroh::endpoint::SendStream, ftnet_utils::FrameReader);
 type StreamResult = eyre::Result<Stream>;
 type ReplyChannel = tokio::sync::oneshot::Sender<StreamResult>;
-#[expect(unused)]
-type ReplyChannelReceiver = tokio::sync::oneshot::Receiver<StreamResult>;
 type RemoteID52 = String;
 type SelfID52 = String;
 
@@ -27,7 +25,6 @@ type StreamRequestReceiver = tokio::sync::mpsc::Receiver<StreamRequest>;
 ///
 /// for managing connection, we use a spawned task. this task listens for incoming stream requests
 /// and manages the connection as part of the task local data.
-#[expect(unused)]
 pub async fn get_stream(
     self_endpoint: iroh::Endpoint,
     protocol: ftnet_utils::Protocol,

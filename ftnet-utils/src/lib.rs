@@ -2,7 +2,7 @@ extern crate self as ftnet_utils;
 
 pub mod get_endpoint;
 mod get_stream;
-mod get_stream2;
+pub mod get_stream2;
 pub mod http;
 mod http_connection_manager;
 mod http_to_peer;

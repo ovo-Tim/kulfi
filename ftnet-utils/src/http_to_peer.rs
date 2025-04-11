@@ -2,7 +2,7 @@ pub async fn http_to_peer<T>(
     req: hyper::Request<T>,
     self_endpoint: iroh::Endpoint,
     remote_node_id52: &str,
-    peer_connections: ftnet_utils::PeerStreamSenders,
+    peer_connections: ftnet_utils::get_stream2::PeerStreamSenders,
     _patch: ftnet_sdk::RequestPatch,
 ) -> ftnet_utils::http::ProxyResult
 where
@@ -15,10 +15,10 @@ where
 
     tracing::info!("peer_proxy: {remote_node_id52}");
 
-    let (mut send, mut recv) = ftnet_utils::get_stream(
+    let (mut send, mut recv) = ftnet_utils::get_stream2::get_stream(
         self_endpoint,
         ftnet_utils::Protocol::Identity,
-        remote_node_id52,
+        remote_node_id52.to_string(),
         peer_connections.clone(),
     )
     .await?;
@@ -44,7 +44,6 @@ where
     let r: ftnet_utils::http::Response = match recv.next().await {
         Some(Ok(v)) => serde_json::from_str(&v)?,
         Some(Err(e)) => {
-            ftnet_utils::forget_connection(remote_node_id52, peer_connections.clone()).await?;
             tracing::error!("failed to get bidirectional stream: {e:?}");
             return Err(eyre::anyhow!("failed to get bidirectional stream: {e:?}"));
         }
@@ -64,7 +63,6 @@ where
     while let Some(v) = match recv.read_chunk(1024 * 64, true).await {
         Ok(v) => Ok(v),
         Err(e) => {
-            ftnet_utils::forget_connection(remote_node_id52, peer_connections.clone()).await?;
             tracing::error!("error reading chunk: {e:?}");
             Err(eyre::anyhow!("read_chunk error: {e:?}"))
         }
