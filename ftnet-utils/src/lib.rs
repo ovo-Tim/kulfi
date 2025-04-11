@@ -2,7 +2,6 @@ extern crate self as ftnet_utils;
 
 pub mod get_endpoint;
 mod get_stream;
-pub mod get_stream2;
 pub mod http;
 mod http_connection_manager;
 mod http_to_peer;
@@ -15,7 +14,7 @@ mod utils;
 pub use secret::KeyringSecretStore;
 
 pub use get_endpoint::get_endpoint;
-pub use get_stream::{PeerStreamSenders, forget_connection, get_stream};
+pub use get_stream::{PeerStreamSenders, get_stream};
 pub use http::ProxyResult;
 pub use http_connection_manager::{HttpConnectionManager, HttpConnectionPool, HttpConnectionPools};
 pub use http_to_peer::http_to_peer;

@@ -70,7 +70,7 @@ pub async fn start(
     mut graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
     id_map: ftnet_utils::IDMap,
     client_pools: ftnet_utils::HttpConnectionPools,
-    peer_connections: ftnet_utils::get_stream2::PeerStreamSenders,
+    peer_connections: ftnet_utils::PeerStreamSenders,
 ) -> eyre::Result<()> {
     use eyre::WrapErr;
 

@@ -2,119 +2,224 @@
 ///
 /// when a connection is broken, etc., we remove the connection from the map.
 pub type PeerStreamSenders = std::sync::Arc<
-    tokio::sync::Mutex<std::collections::HashMap<String, iroh::endpoint::Connection>>,
+    tokio::sync::Mutex<std::collections::HashMap<(SelfID52, RemoteID52), StreamRequestSender>>,
 >;
 
-/// get_stream takes the protocol as well, as every outgoing bi-direction stream must have a
-/// protocol. get_stream tries to check if the bidirectional stream is healthy, as simply opening
+type Stream = (iroh::endpoint::SendStream, ftnet_utils::FrameReader);
+type StreamResult = eyre::Result<Stream>;
+type ReplyChannel = tokio::sync::oneshot::Sender<StreamResult>;
+type RemoteID52 = String;
+type SelfID52 = String;
+
+type StreamRequest = (ftnet_utils::Protocol, ReplyChannel);
+
+type StreamRequestSender = tokio::sync::mpsc::Sender<StreamRequest>;
+type StreamRequestReceiver = tokio::sync::mpsc::Receiver<StreamRequest>;
+
+/// get_stream tries to check if the bidirectional stream is healthy, as simply opening
 /// a bidirectional stream, or even simply writing on it does not guarantee that the stream is
-/// open. only the read request times out to tell us something is wrong.
+/// open. only the read request times out to tell us something is wrong. this is why get_stream
+/// takes the protocol as well, as every outgoing bi-direction stream must have a protocol. it
+/// sends the protocol and waits for an ack. if the ack is not received within a certain time, it
+/// assumes the connection is not healthy, and tries to recreate the connection.
 ///
-/// so solve this, we send a protocol message on the stream, and wait for an acknowledgement. if we
-/// do not get the ack almost right away on a connection that we got from the cache, we assume the
-/// connection is not healthy, and we try to recreate the connection. if it is a fresh connection,
-/// then we use a longer timeout.
+/// for managing connection, we use a spawned task. this task listens for incoming stream requests
+/// and manages the connection as part of the task local data.
 pub async fn get_stream(
     self_endpoint: iroh::Endpoint,
     protocol: ftnet_utils::Protocol,
-    remote_node_id52: &str,
-    peer_connections: ftnet_utils::PeerStreamSenders,
+    remote_node_id52: RemoteID52,
+    peer_stream_senders: PeerStreamSenders,
 ) -> eyre::Result<(iroh::endpoint::SendStream, ftnet_utils::FrameReader)> {
-    use tokio_stream::StreamExt;
+    let stream_request_sender =
+        get_stream_request_sender(self_endpoint, remote_node_id52, peer_stream_senders).await;
 
-    tracing::trace!("getting stream");
-    let conn = get_connection(self_endpoint, remote_node_id52, peer_connections.clone()).await?;
-    // TODO: this is where we can check if the connection is healthy or not. if we fail to get the
-    //       bidirectional stream, probably we should try to recreate connection.
-    tracing::trace!("getting stream - got connection");
-    let (mut send, recv) = match conn.open_bi().await {
-        Ok(v) => v,
-        Err(e) => {
-            tracing::trace!("get-stream forgetting connection: {e}");
-            forget_connection(remote_node_id52, peer_connections).await?;
-            tracing::error!("failed to get bidirectional stream: {e:?}");
-            return Err(eyre::anyhow!("failed to get bidirectional stream: {e:?}"));
-        }
+    let (reply_channel, receiver) = tokio::sync::oneshot::channel();
+
+    stream_request_sender
+        .send((protocol, reply_channel))
+        .await?;
+
+    receiver.await?
+}
+
+async fn get_stream_request_sender(
+    self_endpoint: iroh::Endpoint,
+    remote_node_id52: RemoteID52,
+    peer_stream_senders: PeerStreamSenders,
+) -> StreamRequestSender {
+    let self_id52 = ftnet_utils::public_key_to_id52(&self_endpoint.node_id());
+    let mut senders = peer_stream_senders.lock().await;
+
+    if let Some(sender) = senders.get(&(self_id52.clone(), remote_node_id52.clone())) {
+        return sender.clone();
+    }
+
+    // TODO: figure out if the mpsc::channel is the right size
+    let (sender, receiver) = tokio::sync::mpsc::channel(1);
+    senders.insert(
+        (self_id52.clone(), remote_node_id52.clone()),
+        sender.clone(),
+    );
+    drop(senders);
+
+    tokio::spawn(async move {
+        connection_manager(
+            receiver,
+            self_id52,
+            self_endpoint,
+            remote_node_id52,
+            peer_stream_senders,
+        )
+        .await;
+    });
+
+    sender
+}
+
+async fn connection_manager(
+    mut receiver: StreamRequestReceiver,
+    self_id52: SelfID52,
+    self_endpoint: iroh::Endpoint,
+    remote_node_id52: RemoteID52,
+    peer_stream_senders: PeerStreamSenders,
+) {
+    let e = match connection_manager_(&mut receiver, self_endpoint, remote_node_id52.clone()).await
+    {
+        Ok(()) => return,
+        Err(e) => e,
     };
 
-    tracing::info!("got stream");
-    send.write_all(&serde_json::to_vec(&protocol)?).await?;
-    send.write(b"\n").await?;
+    // what is our error handling strategy?
+    //
+    // since an error has just occurred on our connection, it is best to cancel all concurrent
+    // tasks that depend on this connection, and let the next task recreate the connection, this
+    // way things are clean.
+    //
+    // we can try to keep the concurrent tasks open, and retry connection, but it increases the
+    // complexity of implementation, and it is not worth it for now.
+    //
+    // also note that connection_manager() and it's caller, get_stream(), are called to create the
+    // initial stream only, this error handling strategy will work for concurrent requests that are
+    // waiting for the stream to be created. the tasks that already got the stream will not be
+    // affected by this. tho, since something wrong has happened with the connection, they will
+    // eventually fail too.
+    tracing::error!("connection manager worker error: {e:?}");
 
-    let mut recv = ftnet_utils::frame_reader(recv);
+    // once we close the receiver, any tasks that have gotten access to the corresponding sender
+    // will fail when sending.
+    receiver.close();
 
-    // TODO: use tokio::select!{} to implement timeout here, resilient
-    match recv.next().await {
-        Some(Ok(v)) => {
-            if v != ftnet_utils::ACK {
-                forget_connection(remote_node_id52, peer_connections).await?;
-                eprintln!(
-                    "got unexpected message: {v:?}, expected {}",
-                    ftnet_utils::ACK
-                );
-                return Err(eyre::anyhow!("got unexpected message: {v:?}"));
-            }
-        }
-        Some(Err(e)) => {
-            forget_connection(remote_node_id52, peer_connections).await?;
-            tracing::error!("failed to get bidirectional stream: {e:?}");
-            return Err(eyre::anyhow!("failed to get bidirectional stream: {e:?}"));
-        }
-        None => {
-            tracing::error!("failed to read from incoming connection");
-            return Err(eyre::anyhow!("failed to read from incoming connection"));
+    // send an error to all the tasks that are waiting for stream for this receiver.
+    while let Some((_protocol, reply_channel)) = receiver.recv().await {
+        if reply_channel
+            .send(Err(eyre::anyhow!("failed to create connection: {e:?}")))
+            .is_err()
+        {
+            tracing::error!("failed to send error reply: {e:?}");
         }
     }
 
-    Ok((send, recv))
+    // cleanup the peer_stream_senders map, so no future tasks will try to use this.
+    let mut senders = peer_stream_senders.lock().await;
+    senders.remove(&(self_id52.clone(), remote_node_id52.clone()));
 }
 
-pub async fn forget_connection(
-    remote_node_id52: &str,
-    peer_connections: ftnet_utils::PeerStreamSenders,
-) -> eyre::Result<()> {
-    tracing::trace!("forgetting connection");
-    let mut connections = peer_connections.lock().await;
-    connections.remove(remote_node_id52);
-    tracing::trace!("forgot connection");
-    Ok(())
-}
-
-async fn get_connection(
+async fn connection_manager_(
+    receiver: &mut StreamRequestReceiver,
     self_endpoint: iroh::Endpoint,
-    remote_node_id52: &str,
-    peer_connections: ftnet_utils::PeerStreamSenders,
-) -> eyre::Result<iroh::endpoint::Connection> {
-    tracing::trace!("getting connections lock");
-    let connections = peer_connections.lock().await;
-    tracing::trace!("got connections lock");
-    let connection = connections.get(remote_node_id52).map(ToOwned::to_owned);
-
-    // we drop the connections mutex guard so that we do not hold lock across await point.
-    drop(connections);
-
-    if let Some(conn) = connection {
-        return Ok(conn);
-    }
-
+    remote_node_id52: RemoteID52,
+) -> eyre::Result<()> {
     let conn = match self_endpoint
         .connect(
-            ftnet_utils::id52_to_public_key(remote_node_id52)?,
+            ftnet_utils::id52_to_public_key(&remote_node_id52)?,
             ftnet_utils::APNS_IDENTITY,
         )
         .await
     {
-        Ok(conn) => conn,
+        Ok(v) => v,
         Err(e) => {
             tracing::error!("failed to create connection: {e:?}");
             return Err(eyre::anyhow!("failed to create connection: {e:?}"));
         }
     };
 
-    tracing::trace!("storing connection");
-    let mut connections = peer_connections.lock().await;
-    connections.insert(remote_node_id52.to_string(), conn.clone());
-    tracing::trace!("stored connection");
+    // TODO: if we do not get any task on receiver, we should send ping pong for the keep alive
+    //       duration. hint: use tokio::select!{} here
+    while let Some((protocol, reply_channel)) = receiver.recv().await {
+        // is this a good idea to serialize this part? if 10 concurrent requests come in, we will
+        // handle each one sequentially. the other alternative is to spawn a task for each request.
+        // so which is better?
+        //
+        // in general, if we do it in parallel via spawning, we will have better throughput.
+        //
+        // and we are not worried about having too many concurrent tasks, tho iroh has a limit on
+        // concurrent tasks[1], with a default of 100[2]. it is actually a todo to find out what
+        // happens when we hit this limit, do they handle it by queueing the tasks, or do they
+        // return an error. if they queue then we wont have to implement queue logic.
+        //
+        // [1]: https://docs.rs/iroh/0.34.1/iroh/endpoint/struct.TransportConfig.html#method.max_concurrent_bidi_streams
+        // [2]: https://docs.rs/iroh-quinn-proto/0.13.0/src/iroh_quinn_proto/config/transport.rs.html#354
+        //
+        // but all that is besides the point, we are worried about resilience right now, not
+        // throughput per se (throughput is secondary goal, resilience primary).
+        //
+        // say we have 10 concurrent requests and lets say if we spawned a task for each, what
+        // happens in error case? say connection failed, the device switched from wifi to 4g, or
+        // whatever? in the handler task, we are putting a timeout on the read. in the serial case
+        // the first request will timeout, and all subsequent requests will get immediately an
+        // error. its predictable, its clean.
+        //
+        // if the tasks were spawned, each will timeout independently.
+        //
+        // we can also no longer rely on this function, connection_manager_, returning an error for
+        // them, so our connection_handler strategy will interfere, we would have read more requests
+        // off of receiver.
+        //
+        // do note that this is not a clear winner problem, this is a tradeoff, we lose throughput,
+        // as in best case scenario, 10 concurrent tasks will be better. we will have to revisit
+        // this in future when we are performance optimising things.
+        handle_request(&conn, protocol, reply_channel).await?;
+    }
 
-    Ok(conn)
+    Ok(())
+}
+
+async fn handle_request(
+    conn: &iroh::endpoint::Connection,
+    protocol: ftnet_utils::Protocol,
+    reply_channel: ReplyChannel,
+) -> eyre::Result<()> {
+    use tokio_stream::StreamExt;
+
+    let (mut send, recv) = match conn.open_bi().await {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("failed to open_bi: {e:?}");
+            return Err(eyre::anyhow!("failed to open_bi: {e:?}"));
+        }
+    };
+
+    send.write_all(&serde_json::to_vec(&protocol)?).await?;
+    send.write(b"\n").await?;
+    let mut recv = ftnet_utils::frame_reader(recv);
+
+    let msg = match recv.next().await {
+        Some(v) => v?,
+        None => {
+            tracing::error!("failed to read from incoming connection");
+            return Err(eyre::anyhow!("failed to read from incoming connection"));
+        }
+    };
+
+    if msg != ftnet_utils::ACK {
+        tracing::error!("failed to read ack: {msg:?}");
+        return Err(eyre::anyhow!("failed to read ack: {msg:?}"));
+    }
+
+    reply_channel.send(Ok((send, recv))).unwrap_or_else(|_| {
+        tracing::error!("failed to send reply");
+    });
+
+    Ok(())
 }

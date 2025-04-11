@@ -2,7 +2,7 @@ pub async fn http_to_peer<T>(
     req: hyper::Request<T>,
     self_endpoint: iroh::Endpoint,
     remote_node_id52: &str,
-    peer_connections: ftnet_utils::get_stream2::PeerStreamSenders,
+    peer_connections: ftnet_utils::PeerStreamSenders,
     _patch: ftnet_sdk::RequestPatch,
 ) -> ftnet_utils::http::ProxyResult
 where
@@ -15,7 +15,7 @@ where
 
     tracing::info!("peer_proxy: {remote_node_id52}");
 
-    let (mut send, mut recv) = ftnet_utils::get_stream2::get_stream(
+    let (mut send, mut recv) = ftnet_utils::get_stream(
         self_endpoint,
         ftnet_utils::Protocol::Identity,
         remote_node_id52.to_string(),
