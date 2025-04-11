@@ -8,23 +8,23 @@ mod http_to_peer;
 mod peer_to_http;
 pub mod protocol;
 mod secret;
-mod utils;
 mod tcp;
+mod utils;
 
 #[cfg(feature = "keyring")]
 pub use secret::KeyringSecretStore;
 
 pub use get_endpoint::get_endpoint;
-pub use get_stream::{get_stream, PeerStreamSenders};
+pub use get_stream::{PeerStreamSenders, get_stream};
 pub use http::ProxyResult;
 pub use http_connection_manager::{HttpConnectionManager, HttpConnectionPool, HttpConnectionPools};
 pub use http_to_peer::http_to_peer;
 pub use peer_to_http::peer_to_http;
-pub use protocol::{Protocol, APNS_IDENTITY};
-pub use secret::{read_or_create_key, SecretStore};
+pub use protocol::{APNS_IDENTITY, Protocol};
+pub use secret::{SecretStore, read_or_create_key};
 pub use tcp::tcp;
 pub use utils::{
-    ack, frame_reader, get_remote_id52, id52_to_public_key, public_key_to_id52, FrameReader,
+    FrameReader, ack, frame_reader, get_remote_id52, id52_to_public_key, public_key_to_id52,
 };
 
 /// IDMap stores the fastn port and the endpoint for every identity

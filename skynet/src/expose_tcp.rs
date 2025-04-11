@@ -8,7 +8,9 @@ pub async fn expose_tcp(host: String, port: u16) -> eyre::Result<()> {
         .await
         .wrap_err_with(|| "failed to bind to iroh network")?;
 
-    println!("Connect to {port} by running `skynet tcp-bridge {id52} <some-port>` from any machine.", );
+    println!(
+        "Connect to {port} by running `skynet tcp-bridge {id52} <some-port>` from any machine.",
+    );
 
     loop {
         let conn = match ep.accept().await {
@@ -29,9 +31,7 @@ pub async fn expose_tcp(host: String, port: u16) -> eyre::Result<()> {
                     return;
                 }
             };
-            if let Err(e) =
-                handle_connection(conn, host, port).await
-            {
+            if let Err(e) = handle_connection(conn, host, port).await {
                 tracing::error!("connection error3: {:?}", e);
             }
             tracing::info!("connection handled in {:?}", start.elapsed());
@@ -41,7 +41,6 @@ pub async fn expose_tcp(host: String, port: u16) -> eyre::Result<()> {
     ep.close().await;
     Ok(())
 }
-
 
 async fn handle_connection(
     _conn: iroh::endpoint::Connection,
