@@ -1,7 +1,7 @@
 impl ftnet::Config {
     pub async fn identities(
         &self,
-        client_pools: ftnet_utils::ConnectionPools,
+        client_pools: ftnet_utils::HttpConnectionPools,
     ) -> eyre::Result<Vec<ftnet::Identity>> {
         use eyre::WrapErr;
 

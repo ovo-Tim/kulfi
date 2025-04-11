@@ -1,6 +1,6 @@
 pub async fn peer_to_http(
     addr: &str,
-    client_pools: ftnet_utils::ConnectionPools,
+    client_pools: ftnet_utils::HttpConnectionPools,
     send: &mut iroh::endpoint::SendStream,
     mut recv: ftnet_utils::FrameReader,
 ) -> eyre::Result<()> {
@@ -101,8 +101,8 @@ pub async fn peer_to_http(
 
 async fn get_pool(
     addr: &str,
-    client_pools: ftnet_utils::ConnectionPools,
-) -> eyre::Result<bb8::Pool<ftnet_utils::ConnectionManager>> {
+    client_pools: ftnet_utils::HttpConnectionPools,
+) -> eyre::Result<bb8::Pool<ftnet_utils::HttpConnectionManager>> {
     tracing::trace!("get pool called");
     let mut pools = client_pools.lock().await;
 
@@ -115,7 +115,7 @@ async fn get_pool(
             tracing::debug!("creating new pool for {addr}");
 
             let pool = bb8::Pool::builder()
-                .build(ftnet_utils::ConnectionManager::new(addr.to_string()))
+                .build(ftnet_utils::HttpConnectionManager::new(addr.to_string()))
                 .await?;
 
             pools.insert(addr.to_string(), pool.clone());

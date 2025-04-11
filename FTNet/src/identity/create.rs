@@ -27,7 +27,7 @@ impl ftnet::Identity {
     #[tracing::instrument(skip(client_pools))]
     pub async fn create(
         identities_folder: &std::path::Path,
-        client_pools: ftnet_utils::ConnectionPools,
+        client_pools: ftnet_utils::HttpConnectionPools,
     ) -> eyre::Result<Self> {
         use eyre::WrapErr;
         use ftnet_utils::SecretStore;

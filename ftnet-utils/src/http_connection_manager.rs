@@ -1,12 +1,12 @@
-pub type ConnectionPool = bb8::Pool<ConnectionManager>;
-pub type ConnectionPools =
-    std::sync::Arc<tokio::sync::Mutex<std::collections::HashMap<String, ConnectionPool>>>;
+pub type HttpConnectionPool = bb8::Pool<HttpConnectionManager>;
+pub type HttpConnectionPools =
+    std::sync::Arc<tokio::sync::Mutex<std::collections::HashMap<String, HttpConnectionPool>>>;
 
-pub struct ConnectionManager {
+pub struct HttpConnectionManager {
     addr: String,
 }
 
-impl ConnectionManager {
+impl HttpConnectionManager {
     pub fn new(addr: String) -> Self {
         Self { addr }
     }
@@ -38,7 +38,7 @@ impl ConnectionManager {
     }
 }
 
-impl bb8::ManageConnection for ConnectionManager {
+impl bb8::ManageConnection for HttpConnectionManager {
     type Connection = hyper::client::conn::http1::SendRequest<
         http_body_util::combinators::BoxBody<hyper::body::Bytes, hyper::Error>,
     >;

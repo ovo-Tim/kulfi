@@ -15,8 +15,13 @@ where
 
     tracing::info!("peer_proxy: {remote_node_id52}");
 
-    let (mut send, mut recv) =
-        ftnet_utils::get_stream(self_endpoint, ftnet_utils::Protocol::Identity, remote_node_id52, peer_connections.clone()).await?;
+    let (mut send, mut recv) = ftnet_utils::get_stream(
+        self_endpoint,
+        ftnet_utils::Protocol::Identity,
+        remote_node_id52,
+        peer_connections.clone(),
+    )
+    .await?;
 
     tracing::info!("wrote protocol");
 

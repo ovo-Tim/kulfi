@@ -1,6 +1,6 @@
 pub async fn proxy_pass(
     mut req: hyper::Request<hyper::body::Incoming>,
-    pool: ftnet_utils::ConnectionPool,
+    pool: ftnet_utils::HttpConnectionPool,
     addr: &str,
     _patch: ftnet_sdk::RequestPatch,
 ) -> ftnet_utils::ProxyResult {

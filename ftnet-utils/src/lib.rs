@@ -1,54 +1,39 @@
 extern crate self as ftnet_utils;
 
-mod http_connection;
-mod secret;
-mod utils;
-mod get_stream;
-pub mod connection;
 pub mod get_endpoint;
+mod get_stream;
 pub mod http;
+mod http_connection_manager;
 mod http_to_peer;
 mod peer_to_http;
 pub mod protocol;
+mod secret;
+mod utils;
 
 #[cfg(feature = "keyring")]
 pub use secret::KeyringSecretStore;
 
-pub use connection::{IDMap, PeerConnections};
 pub use get_endpoint::get_endpoint;
-pub use get_stream::{forget_connection, get_stream};
+pub use get_stream::{PeerConnections, forget_connection, get_stream};
 pub use http::ProxyResult;
-pub use http_connection::{ConnectionManager, ConnectionPool, ConnectionPools};
+pub use http_connection_manager::{HttpConnectionManager, HttpConnectionPool, HttpConnectionPools};
 pub use http_to_peer::http_to_peer;
 pub use peer_to_http::peer_to_http;
-pub use protocol::{Protocol, APNS_IDENTITY};
+pub use protocol::{APNS_IDENTITY, Protocol};
 pub use secret::SecretStore;
-pub use utils::{frame_reader, id52_to_public_key, public_key_to_id52, FrameReader};
+pub use utils::{
+    FrameReader, ack, frame_reader, get_remote_id52, id52_to_public_key, public_key_to_id52,
+};
 
-
-pub async fn get_remote_id52(conn: &iroh::endpoint::Connection) -> eyre::Result<String> {
-    let remote_node_id = match conn.remote_node_id() {
-        Ok(id) => id,
-        Err(e) => {
-            tracing::error!("could not read remote node id: {e}, closing connection");
-            // TODO: is this how we close the connection in error cases or do we send some error
-            //       and wait for other side to close the connection?
-            let e2 = conn.closed().await;
-            tracing::info!("connection closed: {e2}");
-            // TODO: send another error_code to indicate bad remote node id?
-            conn.close(0u8.into(), &[]);
-            return Err(eyre::anyhow!("could not read remote node id: {e}"));
-        }
-    };
-
-    Ok(public_key_to_id52(&remote_node_id))
-}
+/// IDMap stores the fastn port and the endpoint for every identity
+///
+/// why is it a Vec and not a HasMap? the incoming requests contain the first few characters of id
+/// and not the full id. the reason for this is we want to use <id>.localhost.direct as well, and
+/// subdomain can be max 63 char long, and our ids are 64 chars. if we use <id>.ftnet, then this
+/// will not be a problem. we still do prefix match instead of exact match just to be sure.
+///
+/// since the number of identities will be small, a prefix match is probably going to be the same
+/// speed as the hash map exact lookup.
+pub type IDMap = std::sync::Arc<tokio::sync::Mutex<Vec<(String, (u16, iroh::endpoint::Endpoint))>>>;
 
 const ACK: &str = "ack";
-
-pub async fn ack(
-    send: &mut iroh::endpoint::SendStream,
-) -> eyre::Result<()> {
-    send.write_all(format!("{}\n", ACK).as_bytes()).await?;
-    Ok(())
-}

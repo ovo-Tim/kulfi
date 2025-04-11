@@ -1,3 +1,10 @@
+/// PeerConnections stores the iroh connections for every peer.
+///
+/// when a connection is broken, etc., we remove the connection from the map.
+pub type PeerConnections = std::sync::Arc<
+    tokio::sync::Mutex<std::collections::HashMap<String, iroh::endpoint::Connection>>,
+>;
+
 /// get_stream takes the protocol as well, as every outgoing bi-direction stream must have a
 /// protocol. get_stream tries to check if the bidirectional stream is healthy, as simply opening
 /// a bidirectional stream, or even simply writing on it does not guarantee that the stream is
@@ -31,8 +38,7 @@ pub async fn get_stream(
     };
 
     tracing::info!("got stream");
-    send.write_all(&serde_json::to_vec(&protocol)?)
-        .await?;
+    send.write_all(&serde_json::to_vec(&protocol)?).await?;
     send.write(b"\n").await?;
 
     let mut recv = ftnet_utils::frame_reader(recv);
@@ -42,7 +48,10 @@ pub async fn get_stream(
         Some(Ok(v)) => {
             if v != ftnet_utils::ACK {
                 forget_connection(remote_node_id52, peer_connections).await?;
-                eprintln!("got unexpected message: {v:?}, expected {}", ftnet_utils::ACK);
+                eprintln!(
+                    "got unexpected message: {v:?}, expected {}",
+                    ftnet_utils::ACK
+                );
                 return Err(eyre::anyhow!("got unexpected message: {v:?}"));
             }
         }

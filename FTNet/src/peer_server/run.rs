@@ -1,7 +1,7 @@
 pub async fn run(
     ep: iroh::Endpoint,
     fastn_port: u16,
-    client_pools: ftnet_utils::ConnectionPools,
+    client_pools: ftnet_utils::HttpConnectionPools,
     peer_connections: ftnet_utils::PeerConnections,
     _graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
 ) -> eyre::Result<()> {
@@ -59,7 +59,7 @@ async fn enqueue_connection(
 
 pub async fn handle_connection(
     conn: iroh::endpoint::Connection,
-    client_pools: ftnet_utils::ConnectionPools,
+    client_pools: ftnet_utils::HttpConnectionPools,
     fastn_port: u16,
 ) -> eyre::Result<()> {
     use ftnet_utils::Protocol;
@@ -129,7 +129,7 @@ pub async fn handle_connection(
                     &mut send,
                     recv,
                 )
-                    .await
+                .await
                 {
                     tracing::error!("failed to proxy http: {e:?}");
                 }
