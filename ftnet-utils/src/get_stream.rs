@@ -179,7 +179,14 @@ async fn connection_manager_(
         // do note that this is not a clear winner problem, this is a tradeoff, we lose throughput,
         // as in best case scenario, 10 concurrent tasks will be better. we will have to revisit
         // this in future when we are performance optimising things.
-        handle_request(&conn, protocol, reply_channel).await?;
+        if let Err(e) = handle_request(&conn, protocol, reply_channel).await {
+            tracing::error!("failed to handle request: {e:?}");
+            // note: we are intentionally not calling conn.close(). why? so that if some existing
+            // stream is still open, if we explicitly call close on the connection, that stream will
+            // immediately fail as well, and we do not want that. we want to let the stream fail
+            // on its own, maybe it will work, maybe it will not.
+            return Err(e);
+        }
     }
 
     Ok(())
