@@ -2,7 +2,7 @@ pub async fn run(
     ep: iroh::Endpoint,
     fastn_port: u16,
     client_pools: ftnet_utils::HttpConnectionPools,
-    peer_connections: ftnet_utils::PeerConnections,
+    peer_connections: ftnet_utils::PeerStreamSenders,
     _graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
 ) -> eyre::Result<()> {
     loop {
@@ -41,7 +41,7 @@ pub async fn run(
 
 async fn enqueue_connection(
     conn: iroh::endpoint::Connection,
-    peer_connections: ftnet_utils::PeerConnections,
+    peer_connections: ftnet_utils::PeerStreamSenders,
 ) -> eyre::Result<()> {
     let public_key = match conn.remote_node_id() {
         Ok(v) => v,

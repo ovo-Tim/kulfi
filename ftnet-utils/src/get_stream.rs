@@ -1,7 +1,7 @@
 /// PeerConnections stores the iroh connections for every peer.
 ///
 /// when a connection is broken, etc., we remove the connection from the map.
-pub type PeerConnections = std::sync::Arc<
+pub type PeerStreamSenders = std::sync::Arc<
     tokio::sync::Mutex<std::collections::HashMap<String, iroh::endpoint::Connection>>,
 >;
 
@@ -18,7 +18,7 @@ pub async fn get_stream(
     self_endpoint: iroh::Endpoint,
     protocol: ftnet_utils::Protocol,
     remote_node_id52: &str,
-    peer_connections: ftnet_utils::PeerConnections,
+    peer_connections: ftnet_utils::PeerStreamSenders,
 ) -> eyre::Result<(iroh::endpoint::SendStream, ftnet_utils::FrameReader)> {
     use tokio_stream::StreamExt;
 
@@ -71,7 +71,7 @@ pub async fn get_stream(
 
 pub async fn forget_connection(
     remote_node_id52: &str,
-    peer_connections: ftnet_utils::PeerConnections,
+    peer_connections: ftnet_utils::PeerStreamSenders,
 ) -> eyre::Result<()> {
     tracing::trace!("forgetting connection");
     let mut connections = peer_connections.lock().await;
@@ -83,7 +83,7 @@ pub async fn forget_connection(
 async fn get_connection(
     self_endpoint: iroh::Endpoint,
     remote_node_id52: &str,
-    peer_connections: ftnet_utils::PeerConnections,
+    peer_connections: ftnet_utils::PeerStreamSenders,
 ) -> eyre::Result<iroh::endpoint::Connection> {
     tracing::trace!("getting connections lock");
     let connections = peer_connections.lock().await;

@@ -7,7 +7,7 @@ impl ftnet::Identity {
         self,
         graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
         id_map: ftnet_utils::IDMap,
-        peer_connections: ftnet_utils::PeerConnections,
+        peer_connections: ftnet_utils::PeerStreamSenders,
         data_dir: &std::path::Path,
     ) -> eyre::Result<()> {
         let port = start_fastn(
