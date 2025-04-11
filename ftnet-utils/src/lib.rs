@@ -24,7 +24,7 @@ pub use protocol::{APNS_IDENTITY, Protocol};
 pub use secret::{SecretStore, read_or_create_key};
 pub use tcp::tcp;
 pub use utils::{
-    FrameReader, ack, frame_reader, get_remote_id52, id52_to_public_key, public_key_to_id52,
+    FrameReader, accept_bi, frame_reader, get_remote_id52, id52_to_public_key, public_key_to_id52,
 };
 
 /// IDMap stores the fastn port and the endpoint for every identity

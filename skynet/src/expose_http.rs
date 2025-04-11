@@ -1,3 +1,5 @@
+use ftnet_utils::get_remote_id52;
+
 pub async fn expose_http(host: String, port: u16) -> eyre::Result<()> {
     use eyre::WrapErr;
     use ftnet_utils::SecretStore;
@@ -49,29 +51,17 @@ async fn handle_connection(
     host: String,
     port: u16,
 ) -> eyre::Result<()> {
-    use tokio_stream::StreamExt;
-
-    tracing::info!("got connection from: {:?}", conn.remote_node_id());
-    let remote_id52 = ftnet_utils::get_remote_id52(&conn)
+    let remote_id52 = get_remote_id52(&conn)
         .await
         .inspect_err(|e| tracing::error!("failed to get remote id: {e:?}"))?;
+
     tracing::info!("new client: {remote_id52}, waiting for bidirectional stream");
     loop {
-        let client_pools = client_pools.clone();
-        let (mut send, recv) = conn.accept_bi().await?;
-        tracing::info!("got bidirectional stream");
-        let mut recv = ftnet_utils::frame_reader(recv);
-        let msg = match recv.next().await {
-            Some(v) => v?,
-            None => {
-                tracing::error!("failed to read from incoming connection");
-                continue;
-            }
-        };
-        let msg = serde_json::from_str::<ftnet_utils::Protocol>(&msg)
-            .inspect_err(|e| tracing::error!("json error for {msg}: {e}"))?;
+        let (mut send, recv, msg) = ftnet_utils::accept_bi(&conn)
+            .await
+            .inspect_err(|e| tracing::error!("failed to accept bidirectional stream: {e:?}"))?;
         tracing::info!("{remote_id52}: {msg:?}");
-        ftnet_utils::ack(&mut send).await?;
+        let client_pools = client_pools.clone();
         match msg {
             ftnet_utils::Protocol::Identity => {
                 if let Err(e) = ftnet_utils::peer_to_http(

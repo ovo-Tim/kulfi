@@ -60,9 +60,6 @@ pub async fn handle_connection(
     client_pools: ftnet_utils::HttpConnectionPools,
     fastn_port: u16,
 ) -> eyre::Result<()> {
-    use ftnet_utils::Protocol;
-    use tokio_stream::StreamExt;
-
     tracing::info!("got connection from: {:?}", conn.remote_node_id());
     let remote_id52 = ftnet_utils::get_remote_id52(&conn)
         .await
@@ -70,22 +67,12 @@ pub async fn handle_connection(
     tracing::info!("new client: {remote_id52}, waiting for bidirectional stream");
     loop {
         let client_pools = client_pools.clone();
-        let (mut send, recv) = conn.accept_bi().await?;
-        tracing::info!("got bidirectional stream");
-        let mut recv = ftnet_utils::frame_reader(recv);
-        let msg = match recv.next().await {
-            Some(v) => v?,
-            None => {
-                tracing::error!("failed to read from incoming connection");
-                continue;
-            }
-        };
-        let msg = serde_json::from_str::<Protocol>(&msg)
-            .inspect_err(|e| tracing::error!("json error for {msg}: {e}"))?;
+        let (mut send, recv, msg) = ftnet_utils::accept_bi(&conn)
+            .await
+            .inspect_err(|e| tracing::error!("failed to accept bidirectional stream: {e:?}"))?;
         tracing::info!("{remote_id52}: {msg:?}");
-        ftnet_utils::ack(&mut send).await?;
         match msg {
-            Protocol::Quit => {
+            ftnet_utils::Protocol::Quit => {
                 if !recv.read_buffer().is_empty() {
                     send.write_all(b"error: quit message should not have payload\n")
                         .await?;
@@ -96,7 +83,7 @@ pub async fn handle_connection(
                 // quit should close the connection, so we are breaking the for loop.
                 break;
             }
-            Protocol::Ping => {
+            ftnet_utils::Protocol::Ping => {
                 tracing::info!("got ping");
                 if !recv.read_buffer().is_empty() {
                     send.write_all(b"error: ping message should not have payload\n")
@@ -109,7 +96,7 @@ pub async fn handle_connection(
                     .inspect_err(|e| tracing::error!("failed to write PONG: {e:?}"))?;
                 tracing::info!("sent");
             }
-            Protocol::WhatTimeIsIt => {
+            ftnet_utils::Protocol::WhatTimeIsIt => {
                 if !recv.read_buffer().is_empty() {
                     send.write_all(b"error: quit message should not have payload\n")
                         .await?;
@@ -120,7 +107,7 @@ pub async fn handle_connection(
                         .await?;
                 }
             }
-            Protocol::Identity => {
+            ftnet_utils::Protocol::Identity => {
                 if let Err(e) = ftnet_utils::peer_to_http(
                     &format!("127.0.0.1:{fastn_port}"),
                     client_pools,
@@ -132,9 +119,9 @@ pub async fn handle_connection(
                     tracing::error!("failed to proxy http: {e:?}");
                 }
             }
-            Protocol::Http { .. } => todo!(),
-            Protocol::Socks5 { .. } => todo!(),
-            Protocol::Tcp { id } => {
+            ftnet_utils::Protocol::Http { .. } => todo!(),
+            ftnet_utils::Protocol::Socks5 { .. } => todo!(),
+            ftnet_utils::Protocol::Tcp { id } => {
                 if let Err(e) = ftnet_utils::tcp(&remote_id52, &id, &mut send, recv).await {
                     tracing::error!("tcp error: {e}");
                 }

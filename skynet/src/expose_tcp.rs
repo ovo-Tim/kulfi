@@ -47,5 +47,7 @@ async fn handle_connection(
     _host: String,
     _port: u16,
 ) -> eyre::Result<()> {
+    // tracing::info!("new client: {remote_id52}, waiting for bidirectional stream");
+
     todo!()
 }

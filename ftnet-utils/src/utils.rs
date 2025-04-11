@@ -1,7 +1,6 @@
-use crate::ACK;
-use eyre::WrapErr;
-
 pub fn id52_to_public_key(id: &str) -> eyre::Result<iroh::PublicKey> {
+    use eyre::WrapErr;
+
     let bytes = data_encoding::BASE32_DNSSEC.decode(id.as_bytes())?;
     if bytes.len() != 32 {
         return Err(eyre::anyhow!(
@@ -44,7 +43,33 @@ pub async fn get_remote_id52(conn: &iroh::endpoint::Connection) -> eyre::Result<
     Ok(public_key_to_id52(&remote_node_id))
 }
 
-pub async fn ack(send: &mut iroh::endpoint::SendStream) -> eyre::Result<()> {
-    send.write_all(format!("{}\n", ACK).as_bytes()).await?;
+async fn ack(send: &mut iroh::endpoint::SendStream) -> eyre::Result<()> {
+    send.write_all(format!("{}\n", ftnet_utils::ACK).as_bytes())
+        .await?;
     Ok(())
+}
+
+pub async fn accept_bi(
+    conn: &iroh::endpoint::Connection,
+) -> eyre::Result<(
+    iroh::endpoint::SendStream,
+    FrameReader,
+    ftnet_utils::Protocol,
+)> {
+    use tokio_stream::StreamExt;
+
+    let (mut send, recv) = conn.accept_bi().await?;
+    tracing::info!("got bidirectional stream");
+    let mut recv = frame_reader(recv);
+    let msg = match recv.next().await {
+        Some(v) => v?,
+        None => {
+            tracing::error!("failed to read from incoming connection");
+            return Err(eyre::anyhow!("failed to read from incoming connection"));
+        }
+    };
+    let msg = serde_json::from_str::<ftnet_utils::Protocol>(&msg)
+        .inspect_err(|e| tracing::error!("json error for {msg}: {e}"))?;
+    ack(&mut send).await?;
+    Ok((send, recv, msg))
 }
