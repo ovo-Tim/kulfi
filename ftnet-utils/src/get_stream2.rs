@@ -13,7 +13,7 @@ type ReplyChannelReceiver = tokio::sync::oneshot::Receiver<StreamResult>;
 type RemoteID52 = String;
 type SelfID52 = String;
 
-type StreamRequest = (iroh::Endpoint, ftnet_utils::Protocol, ReplyChannel);
+type StreamRequest = (ftnet_utils::Protocol, ReplyChannel);
 
 type StreamRequestSender = tokio::sync::mpsc::Sender<StreamRequest>;
 type StreamRequestReceiver = tokio::sync::mpsc::Receiver<StreamRequest>;
@@ -34,43 +34,123 @@ pub async fn get_stream(
     remote_node_id52: RemoteID52,
     peer_stream_senders: PeerStreamSenders,
 ) -> eyre::Result<(iroh::endpoint::SendStream, ftnet_utils::FrameReader)> {
-    let self_id52 = ftnet_utils::public_key_to_id52(&self_endpoint.node_id());
-
     let stream_request_sender =
-        get_stream_request_sender(self_id52, remote_node_id52, peer_stream_senders).await?;
+        get_stream_request_sender(self_endpoint, remote_node_id52, peer_stream_senders).await;
 
     let (reply_channel, receiver) = tokio::sync::oneshot::channel();
 
     stream_request_sender
-        .send((self_endpoint, protocol, reply_channel))
+        .send((protocol, reply_channel))
         .await?;
 
     receiver.await?
 }
 
 async fn get_stream_request_sender(
-    self_id52: SelfID52,
+    self_endpoint: iroh::Endpoint,
     remote_node_id52: RemoteID52,
     peer_stream_senders: PeerStreamSenders,
-) -> eyre::Result<StreamRequestSender> {
-    let mut peer_stream_senders = peer_stream_senders.lock().await;
+) -> StreamRequestSender {
+    let self_id52 = ftnet_utils::public_key_to_id52(&self_endpoint.node_id());
+    let mut senders = peer_stream_senders.lock().await;
 
-    if let Some(sender) = peer_stream_senders.get(&(self_id52.clone(), remote_node_id52.clone())) {
-        return Ok(sender.clone());
+    if let Some(sender) = senders.get(&(self_id52.clone(), remote_node_id52.clone())) {
+        return sender.clone();
     }
 
     // TODO: figure out if the mpsc::channel is the right size
     let (sender, receiver) = tokio::sync::mpsc::channel(1);
-    peer_stream_senders.insert((self_id52, remote_node_id52.clone()), sender.clone());
+    senders.insert(
+        (self_id52.clone(), remote_node_id52.clone()),
+        sender.clone(),
+    );
+    drop(senders);
 
-    tokio::spawn(async move { connection_manager_worker(receiver, remote_node_id52).await });
+    tokio::spawn(async move {
+        connection_manager(
+            receiver,
+            self_id52,
+            self_endpoint,
+            remote_node_id52,
+            peer_stream_senders,
+        )
+        .await;
+    });
 
-    Ok(sender)
+    sender
 }
 
-async fn connection_manager_worker(
-    _receiver: StreamRequestReceiver,
-    _remote_node_id52: RemoteID52,
+async fn connection_manager(
+    mut receiver: StreamRequestReceiver,
+    self_id52: SelfID52,
+    self_endpoint: iroh::Endpoint,
+    remote_node_id52: RemoteID52,
+    peer_stream_senders: PeerStreamSenders,
 ) {
+    if let Err(e) =
+        connection_manager_(&mut receiver, self_endpoint, remote_node_id52.clone()).await
+    {
+        tracing::error!("connection manager worker error: {e:?}");
+
+        // any tasks that have gotten access to the corresponding sender will fail when sending.
+        receiver.close();
+
+        // send an error to all the tasks that are waiting for stream for this receiver.
+        while let Some((_protocol, reply_channel)) = receiver.recv().await {
+            if reply_channel
+                .send(Err(eyre::anyhow!("failed to create connection: {e:?}")))
+                .is_err()
+            {
+                tracing::error!("failed to send error reply: {e:?}");
+            }
+        }
+
+        // cleanup the peer_stream_senders map, so no future tasks will try to use this.
+        let mut senders = peer_stream_senders.lock().await;
+        senders.remove(&(self_id52.clone(), remote_node_id52.clone()));
+    }
+}
+
+async fn connection_manager_(
+    receiver: &mut StreamRequestReceiver,
+    self_endpoint: iroh::Endpoint,
+    remote_node_id52: RemoteID52,
+) -> eyre::Result<()> {
+    let conn = match self_endpoint
+        .connect(
+            ftnet_utils::id52_to_public_key(&remote_node_id52)?,
+            ftnet_utils::APNS_IDENTITY,
+        )
+        .await
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("failed to create connection: {e:?}");
+            return Err(eyre::anyhow!("failed to create connection: {e:?}"));
+        }
+    };
+
+    // TODO: if we do not get any task on receiver, we should send ping pong for the keep alive
+    //       duration. hint: use tokio::select!{} here
+    while let Some((protocol, reply_channel)) = receiver.recv().await {
+        handle_request(&conn, protocol, reply_channel).await?;
+    }
+
+    Ok(())
+}
+
+async fn handle_request(
+    conn: &iroh::endpoint::Connection,
+    _protocol: ftnet_utils::Protocol,
+    _reply_channel: ReplyChannel,
+) -> eyre::Result<()> {
+    let (_send, _recv) = match conn.open_bi().await {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("failed to open_bi: {e:?}");
+            return Err(eyre::anyhow!("failed to open_bi: {e:?}"));
+        }
+    };
+
     todo!()
 }
