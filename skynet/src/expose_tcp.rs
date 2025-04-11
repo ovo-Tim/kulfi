@@ -59,8 +59,13 @@ async fn handle_connection(
         tracing::info!("{remote_id52}: {msg:?}");
         match msg {
             ftnet_utils::Protocol::Identity => {
-                if let Err(e) =
-                    ftnet_utils::tcp(&remote_id52, &format!("{host}:{port}"), &mut send, recv).await
+                if let Err(e) = ftnet_utils::peer_to_tcp(
+                    &remote_id52,
+                    &format!("{host}:{port}"),
+                    &mut send,
+                    recv,
+                )
+                .await
                 {
                     tracing::error!("failed to proxy http: {e:?}");
                 }

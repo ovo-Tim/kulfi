@@ -122,7 +122,7 @@ pub async fn handle_connection(
             ftnet_utils::Protocol::Http { .. } => todo!(),
             ftnet_utils::Protocol::Socks5 { .. } => todo!(),
             ftnet_utils::Protocol::Tcp { id } => {
-                if let Err(e) = ftnet_utils::tcp(&remote_id52, &id, &mut send, recv).await {
+                if let Err(e) = ftnet_utils::peer_to_tcp(&remote_id52, &id, &mut send, recv).await {
                     tracing::error!("tcp error: {e}");
                 }
             }

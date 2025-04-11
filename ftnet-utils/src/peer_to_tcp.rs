@@ -14,7 +14,7 @@ use tokio::io::AsyncWriteExt;
 /// we have to decide if one tcp connection is one bidirectional stream as disused in protocol.rs.
 /// so we will make one tcp connection from this function, and connect the `send` and `recv` streams
 /// to tcp connection's `recv` and `send` side respectively.
-pub async fn tcp(
+pub async fn peer_to_tcp(
     _remote_id: &str,
     addr: &str,
     send: &mut iroh::endpoint::SendStream,
