@@ -63,8 +63,6 @@ async fn get_stream_request_sender(
     let (sender, receiver) = tokio::sync::mpsc::channel(1);
     peer_stream_senders.insert((self_id52, remote_node_id52.clone()), sender.clone());
 
-    let remote_node_id52 = remote_node_id52;
-
     tokio::spawn(async move { connection_manager_worker(receiver, remote_node_id52).await });
 
     Ok(sender)
