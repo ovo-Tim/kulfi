@@ -150,6 +150,38 @@ async fn connection_manager_(
     // TODO: if we do not get any task on receiver, we should send ping pong for the keep alive
     //       duration. hint: use tokio::select!{} here
     while let Some((protocol, reply_channel)) = receiver.recv().await {
+        // is this a good idea to serialize this part? if 10 concurrent requests come in, we will
+        // handle each one sequentially. the other alternative is to spawn a task for each request.
+        // so which is better?
+        //
+        // in general, if we do it in parallel via spawning, we will have better throughput.
+        //
+        // and we are not worried about having too many concurrent tasks, tho iroh has a limit on
+        // concurrent tasks[1], with a default of 100[2]. it is actually a todo to find out what
+        // happens when we hit this limit, do they handle it by queueing the tasks, or do they
+        // return an error. if they queue then we wont have to implement queue logic.
+        //
+        // [1]: https://docs.rs/iroh/0.34.1/iroh/endpoint/struct.TransportConfig.html#method.max_concurrent_bidi_streams
+        // [2]: https://docs.rs/iroh-quinn-proto/0.13.0/src/iroh_quinn_proto/config/transport.rs.html#354
+        //
+        // but all that is besides the point, we are worried about resilience right now, not
+        // throughput per se (throughput is secondary goal, resilience primary).
+        //
+        // say we have 10 concurrent requests and lets say if we spawned a task for each, what
+        // happens in error case? say connection failed, the device switched from wifi to 4g, or
+        // whatever? in the handler task, we are putting a timeout on the read. in the serial case
+        // the first request will timeout, and all subsequent requests will get immediately an
+        // error. its predictable, its clean.
+        //
+        // if the tasks were spawned, each will timeout independently.
+        //
+        // we can also no longer rely on this function, connection_manager_, returning an error for
+        // them, so our connection_handler strategy will interfere, we would have read more requests
+        // off of receiver.
+        //
+        // do note that this is not a clear winner problem, this is a tradeoff, we lose throughput,
+        // as in best case scenario, 10 concurrent tasks will be better. we will have to revisit
+        // this in future when we are performance optimising things.
         handle_request(&conn, protocol, reply_channel).await?;
     }
 
