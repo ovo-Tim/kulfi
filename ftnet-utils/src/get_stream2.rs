@@ -87,28 +87,45 @@ async fn connection_manager(
     remote_node_id52: RemoteID52,
     peer_stream_senders: PeerStreamSenders,
 ) {
-    if let Err(e) =
-        connection_manager_(&mut receiver, self_endpoint, remote_node_id52.clone()).await
+    let e = match connection_manager_(&mut receiver, self_endpoint, remote_node_id52.clone()).await
     {
-        tracing::error!("connection manager worker error: {e:?}");
+        Ok(()) => return,
+        Err(e) => e,
+    };
 
-        // any tasks that have gotten access to the corresponding sender will fail when sending.
-        receiver.close();
+    // what is our error handling strategy?
+    //
+    // since an error has just occurred on our connection, it is best to cancel all concurrent
+    // tasks that depend on this connection, and let the next task recreate the connection, this
+    // way things are clean.
+    //
+    // we can try to keep the concurrent tasks open, and retry connection, but it increases the
+    // complexity of implementation, and it is not worth it for now.
+    //
+    // also note that connection_manager() and it's caller, get_stream(), are called to create the
+    // initial stream only, this error handling strategy will work for concurrent requests that are
+    // waiting for the stream to be created. the tasks that already got the stream will not be
+    // affected by this. tho, since something wrong has happened with the connection, they will
+    // eventually fail too.
+    tracing::error!("connection manager worker error: {e:?}");
 
-        // send an error to all the tasks that are waiting for stream for this receiver.
-        while let Some((_protocol, reply_channel)) = receiver.recv().await {
-            if reply_channel
-                .send(Err(eyre::anyhow!("failed to create connection: {e:?}")))
-                .is_err()
-            {
-                tracing::error!("failed to send error reply: {e:?}");
-            }
+    // once we close the receiver, any tasks that have gotten access to the corresponding sender
+    // will fail when sending.
+    receiver.close();
+
+    // send an error to all the tasks that are waiting for stream for this receiver.
+    while let Some((_protocol, reply_channel)) = receiver.recv().await {
+        if reply_channel
+            .send(Err(eyre::anyhow!("failed to create connection: {e:?}")))
+            .is_err()
+        {
+            tracing::error!("failed to send error reply: {e:?}");
         }
-
-        // cleanup the peer_stream_senders map, so no future tasks will try to use this.
-        let mut senders = peer_stream_senders.lock().await;
-        senders.remove(&(self_id52.clone(), remote_node_id52.clone()));
     }
+
+    // cleanup the peer_stream_senders map, so no future tasks will try to use this.
+    let mut senders = peer_stream_senders.lock().await;
+    senders.remove(&(self_id52.clone(), remote_node_id52.clone()));
 }
 
 async fn connection_manager_(
