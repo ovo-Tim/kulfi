@@ -1,6 +1,6 @@
 [package]
 name = "ftnet-utils"
-version = "0.1.0"
+version = "0.1.1"
 edition.workspace = true
 authors.workspace = true
 description = "ftnet utilities"
@@ -27,5 +27,5 @@ bb8.workspace = true
 rand_core.workspace = true
 
 [features]
-default = []
+default = ["keyring"]
 keyring = ["dep:keyring"]
