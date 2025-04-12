@@ -1,5 +1,3 @@
-static IROH_ENDPOINT: tokio::sync::OnceCell<iroh::Endpoint> = tokio::sync::OnceCell::const_new();
-
 pub async fn http_bridge(proxy_target: Option<String>, port: u16) -> eyre::Result<()> {
     use eyre::WrapErr;
 
@@ -44,7 +42,7 @@ async fn http_bridge_(
                 break;
             }
             val = listener.accept() => {
-                let self_endpoint = IROH_ENDPOINT.get_or_init(new_iroh_endpoint).await.clone();
+                let self_endpoint = skynet::global_iroh_endpoint().await;
                 let graceful_shutdown_rx = graceful_shutdown_rx.clone();
                 let peer_connections = peer_connections.clone();
                 let proxy_target = proxy_target.clone();
@@ -145,15 +143,4 @@ async fn handle_request(
         Default::default(), /* RequestPatch */
     )
     .await
-}
-
-async fn new_iroh_endpoint() -> iroh::Endpoint {
-    // TODO: read secret key from ENV VAR
-    iroh::Endpoint::builder()
-        .discovery_n0()
-        .discovery_local_network()
-        .alpns(vec![ftnet_utils::APNS_IDENTITY.into()])
-        .bind()
-        .await
-        .expect("failed to create iroh Endpoint")
 }

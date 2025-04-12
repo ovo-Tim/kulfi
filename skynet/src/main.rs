@@ -25,9 +25,9 @@ async fn main() -> eyre::Result<()> {
             tracing::info!(port, host, verbose = ?cli.verbose, "Exposing TCP service on FTNet.");
             skynet::expose_tcp(host, port).await
         }
-        t => {
-            tracing::error!("Unsupported command: {t:?}");
-            return Err(eyre::eyre!("Unsupported command: {t:?}"));
+        Command::TcpBridge { proxy_target, port } => {
+            tracing::info!(port, proxy_target, verbose = ?cli.verbose, "Starting TCP bridge.");
+            skynet::tcp_bridge(proxy_target, port).await
         }
     } {
         tracing::error!("Error: {e}");
