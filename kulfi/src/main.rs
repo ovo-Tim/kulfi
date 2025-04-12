@@ -2,7 +2,7 @@
 async fn main() -> eyre::Result<()> {
     use clap::Parser;
 
-    // run with RUST_LOG="skynet=info" to only see our logs when running with the --trace flag
+    // run with RUST_LOG="kulfi=info" to only see our logs when running with the --trace flag
     tracing_subscriber::fmt::init();
 
     let cli = Cli::parse();
@@ -15,19 +15,19 @@ async fn main() -> eyre::Result<()> {
             // what_to_do,
         } => {
             tracing::info!(port, host, verbose = ?cli.verbose, "Exposing HTTP service on FTNet.");
-            skynet::expose_http(host, port).await
+            kulfi::expose_http(host, port).await
         }
         Command::HttpBridge { proxy_target, port } => {
             tracing::info!(port, proxy_target, verbose = ?cli.verbose, "Starting HTTP bridge.");
-            skynet::http_bridge(proxy_target, port).await
+            kulfi::http_bridge(proxy_target, port).await
         }
         Command::ExposeTcp { port, host } => {
             tracing::info!(port, host, verbose = ?cli.verbose, "Exposing TCP service on FTNet.");
-            skynet::expose_tcp(host, port).await
+            kulfi::expose_tcp(host, port).await
         }
         Command::TcpBridge { proxy_target, port } => {
             tracing::info!(port, proxy_target, verbose = ?cli.verbose, "Starting TCP bridge.");
-            skynet::tcp_bridge(proxy_target, port).await
+            kulfi::tcp_bridge(proxy_target, port).await
         }
     } {
         tracing::error!("Error: {e}");

@@ -1,5 +1,5 @@
 [workspace]
-members = ["FTNet", "control-backend-wasm", "sdk", "skynet", "ftnet-utils"]
+members = ["FTNet", "control-backend-wasm", "sdk", "kulfi", "ftnet-utils"]
 resolver = "2"
 
 [workspace.package]

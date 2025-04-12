@@ -2,7 +2,7 @@
 // #![deny(unused_crate_dependencies)]
 #![deny(unsafe_code)]
 
-extern crate self as skynet;
+extern crate self as kulfi;
 
 mod expose_http;
 mod expose_tcp;

@@ -9,7 +9,7 @@ pub async fn expose_tcp(host: String, port: u16) -> eyre::Result<()> {
         .wrap_err_with(|| "failed to bind to iroh network")?;
 
     println!(
-        "Connect to {port} by running `skynet tcp-bridge {id52} <some-port>` from any machine.",
+        "Connect to {port} by running `kulfi tcp-bridge {id52} <some-port>` from any machine.",
     );
 
     loop {

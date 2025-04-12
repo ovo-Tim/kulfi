@@ -2184,6 +2184,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "kulfi"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "clap-verbosity-flag",
+ "eyre",
+ "ftnet-utils",
+ "http-body-util",
+ "hyper",
+ "hyper-util",
+ "iroh",
+ "libdbus-sys",
+ "rand 0.8.5",
+ "serde_json",
+ "tokio",
+ "tokio-stream",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "lazy_static"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3696,27 +3717,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dee851d0e5e7af3721faea1843e8015e820a234f81fda3dea9247e15bac9a86a"
 dependencies = [
  "bitflags 2.9.0",
-]
-
-[[package]]
-name = "skynet"
-version = "0.1.0"
-dependencies = [
- "clap",
- "clap-verbosity-flag",
- "eyre",
- "ftnet-utils",
- "http-body-util",
- "hyper",
- "hyper-util",
- "iroh",
- "libdbus-sys",
- "rand 0.8.5",
- "serde_json",
- "tokio",
- "tokio-stream",
- "tracing",
- "tracing-subscriber",
 ]
 
 [[package]]

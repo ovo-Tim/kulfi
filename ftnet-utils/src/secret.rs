@@ -67,13 +67,13 @@ impl KeyringSecretStore {
 pub async fn read_or_create_key() -> eyre::Result<String> {
     use ftnet_utils::SecretStore;
 
-    match tokio::fs::read_to_string(".skynet.id52").await {
+    match tokio::fs::read_to_string(".kulfi.id52").await {
         Ok(v) => Ok(v),
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
             tracing::info!("no key found, creating new one");
             let public_key = ftnet_utils::KeyringSecretStore::generate(rand::rngs::OsRng)?;
             let public_key = ftnet_utils::public_key_to_id52(&public_key);
-            tokio::fs::write(".skynet.id52", public_key.as_str()).await?;
+            tokio::fs::write(".kulfi.id52", public_key.as_str()).await?;
             Ok(public_key)
         }
         Err(e) => {
