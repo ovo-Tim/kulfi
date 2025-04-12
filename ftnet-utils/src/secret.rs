@@ -59,7 +59,7 @@ impl KeyringSecretStore {
     }
 
     fn keyring_entry(&self) -> eyre::Result<keyring::Entry> {
-        keyring::Entry::new("FTNet", self.id52.as_str())
+        keyring::Entry::new("malai", self.id52.as_str())
             .wrap_err_with(|| format!("failed to create keyring Entry for {}", self.id52))
     }
 }

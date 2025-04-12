@@ -142,5 +142,5 @@ async fn handle_request(
         peer_connections,
         Default::default(), /* RequestPatch */
     )
-    .await
+        .await
 }

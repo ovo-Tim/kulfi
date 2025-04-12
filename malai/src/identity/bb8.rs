@@ -3,7 +3,7 @@
 //!
 //! let's first understand the types of connection we make over the network.
 //!
-//! every running FTNet app opens one "connection" with the relay at startup. if the connection is
+//! every running malai app opens one "connection" with the relay at startup. if the connection is
 //! lost, it tries to reconnect. in `iroh` terms, this is called `iroh::Endpoint`. this is a
 //! connection with the relay, and it is a long-lived connection. this is still not a
 //! `iroh::Connection`, which is the connection we want to pool, so at startup we do not have
@@ -25,8 +25,8 @@
 //! let's recap the control flow. bob wants to access alice's fastn, so bob opens
 //! https://<alice-id>.localhost.direct on their browser. localhost.direct distributes their
 //! wildcard domain certificate[1], and maps *.localhost.direct to 127.0.0.1, so the request from bob's
-//! browser lands on their own machine, to port 443, where bob's FTNet-http-proxy is running. bob's
-//! FTNet-http-proxy gets the `alice-id` and is the main actor here, it gets an HTTP request, and for
+//! browser lands on their own machine, to port 443, where bob's malai-http-proxy is running. bob's
+//! malai-http-proxy gets the `alice-id` and is the main actor here, it gets an HTTP request, and for
 //! that it request it creates an endpoint, initiates a connection, and creates a bidirectional
 //! stream. on the stream it then writes the HTTP request, and waits for the response from the
 //! alice's side, and converts it back as an HTTP response and send it to the browser.
@@ -62,13 +62,13 @@ pub struct PeerIdentity {
     pub client_pools: ftnet_utils::ConnectionPools,
 }
 
-impl ftnet::Identity {
+impl malai::Identity {
     pub fn peer_identity(&self, fastn_port: u16, peer_id: &str) -> eyre::Result<PeerIdentity> {
         Ok(PeerIdentity {
             fastn_port,
             self_id52: self.id52.clone(),
             self_public_key: self.public_key,
-            peer_public_key: ftnet::utils::id52_to_public_key(peer_id)?,
+            peer_public_key: malai::utils::id52_to_public_key(peer_id)?,
             client_pools: self.client_pools.clone(),
         })
     }
@@ -94,7 +94,7 @@ impl bb8::ManageConnection for PeerIdentity {
             tracing::info!("got ep, ep={}", self.self_id52);
 
             let conn = ep
-                .connect(self.peer_public_key, ftnet::APNS_IDENTITY)
+                .connect(self.peer_public_key, malai::APNS_IDENTITY)
                 .await
                 .map_err(|e| {
                     tracing::error!("failed to connect to iroh network: {e:?}");
@@ -108,7 +108,7 @@ impl bb8::ManageConnection for PeerIdentity {
             // tokio::spawn(async move {
             //     let start = std::time::Instant::now();
             //     if let Err(e) =
-            //         ftnet::peer_server::handle_connection(conn2, client_pools, fastn_port).await
+            //         malai::peer_server::handle_connection(conn2, client_pools, fastn_port).await
             //     {
             //         tracing::error!("connection error2: {:?}", e);
             //     }
@@ -123,7 +123,7 @@ impl bb8::ManageConnection for PeerIdentity {
         &self,
         conn: &mut Self::Connection,
     ) -> impl Future<Output=Result<(), Self::Error>> + Send {
-        Box::pin(async move { ftnet::client::ping(conn).await })
+        Box::pin(async move { malai::client::ping(conn).await })
     }
 
     fn has_broken(&self, _conn: &mut Self::Connection) -> bool {

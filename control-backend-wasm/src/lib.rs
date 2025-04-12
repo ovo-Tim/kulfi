@@ -3,7 +3,7 @@
 #![warn(clippy::used_underscore_binding)]
 #![forbid(unsafe_code)]
 
-extern crate self as ftnet_backend;
+extern crate self as malai_backend;
 
 #[ft_sdk::data]
 fn ping() -> ft_sdk::data::Result {

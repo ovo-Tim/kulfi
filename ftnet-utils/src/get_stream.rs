@@ -71,7 +71,7 @@ async fn get_stream_request_sender(
             remote_node_id52,
             peer_stream_senders,
         )
-        .await;
+            .await;
     });
 
     sender

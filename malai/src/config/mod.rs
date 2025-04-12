@@ -1,4 +1,4 @@
-pub mod dotftnet;
+pub mod dot_malai;
 mod identities;
 mod read;
 

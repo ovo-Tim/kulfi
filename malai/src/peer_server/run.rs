@@ -91,7 +91,7 @@ pub async fn handle_connection(
                     break;
                 }
                 tracing::info!("sending PONG");
-                send.write_all(ftnet::client::PONG)
+                send.write_all(malai::client::PONG)
                     .await
                     .inspect_err(|e| tracing::error!("failed to write PONG: {e:?}"))?;
                 tracing::info!("sent");
@@ -114,7 +114,7 @@ pub async fn handle_connection(
                     &mut send,
                     recv,
                 )
-                .await
+                    .await
                 {
                     tracing::error!("failed to proxy http: {e:?}");
                 }

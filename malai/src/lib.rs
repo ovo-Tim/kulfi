@@ -2,7 +2,7 @@
 #![deny(unused_crate_dependencies)]
 #![deny(unsafe_code)]
 
-// TODO: Remove this and separate ftnet binary from library to get rid of unused_crate_dependencies
+// TODO: Remove this and separate malai binary from library to get rid of unused_crate_dependencies
 // lint check errors
 // Only the binary is using the following crates:
 use clap as _;
@@ -10,7 +10,7 @@ use directories as _;
 use fastn_observer as _;
 use tracing_subscriber as _;
 
-extern crate self as ftnet;
+extern crate self as malai;
 
 mod client;
 mod config;

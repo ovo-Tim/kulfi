@@ -89,7 +89,7 @@ pub async fn peer_to_http(
             .wrap_err_with(|| "failed to serialize json while writing http response")?
             .as_bytes(),
     )
-    .await?;
+        .await?;
     send.write_all(b"\n").await?;
     let bytes = body.collect().await?.to_bytes();
     tracing::debug!("got response body: {} bytes", bytes.len());

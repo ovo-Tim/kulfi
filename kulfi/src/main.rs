@@ -14,7 +14,7 @@ async fn main() -> eyre::Result<()> {
             // secure,
             // what_to_do,
         } => {
-            tracing::info!(port, host, verbose = ?cli.verbose, "Exposing HTTP service on FTNet.");
+            tracing::info!(port, host, verbose = ?cli.verbose, "Exposing HTTP service on malai.");
             kulfi::expose_http(host, port).await
         }
         Command::HttpBridge { proxy_target, port } => {
@@ -22,7 +22,7 @@ async fn main() -> eyre::Result<()> {
             kulfi::http_bridge(proxy_target, port).await
         }
         Command::ExposeTcp { port, host } => {
-            tracing::info!(port, host, verbose = ?cli.verbose, "Exposing TCP service on FTNet.");
+            tracing::info!(port, host, verbose = ?cli.verbose, "Exposing TCP service on malai.");
             kulfi::expose_tcp(host, port).await
         }
         Command::TcpBridge { proxy_target, port } => {
@@ -50,9 +50,9 @@ pub struct Cli {
 #[derive(clap::Subcommand, Debug)]
 pub enum Command {
     #[clap(
-        about = "Expose HTTP Service on FTNet, connect using FTNet.",
+        about = "Expose HTTP Service on malai, connect using malai.",
         long_about = r#"
-Expose HTTP Service on FTNet, connect using FTNet.
+Expose HTTP Service on malai, connect using malai.
 
 By default it allows any peer to connecto to the HTTP(s) service. You can pass --what-to-do
 argument to specify a What To Do service that can be used to add access control."#

@@ -5,8 +5,8 @@ pub async fn handle_connection(
     client_pools: ftnet_utils::HttpConnectionPools,
     peer_connections: ftnet_utils::PeerStreamSenders,
 ) {
-    ftnet::OPEN_CONTROL_CONNECTION_COUNT.incr();
-    ftnet::CONTROL_CONNECTION_COUNT.incr();
+    malai::OPEN_CONTROL_CONNECTION_COUNT.incr();
+    malai::CONTROL_CONNECTION_COUNT.incr();
 
     let io = hyper_util::rt::TokioIo::new(stream);
 
@@ -45,7 +45,7 @@ pub async fn handle_connection(
         tracing::error!("connection error1: {e:?}");
     }
 
-    ftnet::OPEN_CONTROL_CONNECTION_COUNT.decr();
+    malai::OPEN_CONTROL_CONNECTION_COUNT.decr();
 }
 
 async fn handle_request(
@@ -54,10 +54,10 @@ async fn handle_request(
     client_pools: ftnet_utils::HttpConnectionPools,
     peer_connections: ftnet_utils::PeerStreamSenders,
 ) -> ftnet_utils::http::ProxyResult {
-    ftnet::CONTROL_REQUEST_COUNT.incr();
-    ftnet::IN_FLIGHT_REQUESTS.incr();
+    malai::CONTROL_REQUEST_COUNT.incr();
+    malai::IN_FLIGHT_REQUESTS.incr();
     let r = handle_request_(r, id_map, client_pools, peer_connections).await;
-    ftnet::IN_FLIGHT_REQUESTS.decr();
+    malai::IN_FLIGHT_REQUESTS.decr();
     r
 }
 
@@ -87,13 +87,13 @@ async fn handle_request_(
     // if this is an identity, if so forward the request to fastn corresponding to that identity
     if let Some(fastn_port) = find_identity(id, id_map.clone()).await? {
         let addr = format!("127.0.0.1:{fastn_port}");
-        return ftnet::control_server::proxy_pass(
+        return malai::control_server::proxy_pass(
             r,
             find_pool(client_pools, &addr).await?,
             &addr,
             Default::default(),
         )
-        .await;
+            .await;
     }
 
     // TODO: maybe we should try all the identities not just default
@@ -108,17 +108,17 @@ async fn handle_request_(
         // if not identity, find if the id is an http device owned by identity, if so proxy-pass the
         // request to that device
         Ok(WhatToDo::ProxyPass {
-            port,
-            extra_headers,
-        }) => {
+               port,
+               extra_headers,
+           }) => {
             let addr = format!("127.0.0.1:{port}");
-            ftnet::control_server::proxy_pass(
+            malai::control_server::proxy_pass(
                 r,
                 find_pool(client_pools, &addr).await?,
                 &addr,
                 extra_headers,
             )
-            .await
+                .await
         }
         Ok(WhatToDo::UnknownPeer) => {
             tracing::error!("unknown peer: {id}");
@@ -172,7 +172,7 @@ pub enum WhatToDo {
 }
 
 async fn what_to_do(_port: u16, id: &str) -> eyre::Result<WhatToDo> {
-    // request to fastn server at /-/ftnet/v1/control/what-to-do/<id>/
+    // request to fastn server at /-/malai/v1/control/what-to-do/<id>/
     Ok(WhatToDo::ForwardToPeer {
         peer_id: id.to_string(),
         patch: Default::default(),
@@ -196,7 +196,7 @@ async fn default_identity(id_map: ftnet_utils::IDMap) -> eyre::Result<(String, u
         .await
         .first()
         .map(|(ident, (port, _ep))| (ident.to_string(), *port))
-        .expect("ftnet ensures there is at least one identity at the start"))
+        .expect("malai ensures there is at least one identity at the start"))
 }
 
 async fn get_endpoint(

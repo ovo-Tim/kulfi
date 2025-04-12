@@ -21,7 +21,7 @@ where
         remote_node_id52.to_string(),
         peer_connections.clone(),
     )
-    .await?;
+        .await?;
 
     tracing::info!("wrote protocol");
 
