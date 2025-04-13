@@ -42,7 +42,7 @@ async fn http_bridge_(
                 break;
             }
             val = listener.accept() => {
-                let self_endpoint = kulfi::global_iroh_endpoint().await;
+                let self_endpoint = malai::global_iroh_endpoint().await;
                 let graceful_shutdown_rx = graceful_shutdown_rx.clone();
                 let peer_connections = peer_connections.clone();
                 let proxy_target = proxy_target.clone();
@@ -142,5 +142,5 @@ async fn handle_request(
         peer_connections,
         Default::default(), /* RequestPatch */
     )
-        .await
+    .await
 }

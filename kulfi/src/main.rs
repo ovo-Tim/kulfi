@@ -4,111 +4,77 @@ async fn main() -> eyre::Result<()> {
 
     // run with RUST_LOG="kulfi=info" to only see our logs when running with the --trace flag
     tracing_subscriber::fmt::init();
+    // configure_tracing_subscriber();
 
     let cli = Cli::parse();
 
-    if let Err(e) = match cli.command {
-        Command::ExposeHttp {
-            port,
-            host,
-            // secure,
-            // what_to_do,
+    match cli.command {
+        Command::Start {
+            foreground,
+            data_dir,
+            control_port,
         } => {
-            tracing::info!(port, host, verbose = ?cli.verbose, "Exposing HTTP service on malai.");
-            kulfi::expose_http(host, port).await
-        }
-        Command::HttpBridge { proxy_target, port } => {
-            tracing::info!(port, proxy_target, verbose = ?cli.verbose, "Starting HTTP bridge.");
-            kulfi::http_bridge(proxy_target, port).await
-        }
-        Command::ExposeTcp { port, host } => {
-            tracing::info!(port, host, verbose = ?cli.verbose, "Exposing TCP service on malai.");
-            kulfi::expose_tcp(host, port).await
-        }
-        Command::TcpBridge { proxy_target, port } => {
-            tracing::info!(port, proxy_target, verbose = ?cli.verbose, "Starting TCP bridge.");
-            kulfi::tcp_bridge(proxy_target, port).await
-        }
-    } {
-        tracing::error!("Error: {e}");
-        return Err(e);
-    }
+            let data_dir = match data_dir {
+                Some(dir) => dir.into(),
+                // https://docs.rs/directories/6.0.0/directories/struct.ProjectDirs.html#method.data_dir
+                None => match directories::ProjectDirs::from("com", "FifthTry", "kulfi") {
+                    Some(dir) => dir.data_dir().to_path_buf(),
+                    None => {
+                        return Err(eyre::anyhow!(
+                            "dot_kulfi init failed: can not find data dir when dir is not provided"
+                        ));
+                    }
+                },
+            };
 
-    Ok(())
+            kulfi::start(foreground, data_dir, control_port).await
+        }
+        Command::TcpProxy { id, port } => {
+            tracing::info!(
+                "Proxying TCP server to remote kulfi service with id: {id}, port: {port}"
+            );
+            Ok(())
+        }
+    }
+}
+
+#[expect(dead_code)]
+fn configure_tracing_subscriber() {
+    use tracing_subscriber::layer::SubscriberExt;
+
+    tracing::subscriber::set_global_default(
+        tracing_subscriber::registry()
+            .with(fastn_observer::Layer::default())
+            .with(tracing_subscriber::EnvFilter::from_default_env()),
+    )
+        .unwrap();
 }
 
 #[derive(clap::Parser, Debug)]
 #[command(version, about, long_about = None)]
 pub struct Cli {
-    #[command(flatten)]
-    verbose: clap_verbosity_flag::Verbosity,
-
     #[command(subcommand)]
     pub command: Command,
+
+    #[arg(long, global = true)]
+    pub trace: bool,
 }
 
 #[derive(clap::Subcommand, Debug)]
 pub enum Command {
-    #[clap(
-        about = "Expose HTTP Service on malai, connect using malai.",
-        long_about = r#"
-Expose HTTP Service on malai, connect using malai.
-
-By default it allows any peer to connecto to the HTTP(s) service. You can pass --what-to-do
-argument to specify a What To Do service that can be used to add access control."#
-    )]
-    ExposeHttp {
-        port: u16,
-        #[arg(
-            long,
-            default_value = "127.0.0.1",
-            help = "Host serving the http service."
-        )]
-        host: String,
-        // #[arg(
-        //     long,
-        //     default_value_t = false,
-        //     help = "Use this if the service is HTTPS"
-        // )]
-        // secure: bool,
-        // #[arg(
-        //     long,
-        //     help = "The What To Do Service that can be used to add access control."
-        // )]
-        // this will be the id52 of the identity server that should be consulted
-        // what_to_do: Option<String>,
+    #[clap(about = "Start the kulfi service.")]
+    Start {
+        #[arg(default_value_t = false, short = 'f')]
+        foreground: bool,
+        #[arg(long, short = 'd')]
+        data_dir: Option<String>,
+        #[arg(default_value_t = 80, long, short = 'p')]
+        control_port: u16,
     },
-    HttpBridge {
-        #[arg(
-            long,
-            short('t'),
-            help = "The id52 to which this bridge will forward incoming HTTP request. By default it forwards to every id52."
-        )]
-        proxy_target: Option<String>,
-        #[arg(
-            long,
-            short('p'),
-            help = "The port on which this bridge will listen for incoming HTTP requests.",
-            default_value = "8080"
-        )]
-        port: u16,
-    },
-    ExposeTcp {
-        port: u16,
-        #[arg(
-            long,
-            default_value = "127.0.0.1",
-            help = "Host serving the TCP service."
-        )]
-        host: String,
-    },
-    TcpBridge {
-        #[arg(help = "The id52 to which this bridge will forward incoming TCP request.")]
-        proxy_target: String,
-        #[arg(
-            help = "The port on which this bridge will listen for incoming TCP requests.",
-            default_value = "8081"
-        )]
+    #[clap(about = "Proxy TCP server to a remote kulfi service.")]
+    TcpProxy {
+        id: String,
+        #[arg(default_value_t = 2345)]
         port: u16,
     },
 }

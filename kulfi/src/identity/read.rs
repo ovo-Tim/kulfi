@@ -1,4 +1,4 @@
-impl malai::Identity {
+impl kulfi::Identity {
     pub async fn read(
         _path: &std::path::Path,
         id: String,

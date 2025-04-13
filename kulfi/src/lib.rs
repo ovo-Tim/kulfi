@@ -1,32 +1,31 @@
-// #![deny(unused_extern_crates)]
-// #![deny(unused_crate_dependencies)]
+#![deny(unused_extern_crates)]
+#![deny(unused_crate_dependencies)]
 #![deny(unsafe_code)]
+
+// TODO: Remove this and separate kulfi binary from library to get rid of unused_crate_dependencies
+// lint check errors
+// Only the binary is using the following crates:
+use clap as _;
+use directories as _;
+use fastn_observer as _;
+use tracing_subscriber as _;
 
 extern crate self as kulfi;
 
-mod expose_http;
-mod expose_tcp;
-mod http_bridge;
-mod tcp_bridge;
+mod client;
+mod config;
+pub mod control_server;
+mod counters;
+mod identity;
+pub mod peer_server;
+mod start;
+pub mod utils;
 
-pub use expose_http::expose_http;
-pub use expose_tcp::expose_tcp;
-pub use http_bridge::http_bridge;
-pub use tcp_bridge::tcp_bridge;
-
-pub async fn global_iroh_endpoint() -> iroh::Endpoint {
-    async fn new_iroh_endpoint() -> iroh::Endpoint {
-        // TODO: read secret key from ENV VAR
-        iroh::Endpoint::builder()
-            .discovery_n0()
-            .discovery_local_network()
-            .alpns(vec![ftnet_utils::APNS_IDENTITY.into()])
-            .bind()
-            .await
-            .expect("failed to create iroh Endpoint")
-    }
-
-    static IROH_ENDPOINT: tokio::sync::OnceCell<iroh::Endpoint> =
-        tokio::sync::OnceCell::const_new();
-    IROH_ENDPOINT.get_or_init(new_iroh_endpoint).await.clone()
-}
+pub use config::Config;
+pub use counters::{
+    CONTROL_CONNECTION_COUNT, CONTROL_REQUEST_COUNT, IN_FLIGHT_REQUESTS,
+    OPEN_CONTROL_CONNECTION_COUNT,
+};
+// pub use identity::{Identity, PeerIdentity};
+pub use identity::Identity;
+pub use start::start;

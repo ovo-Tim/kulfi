@@ -1,4 +1,4 @@
-/// this function is called on startup, and initializes the malai directory if it doesn't exist
+/// this function is called on startup, and initializes the kulfi directory if it doesn't exist
 #[tracing::instrument(skip(client_pools))]
 pub async fn init_if_required(
     dir: &std::path::Path,
@@ -16,14 +16,14 @@ pub async fn init_if_required(
         //       is older than say 5 minutes).
         tokio::fs::create_dir_all(&dir)
             .await
-            .wrap_err_with(|| format!("failed to create dot_malai directory: {dir:?}"))?;
-        let identities = malai::utils::mkdir(dir, "identities")?;
-        malai::utils::mkdir(dir, "logs")?;
+            .wrap_err_with(|| format!("failed to create dot_kulfi directory: {dir:?}"))?;
+        let identities = kulfi::utils::mkdir(dir, "identities")?;
+        kulfi::utils::mkdir(dir, "logs")?;
 
         super::lock_file(dir).wrap_err_with(|| "failed to create lock file")?;
 
         // we always create the default identity
-        malai::Identity::create(&identities, client_pools).await?;
+        kulfi::Identity::create(&identities, client_pools).await?;
     }
 
     Ok(dir.to_path_buf())

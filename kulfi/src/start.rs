@@ -1,4 +1,4 @@
-/// start malai service
+/// start kulfi service
 ///
 /// on startup, we first check if another instance is running if so we exit.
 ///
@@ -12,18 +12,18 @@ pub async fn start(_fg: bool, data_dir: std::path::PathBuf, control_port: u16) -
     let client_pools = ftnet_utils::HttpConnectionPools::default();
     let peer_connections = ftnet_utils::PeerStreamSenders::default();
 
-    let config = malai::Config::read(&data_dir, client_pools.clone())
+    let config = kulfi::Config::read(&data_dir, client_pools.clone())
         .await
         .wrap_err_with(|| "failed to run config")?;
 
     let _lock = config
         .lock()
         .await
-        .wrap_err_with(|| "looks like there is another instance of malai running")?;
+        .wrap_err_with(|| "looks like there is another instance of kulfi running")?;
 
     let identities = config.identities(client_pools.clone()).await?;
     tracing::info!(
-        "malai started with {identities}.",
+        "kulfi started with {identities}.",
         identities = identities
             .iter()
             .map(|i| i.id52.to_string())
@@ -56,7 +56,7 @@ pub async fn start(_fg: bool, data_dir: std::path::PathBuf, control_port: u16) -
 
     tokio::spawn(async move {
         tracing::info!("Starting control server with identity: {first}");
-        malai::control_server::start(
+        kulfi::control_server::start(
             control_port,
             first,
             graceful_shutdown_rx,
@@ -81,7 +81,7 @@ pub async fn start(_fg: bool, data_dir: std::path::PathBuf, control_port: u16) -
     loop {
         count += 1;
         tokio::time::sleep(std::time::Duration::from_millis(100)).await;
-        let v = malai::OPEN_CONTROL_CONNECTION_COUNT.get();
+        let v = kulfi::OPEN_CONTROL_CONNECTION_COUNT.get();
         if v == 0 {
             tracing::info!("No inflight requests open.");
             break;

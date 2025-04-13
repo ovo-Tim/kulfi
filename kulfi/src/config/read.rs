@@ -1,8 +1,8 @@
 use eyre::WrapErr;
 
-impl malai::Config {
+impl kulfi::Config {
     pub async fn lock(&self) -> eyre::Result<file_guard::FileGuard<&std::fs::File>> {
-        malai::config::dot_malai::exclusive(&self.lock_file)
+        kulfi::config::dot_kulfi::exclusive(&self.lock_file)
             .await
             .wrap_err_with(|| "Config::lock(): failed to take exclusive lock")
     }
@@ -11,10 +11,10 @@ impl malai::Config {
         dir: &std::path::Path,
         client_pools: ftnet_utils::HttpConnectionPools,
     ) -> eyre::Result<Self> {
-        let dir = malai::config::dot_malai::init_if_required(dir, client_pools)
+        let dir = kulfi::config::dot_kulfi::init_if_required(dir, client_pools)
             .await
             .wrap_err_with(|| "Config: failed to get init directory")?;
-        let lock_file = malai::config::dot_malai::lock_file(&dir)
+        let lock_file = kulfi::config::dot_kulfi::lock_file(&dir)
             .wrap_err_with(|| "failed to create lock file")?;
         Ok(Self { dir, lock_file })
     }

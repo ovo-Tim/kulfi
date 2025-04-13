@@ -4,7 +4,7 @@ use tokio::io::AsyncWriteExt;
 ///
 /// the other side has indicated they want to access our TCP device, whose id is specified in the
 /// protocol header. we will first check if the remote id is allowed to do that, but the permission
-/// system is managed not by Rust code of malai, but by the fastn server running as the identity
+/// system is managed not by Rust code of kulfi, but by the fastn server running as the identity
 /// server. this allows fastn code to contain a lot of logic. since fastn code is sandboxed, and
 /// something end user can easily modify or get from the fastn app marketplace ecosystem, it is a
 /// good place to put as much logic as possible into fastn code.

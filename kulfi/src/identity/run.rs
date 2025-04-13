@@ -1,7 +1,7 @@
 use eyre::WrapErr;
 use ftnet_utils::SecretStore;
 
-impl malai::Identity {
+impl kulfi::Identity {
     #[tracing::instrument(skip_all)]
     pub async fn run(
         self,
@@ -32,7 +32,7 @@ impl malai::Identity {
             id_map.lock().await.push((self.id52, (port, ep.clone())));
         }
 
-        malai::peer_server::run(ep, port, self.client_pools.clone(), graceful_shutdown_rx).await
+        kulfi::peer_server::run(ep, port, self.client_pools.clone(), graceful_shutdown_rx).await
     }
 }
 

@@ -5,8 +5,8 @@ pub async fn handle_connection(
     client_pools: ftnet_utils::HttpConnectionPools,
     peer_connections: ftnet_utils::PeerStreamSenders,
 ) {
-    malai::OPEN_CONTROL_CONNECTION_COUNT.incr();
-    malai::CONTROL_CONNECTION_COUNT.incr();
+    kulfi::OPEN_CONTROL_CONNECTION_COUNT.incr();
+    kulfi::CONTROL_CONNECTION_COUNT.incr();
 
     let io = hyper_util::rt::TokioIo::new(stream);
 
@@ -45,7 +45,7 @@ pub async fn handle_connection(
         tracing::error!("connection error1: {e:?}");
     }
 
-    malai::OPEN_CONTROL_CONNECTION_COUNT.decr();
+    kulfi::OPEN_CONTROL_CONNECTION_COUNT.decr();
 }
 
 async fn handle_request(
@@ -54,10 +54,10 @@ async fn handle_request(
     client_pools: ftnet_utils::HttpConnectionPools,
     peer_connections: ftnet_utils::PeerStreamSenders,
 ) -> ftnet_utils::http::ProxyResult {
-    malai::CONTROL_REQUEST_COUNT.incr();
-    malai::IN_FLIGHT_REQUESTS.incr();
+    kulfi::CONTROL_REQUEST_COUNT.incr();
+    kulfi::IN_FLIGHT_REQUESTS.incr();
     let r = handle_request_(r, id_map, client_pools, peer_connections).await;
-    malai::IN_FLIGHT_REQUESTS.decr();
+    kulfi::IN_FLIGHT_REQUESTS.decr();
     r
 }
 
@@ -87,7 +87,7 @@ async fn handle_request_(
     // if this is an identity, if so forward the request to fastn corresponding to that identity
     if let Some(fastn_port) = find_identity(id, id_map.clone()).await? {
         let addr = format!("127.0.0.1:{fastn_port}");
-        return malai::control_server::proxy_pass(
+        return kulfi::control_server::proxy_pass(
             r,
             find_pool(client_pools, &addr).await?,
             &addr,
@@ -112,7 +112,7 @@ async fn handle_request_(
                extra_headers,
            }) => {
             let addr = format!("127.0.0.1:{port}");
-            malai::control_server::proxy_pass(
+            kulfi::control_server::proxy_pass(
                 r,
                 find_pool(client_pools, &addr).await?,
                 &addr,
@@ -172,7 +172,7 @@ pub enum WhatToDo {
 }
 
 async fn what_to_do(_port: u16, id: &str) -> eyre::Result<WhatToDo> {
-    // request to fastn server at /-/malai/v1/control/what-to-do/<id>/
+    // request to fastn server at /-/kulfi/v1/control/what-to-do/<id>/
     Ok(WhatToDo::ForwardToPeer {
         peer_id: id.to_string(),
         patch: Default::default(),
@@ -196,7 +196,7 @@ async fn default_identity(id_map: ftnet_utils::IDMap) -> eyre::Result<(String, u
         .await
         .first()
         .map(|(ident, (port, _ep))| (ident.to_string(), *port))
-        .expect("malai ensures there is at least one identity at the start"))
+        .expect("kulfi ensures there is at least one identity at the start"))
 }
 
 async fn get_endpoint(

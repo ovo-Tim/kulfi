@@ -1,8 +1,8 @@
-impl malai::Config {
+impl kulfi::Config {
     pub async fn identities(
         &self,
         client_pools: ftnet_utils::HttpConnectionPools,
-    ) -> eyre::Result<Vec<malai::Identity>> {
+    ) -> eyre::Result<Vec<kulfi::Identity>> {
         use eyre::WrapErr;
 
         let mut identities = Vec::new();
@@ -28,7 +28,7 @@ impl malai::Config {
                 }
             };
 
-            let identity = malai::Identity::read(&identities_dir, id, client_pools.clone())
+            let identity = kulfi::Identity::read(&identities_dir, id, client_pools.clone())
                 .await
                 .wrap_err_with(|| format!("failed to read {path:?} as an identity folder"))?;
 

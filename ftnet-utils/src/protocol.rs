@@ -72,7 +72,7 @@
 /// security philosophy: more protocols, more liabilities
 /// =====================================================
 ///
-/// the goal of the malai is to make sure there are only a few protocols. all protocol
+/// the goal of the kulfi is to make sure there are only a few protocols. all protocol
 /// handlers are security risk, they are written in Rust, possibly using C and other libraries.
 /// their code has to be reviewed for potential security issues.
 ///
@@ -115,4 +115,4 @@ pub enum Protocol {
 /// to handle them, we will end up creating more connections than minimally required (one connection
 /// can only talk one APNS). So, we use a single APNS for all the protocols, and we use the first
 /// line of the input to determine the protocol.
-pub const APNS_IDENTITY: &[u8] = b"/malai/identity/0.1";
+pub const APNS_IDENTITY: &[u8] = b"/kulfi/identity/0.1";

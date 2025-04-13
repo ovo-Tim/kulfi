@@ -1,30 +1,30 @@
 [package]
 name = "malai"
 version = "0.1.0"
+authors.workspace = true
 edition.workspace = true
+description = "malai: Kulfi Network Toolkit"
 license.workspace = true
+repository.workspace = true
+homepage.workspace = true
 publish.workspace = true
-description = "FTNet: FifthTry Network"
-
+rust-version.workspace = true
 
 [dependencies]
+clap-verbosity-flag.workspace = true
 clap.workspace = true
-directories.workspace = true
 eyre.workspace = true
-fastn-observer.workspace = true
-file-guard.workspace = true
-ftnet-sdk.workspace = true
 ftnet-utils.workspace = true
 http-body-util.workspace = true
 hyper-util.workspace = true
 hyper.workspace = true
 iroh.workspace = true
-reqwest.workspace = true
-serde.workspace = true
+rand.workspace = true
 serde_json.workspace = true
 tokio-stream.workspace = true
 tokio.workspace = true
 tracing-subscriber.workspace = true
 tracing.workspace = true
-zip.workspace = true
-rand.workspace = true
+
+[target.'cfg(target_os = "linux")'.dependencies]
+libdbus-sys.workspace = true

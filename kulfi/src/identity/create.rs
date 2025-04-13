@@ -23,7 +23,7 @@
 //!
 //! `logs` is the folder that contains the logs for this identity. This contains fastn access logs
 //! and other device access logs etc.
-impl malai::Identity {
+impl kulfi::Identity {
     #[tracing::instrument(skip(client_pools))]
     pub async fn create(
         identities_folder: &std::path::Path,
@@ -44,30 +44,30 @@ impl malai::Identity {
             public_key = ftnet_utils::public_key_to_id52(&public_key),
         ));
 
-        let package_template_folder = malai::utils::mkdir(&tmp_dir, "package-template")?;
+        let package_template_folder = kulfi::utils::mkdir(&tmp_dir, "package-template")?;
 
         // TODO: get the slug from config
-        malai::utils::download_package_template(
+        kulfi::utils::download_package_template(
             &package_template_folder,
-            "malai-template".to_string(),
+            "kulfi-template".to_string(),
         )
             .await?;
 
         // copy package-template/template/ to package
-        malai::utils::copy_dir(
+        kulfi::utils::copy_dir(
             &package_template_folder.join("template"),
             &tmp_dir.join("package"),
         )?;
 
         // TODO: call `fastn update` in the folder to ensure all dependencies are downloaded
         tracing::info!("running fastn update in {tmp_dir:?}/package");
-        malai::utils::run_fastn(&tmp_dir.join("package"), &["update"])?;
+        kulfi::utils::run_fastn(&tmp_dir.join("package"), &["update"])?;
         tracing::info!("fastn update completed");
 
         // TODO: should we encrypt the contents of this folder to prevent tampering / snooping?
 
-        malai::utils::mkdir(&tmp_dir, "devices")?;
-        malai::utils::mkdir(&tmp_dir, "logs")?;
+        kulfi::utils::mkdir(&tmp_dir, "devices")?;
+        kulfi::utils::mkdir(&tmp_dir, "logs")?;
 
         let id52 = ftnet_utils::public_key_to_id52(&public_key);
         let dir = identities_folder.join(&id52);

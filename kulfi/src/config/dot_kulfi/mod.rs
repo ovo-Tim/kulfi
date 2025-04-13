@@ -1,12 +1,12 @@
-//! The malai folder
+//! The kulfi folder
 //!
 //! The location of this folder is platform-specific, on Linux it is either
-//! $HOME/.local/share/malai or $XDG_DATA_HOME/malai, on MacOS it is $HOME/Library/Application
-//! Support/com.FifthTry.malai and on Windows: {FOLDERID_RoamingAppData}\malai\data which is usually
-//! C:\Users\Alice\AppData\Roaming\FifthTry\malai\data.
+//! $HOME/.local/share/kulfi or $XDG_DATA_HOME/kulfi, on MacOS it is $HOME/Library/Application
+//! Support/com.FifthTry.kulfi and on Windows: {FOLDERID_RoamingAppData}\kulfi\data which is usually
+//! C:\Users\Alice\AppData\Roaming\FifthTry\kulfi\data.
 //!
-//! The folder contains a lock file, `$malai/malai.lock, which is used to ensure only one instance
-//! of `malai` is running.
+//! The folder contains a lock file, `$kulfi/kulfi.lock, which is used to ensure only one instance
+//! of `kulfi` is running.
 //!
 //! The folder contains more folders like `identities`, `logs` and maybe `config.json` etc. in
 //! the future.
@@ -15,7 +15,7 @@
 //! that exists on this machine. The content of single `identity` folder is described
 //! in `identity/create.rs`.
 
-pub const LOCK_FILE: &str = "malai.lock";
+pub const LOCK_FILE: &str = "kulfi.lock";
 
 mod init_if_required;
 mod lock;

@@ -1,4 +1,4 @@
-pub mod dot_malai;
+pub mod dot_kulfi;
 mod identities;
 mod read;
 
