@@ -4,11 +4,11 @@ on:
   push:
     branches: [ main ]
     paths:
-      - ftnet.fifthtry.site/**
+      - kulfi.fifthtry.site/**
       - control-backend-wasm/**
       - common/**
       - scripts/*.sh
-      - .github/workflows/app-to-ft.yml
+      - .github/workflows/kulfi-app-to-ft.yml
       - Cargo.toml
 
 
@@ -16,7 +16,7 @@ jobs:
   upload-to-fifthtry:
     runs-on: ubuntu-latest
     env:
-      FIFTHTRY_SITE_WRITE_TOKEN: ${{ secrets.FT_FTNET_APP }}
+      FIFTHTRY_SITE_WRITE_TOKEN: ${{ secrets.FT_KULFI_APP }}
     steps:
       - uses: actions/checkout@v2
       - uses: Swatinem/rust-cache@v2

@@ -1,0 +1,9 @@
+-- import: fastn
+
+-- fastn.package: kulfi-template.fifthtry.site
+
+-- fastn.dependency: kulfi.fifthtry.site
+
+-- fastn.app: FTNet
+mount-point: /-/kulfi/
+package: kulfi.fifthtry.site

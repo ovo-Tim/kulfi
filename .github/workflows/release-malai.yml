@@ -1,11 +1,11 @@
 # TODO(siddhantk232): build for windows
-name: Create a new skynet release
+name: Release malai
 
 on:
   workflow_dispatch:
     inputs:
       releaseTag:
-        description: 'Release Version (will be prefixed with "skynet-")'
+        description: 'Release Version (will be prefixed with "malai-")'
         required: true
       productionRelease:
         type: boolean
@@ -14,7 +14,7 @@ jobs:
   release-ubuntu:
     name: Build for Linux
     # using the oldest available ubuntu on github CI to provide maximum compatibility with glibc versions
-    # update SKYNET_RELEASE_TEMPLATE with the glibc version
+    # update MALAI_RELEASE_TEMPLATE with the glibc version
     # on ubuntu-20.04, glibc version is 2.31
     runs-on: ubuntu-20.04
     env:
@@ -32,17 +32,17 @@ jobs:
       - name: print rustc version
         run: rustc --version
       - name: cargo build (linux)
-        run: cargo build --release --bin skynet
-      - name: print skynet version
-        run: ./target/release/skynet --version
+        run: cargo build --release --bin malai
+      - name: print malai version
+        run: ./target/release/malai --version
       - name: print file info
         run: |
-          file ./target/release/skynet
-          ldd ./target/release/skynet
+          file ./target/release/malai
+          ldd ./target/release/malai
       - uses: actions/upload-artifact@v4
         with:
           name: linux_x86_64
-          path: target/release/skynet
+          path: target/release/malai
   release-macos:
     name: Build for MacOS
     # don't use later versions, as else our binary will be built for arm64,
@@ -64,18 +64,18 @@ jobs:
       - name: Run Build
         id: build-macos
         continue-on-error: false
-        run: cargo build --release --bin skynet
-      - name: print skynet version
-        run: ./target/release/skynet --version
+        run: cargo build --release --bin malai
+      - name: print malai version
+        run: ./target/release/malai --version
       - name: print file info
         run: |
-          file ./target/release/skynet
-          otool -L ./target/release/skynet
+          file ./target/release/malai
+          otool -L ./target/release/malai
       - uses: actions/upload-artifact@v4
         with:
           name: macos_x64_latest
           path: |
-            target/release/skynet
+            target/release/malai
   create-release:
     name: Create github tag and release
     runs-on: ubuntu-latest
@@ -94,17 +94,17 @@ jobs:
           path: ~/download/linux
       - name: Rename assets
         run: |
-          mv ~/download/macos/skynet ~/download/macos/skynet_macos_x86_64
-          mv ~/download/linux/skynet ~/download/linux/skynet_linux_x86_64
-      - name: Update .github/SKYNET_RELEASE_TEMPLATE.md
+          mv ~/download/macos/malai ~/download/macos/malai_macos_x86_64
+          mv ~/download/linux/malai ~/download/linux/malai_linux_x86_64
+      - name: Update .github/MALAI_RELEASE_TEMPLATE.md
         run: |
-          sed -i "s/GITHUB_SHA/${GITHUB_SHA}/g" .github/SKYNET_RELEASE_TEMPLATE.md
-          sed -i "s/DATE/$(date)/g" .github/SKYNET_RELEASE_TEMPLATE.md
+          sed -i "s/GITHUB_SHA/${GITHUB_SHA}/g" .github/MALAI_RELEASE_TEMPLATE.md
+          sed -i "s/DATE/$(date)/g" .github/MALAI_RELEASE_TEMPLATE.md
       - uses: ncipollo/release-action@v1
         with:
-          artifacts: "~/download/macos/skynet_macos_x86_64,~/download/linux/skynet_linux_x86_64"
+          artifacts: "~/download/macos/malai_macos_x86_64,~/download/linux/malai_linux_x86_64"
           generateReleaseNotes: true
           token: ${{ secrets.GITHUB_TOKEN }}
-          tag: skynet-${{ github.event.inputs.releaseTag }}
+          tag: malai-${{ github.event.inputs.releaseTag }}
           prerelease: ${{ github.event.inputs.productionRelease && github.event.inputs.productionRelease == 'false' }}
-          bodyFile: .github/SKYNET_RELEASE_TEMPLATE.md
+          bodyFile: .github/MALAI_RELEASE_TEMPLATE.md

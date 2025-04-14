@@ -1,0 +1,5 @@
+-- import: fastn
+
+-- fastn.package: kulfi.fifthtry.site
+system: kulfi
+system-is-confidential: false

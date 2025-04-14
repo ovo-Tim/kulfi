@@ -1,9 +1,0 @@
--- import: fastn
-
--- fastn.package: ftnet-template.fifthtry.site
-
--- fastn.dependency: ftnet.fifthtry.site
-
--- fastn.app: FTNet
-mount-point: /-/ftnet/
-package: ftnet.fifthtry.site
