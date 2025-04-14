@@ -1,0 +1,40 @@
+;; TODO: Add Services to accounts as well. You should not need orgs to be able
+;; to share services.
+-- import: kulfi.app/assets
+
+-- ds.site-page: Kulfi Accounts
+
+-- ds.heading-large: Kulfi Accounts
+
+Accounts are managed by the [Profiles](/impl/kulfi-profile/) app itself. You
+can create a new account or add an existing account to your profile.
+
+A Profile can be associated with multiple accounts. On a single profile, you
+can switch between multiple accounts while browsing to switch your account
+identity.
+
+-- ds.heading-medium: New Account Creation
+
+It is recommended that you create account on a profile that is always online.
+This lets you always accept requests when you try to add this account to other
+profiles.
+
+-- ds.image: New Account
+src: $assets.files.assets.new_account.png
+
+
+-- ds.heading-medium: Add Existing Account
+
+-- ds.image: Add Existing Account
+src: $assets.files.assets.existing_account.png
+
+Adding an existing account will send request to the profile on which this
+account was created. Once the request is accepted by going to that profile and
+clicking "Accept", the account will be added to this profile.
+
+Here's how such a request looks like on the profile page:
+
+-- ds.image: Request to add account
+src: $assets.files.assets.account_add_request.png
+
+-- end: ds.site-page

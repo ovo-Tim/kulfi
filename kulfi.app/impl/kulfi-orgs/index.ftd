@@ -1,0 +1,79 @@
+-- import: kulfi.app/assets
+
+-- ds.site-page: Kulfi Orgs
+
+-- ds.heading-large: Kulfi Orgs
+
+A `kulfi` Org is used to contain multiple accounts. Any service owned by this
+organization is accessible to every account associated with this organization.
+
+;; NOTE: Add more fine grained access controls using lets-auth
+
+Each Organization has a separated `fastn` package that is used to:
+
+- Serve the dashboard page of that organization
+- Serve `/what-to-do/` requests
+- Manage member accounts and services
+
+On the [profile](/impl/kulfi-profile/) page, You'll see organizations that you
+have access to. These are just links to the dashboard page of those orgs.
+
+Orgs created by you wil be stored and served by your profile. It is recommended
+that you create orgs on a profile that is always online. This lets you always
+accept `/what-to-do/` requests.
+
+The [Profile](/impl/kulfi-profile/) app only helps you create new profiles.
+Everything related to organization is then managed by the org's `fastn`
+package.
+
+-- ds.heading-medium: Creating a new Organization
+
+-- ds.image: Create New Org
+src: $assets.files.assets.new_org_form.png
+
+Once created, this Org will appear on your profiles page. A new path
+(`$KULFI_DIR/orgs/<org_id52>/package/`) is created where the `fastn` package
+for this Org will be stored. A `fastn serve` will be spawned by the kulfi app
+automatically.
+
+Here's how a typical dashboard page of an Org looks like:
+
+-- ds.image: Org Dashboard Page - Owner View
+src: $assets.files.assets.org_dashboard_owner_view.png
+
+This is what you, as the creator of this Org will see. Services on this page
+appear automatically as they're spawned using the `malai` cli.
+
+When you run:
+
+-- ds.code:
+lang: shell
+
+malai expose-http 3000 --org <id52-of-org>
+
+-- ds.copy-regular:
+
+This will send a request to your Org which will make this service visible on
+the Org dashboard. The cli will wait for you to go to the dashboard and confirm
+the request before it'll start running.
+
+TODO: we can probably do better here. The `malai` cli should probably take a
+jey signed by the Org so that we know that the request to add this service to
+malai is legit.
+
+-- ds.heading-medium: Other Dashboard Views
+
+-- ds.image: Dashboard Page - Member View
+src: $assets.files.assets.org_dashboard_member_view.png
+
+The Member View would be shown to you if you visit this org page and your're
+the member. You become a member by requesting to join the org, the org owner
+has to accept this request, of course.
+
+-- ds.image: Dashboard Page - Visitor View
+src: $assets.files.assets.org_dashboard_visitor_view.png
+
+This view is shown to anonymous visitors. You can request to join this org or
+you can browse their public services.
+
+-- end: ds.site-page
