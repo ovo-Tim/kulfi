@@ -1,0 +1,11 @@
+-- import: fastn
+
+-- fastn.package: kulfi.app
+
+-- fastn.dependency: design-system.fifthtry.site
+
+-- fastn.auto-import: design-system.fifthtry.site as ds
+
+-- fastn.url-mappings:
+
+/discord/ -> https://discord.gg/nK4ZP8HpV7
