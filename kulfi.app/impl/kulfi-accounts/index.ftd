@@ -1,5 +1,3 @@
-;; TODO: Add Services to accounts as well. You should not need orgs to be able
-;; to share services.
 -- import: kulfi.app/assets
 
 -- ds.site-page: Kulfi Accounts
@@ -12,6 +10,9 @@ can create a new account or add an existing account to your profile.
 A Profile can be associated with multiple accounts. On a single profile, you
 can switch between multiple accounts while browsing to switch your account
 identity.
+
+TODO: Add Services to accounts as well. You should not need orgs to be able
+to share services.
 
 -- ds.heading-medium: New Account Creation
 
