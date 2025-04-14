@@ -47,7 +47,7 @@ fn configure_tracing_subscriber() {
             .with(fastn_observer::Layer::default())
             .with(tracing_subscriber::EnvFilter::from_default_env()),
     )
-        .unwrap();
+    .unwrap();
 }
 
 #[derive(clap::Parser, Debug)]

@@ -19,7 +19,7 @@ pub fn public_key_to_id52(key: &iroh::PublicKey) -> String {
 }
 
 pub type FrameReader =
-tokio_util::codec::FramedRead<iroh::endpoint::RecvStream, tokio_util::codec::LinesCodec>;
+    tokio_util::codec::FramedRead<iroh::endpoint::RecvStream, tokio_util::codec::LinesCodec>;
 
 pub fn frame_reader(recv: iroh::endpoint::RecvStream) -> FrameReader {
     FrameReader::new(recv, tokio_util::codec::LinesCodec::new())

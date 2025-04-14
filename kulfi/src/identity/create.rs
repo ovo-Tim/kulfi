@@ -51,7 +51,7 @@ impl kulfi::Identity {
             &package_template_folder,
             "kulfi-template".to_string(),
         )
-            .await?;
+        .await?;
 
         // copy package-template/template/ to package
         kulfi::utils::copy_dir(

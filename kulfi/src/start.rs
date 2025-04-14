@@ -64,8 +64,8 @@ pub async fn start(_fg: bool, data_dir: std::path::PathBuf, control_port: u16) -
             client_pools,
             peer_connections,
         )
-            .await
-            .unwrap()
+        .await
+        .unwrap()
     });
 
     tokio::signal::ctrl_c()

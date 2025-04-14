@@ -93,7 +93,7 @@ async fn handle_request_(
             &addr,
             Default::default(),
         )
-            .await;
+        .await;
     }
 
     // TODO: maybe we should try all the identities not just default
@@ -108,9 +108,9 @@ async fn handle_request_(
         // if not identity, find if the id is an http device owned by identity, if so proxy-pass the
         // request to that device
         Ok(WhatToDo::ProxyPass {
-               port,
-               extra_headers,
-           }) => {
+            port,
+            extra_headers,
+        }) => {
             let addr = format!("127.0.0.1:{port}");
             kulfi::control_server::proxy_pass(
                 r,
@@ -118,7 +118,7 @@ async fn handle_request_(
                 &addr,
                 extra_headers,
             )
-                .await
+            .await
         }
         Ok(WhatToDo::UnknownPeer) => {
             tracing::error!("unknown peer: {id}");
