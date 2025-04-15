@@ -1,0 +1,15 @@
+-- ds.site-page: Kulfi App Journey
+
+-- ds.copy-regular:
+
+- install kulfi
+- open it, a profile is created
+- create an account
+- create an org
+- run services using `malai`
+- add members to your org so that they can access your exposed services
+
+link to journeys created in kulfi-profile, kulfi-org and kulfi-account for
+granular things like create-account, join-org, org dashboards etc.
+
+-- end: ds.site-page
