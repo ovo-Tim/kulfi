@@ -1,7 +1,57 @@
--- ds.site-page: Docs
+-- import: kulfi-org.fifthtry.site/assets
 
--- ds.heading-medium: Journeys
+-- ds.site-page: Dashboard Page Journey
 
-- [Dashboard Page](/doc/journeys/home/)
+-- ds.copy-regular:
+
+The dashboard page shows different content to different viewers. Currently it
+recognizes:
+
+- Owner (creator of this organization)
+- Visitor (outside of this organization)
+- Member (part of this organization)
+
+Initially, the owner sess the dashboard page:
+
+-- ds.image: Dashboard Page (owner view)
+src: $assets.files.assets.docs.dashboard-page-initial.png
+
+The members list, "join request"s and, services list are all empty.
+
+- Only the **owner** can add services and accept "join request"s from visitors.
+- The **member** can access both public and private services.
+- The **visitor** can access only public services.
+
+-- ds.heading-medium: Owner adds Services
+
+A service is a connected `malai` instance. All the members of this organization
+get to access this service by visiting it's id52 (`kulfi://http-<id52>` for
+http services).
+
+If it's a public service, then visitors can also see this service.
+
+Once a service is added, the dashboard page looks like:
+
+-- ds.image: Dashboard Page with Services (owner view)
+src: $assets.files.assets.doc.dashboard-page-services.png
+
+To learn about how to add a public/private service to an organization. See
+[/doc/journeys/add-service/](/doc/journeys/add-service/).
+
+-- ds.heading-medium: Member Join Request
+
+Only the owner can see and accept join requests. Join request appear on the dashboard:
+
+-- ds.image: Join Request (owner view)
+src: $assets.files.assets.doc.dashboard-page-join-requests.png
+
+To learn more about how Join Request(s) work. See [/doc/journeys/join-request/](/doc/journeys/join-request/).
+
+-- ds.heading-medium: Member List
+
+The owner and members can see other members on the dashboard page.
+
+-- ds.image: Members List (owner view)
+src: $assets.files.assets.doc.dashboard-page-members-list.png
 
 -- end: ds.site-page
