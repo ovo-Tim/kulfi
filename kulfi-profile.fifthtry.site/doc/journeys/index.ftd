@@ -1,0 +1,8 @@
+-- ds.heading-medium: The main journey
+
+Describe what things can happen on the profile page. Paint the bigger picture.
+For specifics, other journeys exist (how to create an account, for example).
+
+- What will the initial profile page look like?
+- What is the first thing the user has to do?
+- How can I share my django service with others?
