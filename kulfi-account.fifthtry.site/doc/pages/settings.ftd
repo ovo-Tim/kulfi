@@ -1,0 +1,11 @@
+-- ds.site-page: Settings Page | Accounts App
+
+-- ds.heading-medium: Settings Page
+
+The settngs page of the Account app lets you can change basic account
+information like name, profile picture, email etc.
+
+All of this information is used by others to identify you. You can choose to be
+anonymous by filling fake information.
+
+-- end: ds.site-page
