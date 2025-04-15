@@ -1,0 +1,11 @@
+-- ds.site-page: Home Page | Org App
+
+-- ds.heading-medium: Home Page
+
+The home page of the Org app is a dashboard page which shows:
+
+- Running services.
+- Existing Members.
+- Member "join request"s
+
+-- end: ds.site-page
