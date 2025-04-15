@@ -1,0 +1,63 @@
+-- import: kulfi-profile.fifthtry.site/assets
+
+-- ds.site-page: Profile Page Main Journey
+
+-- ds.copy-regular:
+
+The Profile Page is the default page that you see whenever you open the Kulfi
+app. When you first open the Kulfi app, You'll be greeted with a profile page
+that looks like:
+
+
+-- ds.image: Initial Profile Page
+src: $assets.files.assets.doc.initial-profile.png
+
+In the bottom bar, there's an address bar that shows your current url
+(`kulfi://<id52>`) and, a profile switcher. You can switch between multiple
+profiles, a **default profile** is created for you when you first open the
+Kulfi app.
+
+The first thing that you do is add/create an account.
+
+-- ds.heading-medium: Accounts
+
+- A profile must be connected to an account. 
+- A single account can be shared across multiple profiles (your phone and
+  laptop for example)
+- An account helps others identify you when you request to join their Org.
+- An account is also required if you want to create your own Org.
+- See [/doc/journeys/create-account/](/doc/journeys/create-account/) and
+  [/doc/journeys/add-account/](/doc/journeys/add-account/) to learn more about
+  how to add/create an account to your profile.
+
+Once an account is added, the profile page will look like:
+
+-- ds.image: Profile Page with Account
+src: $assets.files.assets.doc.profile-page-with-account.png
+
+All the orgs this account has access to will appear on your profile page.
+Initially there will be nothing.
+
+You can create an Org or join existing Org(s).
+
+-- ds.heading-medium: Orgs
+
+- An Org is used to manage common services for multiple accounts.
+- The creator of the Org can add multiple services.
+- Members of this Org will be able to access those services.
+- Example of services include: An http service, A tcp service etc.
+- See [/doc/journeys/create-org/](/doc/journeys/create-org/) and
+  [/doc/journeys/add-org/](/doc/journeys/add-org/) to learn more about how to
+  create/add orgs.
+
+Once an Org is there on the profile page, you can click on it to visit that
+Org's dashboard page.
+
+A typical Org dashboard page looks like:
+
+-- ds.image: Org Dashboard Page
+src: $assets.files.assets.doc.org-dashboard-typical.png
+
+To learn more about Org Dashboard Functionality, visit https://kulfi.app/doc/journeys/
+
+-- end: ds.site-page
