@@ -9,8 +9,8 @@ authors = [
 ]
 edition = "2024"
 license = "UPL-1.0"
-repository = "https://github.com/FifthTry/ftnet"
-homepage = "https://ftnet.in"
+repository = "https://github.com/kulfi-project/kulfi"
+homepage = "https://kulfi.app"
 publish = true
 rust-version = "1.86"
 
