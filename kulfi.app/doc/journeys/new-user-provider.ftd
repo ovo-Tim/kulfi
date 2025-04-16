@@ -1,0 +1,108 @@
+-- import: kulfi.app/assets
+
+-- ds.site-page: Provide Services with Kulfi
+
+-- ds.heading-large: Provide Services with Kulfi
+
+-- ds.heading-medium: Install `kulfi`
+
+Kulfi is a GUI app. Install it and then open it. On first launch, it'll create
+a new profile automatically for you. You can create multiple profiles later if
+needed.
+
+-- ds.image: Kulfi Launch Screen
+src: $assets.files.assets.doc.kulfi-launch-screen.png
+
+The first thing you need to do is create an account.
+
+-- ds.heading-medium: Add an Account
+
+An account lets others identify you. A new account created will be stored on
+this machine where Kulfi is running.
+
+-- ds.image: Create Account
+src: $assets.files.assets.doc.create-account-siddhant.png
+
+After creating an account, you'll be redirect back to the profile page.
+
+The profile will then ask you to create an Org.
+
+-- ds.image: Profile page asking to create Org
+src: $assets.files.assets.doc.profile-page-create-org.png
+
+TODO: In future, It should be possible to directly use your account for sharing
+services. You won't need an Org for single user usecases then.
+
+-- ds.heading-medium: Create an Org
+
+You'll need an Org to be able to share services with the world. Services can be
+public (anyone can access) or private (only Org members can access).
+
+-- ds.image: Create Org
+src: $assets.files.assets.doc.create-org-superorg.png
+
+After creating an Org, you'll be redirected to the Org dashboard page.
+
+-- ds.heading-medium: Add services with `malai`
+
+Initially on the Org dashboard page, there are no services.
+
+-- ds.image: Org Dashboard Page
+src: $assets.files.assets.doc.org-dashboard-initial.png
+
+You can add a service using `malai` CLI.
+
+-- ds.heading-small: Add a Private Service
+
+To add a private service. Run the following command:
+
+-- ds.code: `malai` expose private http service
+lang: shell
+
+malai expose-http 8000 --org <org-id>
+
+-- ds.heading-small: Add a Public Service
+
+To add a public service. Run the following command:
+
+-- ds.code: `malai` expose public http service
+lang: shell
+
+malai expose-http 8000 --org <org-id> --public
+
+-- ds.copy-regular:
+
+Both of these cli requests will ask you to authenticate by going to the
+dashboard and approving this service add request.
+
+Once this is done services will appear on your Org dashboard page.
+
+-- ds.image: Org Dashboard Page with Services
+src: $assets.files.assets.doc.org-dashboard-with-services.png
+
+-- ds.heading-medium: Accessing Services
+
+You can click on the service or copy it's URL in the address bar to access it.
+Suppose the Notes App address is
+`kulfi://http-682dc4680d57d4fd10aca2ffe5b5b77e6dcbfa45c4a47ebe68d2`. Since
+you're the owner, you can access it. Visitors will only be able to access the
+"Talk App".
+
+-- ds.image: Notes App
+src: $assets.files.assets.doc.notes-app.png
+
+-- ds.heading-medium: Add members to your Org
+
+You can share your Ord Dashboard link
+(`kulfi://org-c1b2d4463e503765b7422e126ea7ff5633ba5903f97b700ac818`) with
+others. When they visit they'll only be able to access Public services. They
+can request to join your Org if they want to acess private services.
+
+
+-- ds.heading-medium: Learn More
+
+- Learn about the Profile feature - https://kulfi-profile.fifthtry.site/doc/journeys/
+- Learn about the Accounts feature - https://kulfi-account.fifthtry.site/doc/journeys/
+- Learn about the Org feature - https://kulfi-org.fifthtry.site/doc/journeys/
+
+-- end: ds.site-page

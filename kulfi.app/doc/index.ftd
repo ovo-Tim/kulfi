@@ -1,4 +1,4 @@
--- ds.site-page: Kulfi App Journeys
+-- ds.site-page: Docs
 
 -- ds.heading-medium: Journeys
 
@@ -10,5 +10,12 @@ Describes how a new user can expose their services on the Kulfi network.
 
 Described how a new user can consume services on the Kulfi network.
 
+-- ds.heading-medium: Pages
+
+TODO
+
+-- ds.heading-medium: Backend
+
+TODO
 
 -- end: ds.site-page
