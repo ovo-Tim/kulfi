@@ -1,0 +1,64 @@
+-- import: kulfi.app/assets
+
+-- ds.site-page: Browse Existing Services With Kulfi
+
+-- ds.heading-large: Browse Existing Services With Kulfi
+
+-- ds.heading-medium: Install `kulfi`
+
+Kulfi is a GUI app. Install it and then open it. On first launch, it'll create
+a new profile automatically for you. You can create multiple profiles later if
+needed.
+
+-- ds.image: Kulfi Launch Screen
+src: $assets.files.assets.doc.kulfi-launch-screen.png
+
+The first thing you need to do is create an account.
+
+-- ds.heading-medium: Add an Account
+
+An account lets others identify you. A new account created will be stored on
+this machine where Kulfi is running.
+
+-- ds.image: Create Account
+src: $assets.files.assets.doc.create-account-amitu.png
+
+After creating an account, you'll be redirect back to the profile page.
+
+The profile will then ask you to create an Org.
+
+-- ds.image: Profile page asking to create Org
+src: $assets.files.assets.doc.profile-page-create-org.png
+
+You can ignore creating an Org for now and start browsing existing services by
+other Orgs. For this, you need the org id you're trying to visit.
+
+Let's assume there's an Org accessible at
+`kulfi://org-c1b2d4463e503765b7422e126ea7ff5633ba5903f97b700ac818`. You can put
+this url in the address bar, this will load that Org's dashboard page.
+
+-- ds.image: Org Dashboard Page
+src: $assets.files.assets.doc.org-siddhant-dashboard.png
+
+-- ds.heading-medium: Accessing Services
+
+You can see the list of public services on the Org dashboard page. You can
+click on them or put their address in the address bar. In this case, you can
+visit `kulfi://http-e9b1c82b43206c96173848ed0afad2fe633fdc8a02ba391a3d37`,
+which is where the Talk App lives.
+
+-- ds.image: Talk App
+src: $assets.files.assets.doc.talk-app.png
+
+Alternatively, you can click the "Request To Join" button which will send the
+request to the Org owner that you want to join this Org. Once the request is
+accepted, you'll also see private services on this Org Dashboard page.
+
+-- ds.heading-medium: Learn More
+
+- Provide your services with Kulfi - [/doc/journeys/new-user-provider/](/doc/journeys/new-user-provider/)
+- Learn about the Profile feature - https://kulfi-profile.fifthtry.site/doc/journeys/
+- Learn about the Accounts feature - https://kulfi-account.fifthtry.site/doc/journeys/
+- Learn about the Org feature - https://kulfi-org.fifthtry.site/doc/journeys/
+
+-- end: ds.site-page
