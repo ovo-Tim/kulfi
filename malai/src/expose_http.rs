@@ -93,9 +93,8 @@ fn print_id52_info(host: &str, port: u16, id52: &str) {
     use colored::Colorize;
 
     println!(
-        "{} {} {}{}:{}",
+        "{} is now serving {}{}:{}",
         "Malai".on_green().black(),
-        "is now serving",
         "http://".yellow(),
         host.yellow(),
         port.to_string().yellow()
