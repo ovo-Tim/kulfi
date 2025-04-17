@@ -1,6 +1,6 @@
 #!/bin/sh
 
-MALAI_VERSION="0.1.0"
+MALAI_VERSION="0.1.1"
 
 # This script should be run via curl:
 # source < "$(curl -fsSL https://malai.sh/install.sh)"
