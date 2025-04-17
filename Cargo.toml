@@ -34,6 +34,7 @@ bb8 = "0.9"
 bytes = "1"
 clap = { version = "4", features = ["derive"] }
 clap-verbosity-flag = "3"
+colored = "3"
 data-encoding = "2.8"
 diesel = { version = "2", default-features = false, features = ["chrono"] }
 directories = "6.0.0"
@@ -48,6 +49,7 @@ hyper = { version = "1", features = ["full"] }
 hyper-util = { version = "0.1.10", features = ["tokio", "server"] }
 iroh = { version = "0.34", features = ["discovery-local-network"] }
 keyring = "4.0.0-rc.1"
+libdbus-sys = { version = "0.2", features = ["vendored"] }
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
@@ -57,7 +59,6 @@ tokio-util = "0.7"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 zip = { version = "2", default-features = false }
-libdbus-sys = { version = "0.2", features = ["vendored"] }
 
 [workspace.dependencies.fastn-observer]
 git = "https://github.com/fastn-stack/fastn-observer"

@@ -8,7 +8,7 @@ pub async fn expose_http(host: String, port: u16) -> eyre::Result<()> {
         .await
         .wrap_err_with(|| "failed to bind to iroh network")?;
 
-    println!("Connect to {port} by visiting http://{id52}.localhost.direct",);
+    print_id52_info(&host, port, &id52);
 
     let client_pools = ftnet_utils::HttpConnectionPools::default();
 
@@ -87,4 +87,25 @@ async fn handle_connection(
     tracing::info!("connection closed by peer: {e}");
     conn.close(0u8.into(), &[]);
     Ok(())
+}
+
+fn print_id52_info(host: &str, port: u16, id52: &str) {
+    use colored::Colorize;
+
+    println!(
+        "{} {} {}{}:{}",
+        "Malai".on_green().black(),
+        "is now serving",
+        "http://".yellow(),
+        host.yellow(),
+        port.to_string().yellow()
+    );
+    println!("ID52: {}", id52.yellow());
+    println!(
+        "{} {}{}{}",
+        "Public kulfi proxy address:".dimmed(),
+        "https://".yellow(),
+        id52.yellow(),
+        ".kulfi.site".yellow()
+    );
 }

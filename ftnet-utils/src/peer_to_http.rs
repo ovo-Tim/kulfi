@@ -45,7 +45,7 @@ pub async fn peer_to_http(
 
     let mut r = hyper::Request::builder()
         .method(req.method.as_str())
-        .uri(req.uri);
+        .uri(&req.uri);
     for (name, value) in req.headers {
         r = r.header(name, value);
     }
@@ -96,6 +96,18 @@ pub async fn peer_to_http(
     send.write_all(&bytes).await?;
 
     tracing::info!("handled http request in {:?}", start.elapsed());
+
+    {
+        use colored::Colorize;
+        println!(
+            "{} {} {} in {}",
+            req.method.to_uppercase().green(),
+            req.uri,
+            resp.status.as_str().on_blue().black(),
+            format!("{}ms", start.elapsed().as_millis()).yellow()
+        );
+    }
+
     Ok(())
 }
 
