@@ -30,3 +30,13 @@ pub async fn global_iroh_endpoint() -> iroh::Endpoint {
         tokio::sync::OnceCell::const_new();
     IROH_ENDPOINT.get_or_init(new_iroh_endpoint).await.clone()
 }
+
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
+pub fn ui() -> eyre::Result<()> {
+    tauri::Builder::default()
+        .plugin(tauri_plugin_opener::init())
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
+
+    Ok(())
+}

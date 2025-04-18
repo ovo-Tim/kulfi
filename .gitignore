@@ -13,6 +13,8 @@ debug/
 target
 **/*.rs.bk
 
+malai/gen
+
 # fastn test
 
 .env
@@ -27,4 +29,4 @@ target
 .packages
 *.wasm
 
-.skynet.id52
+.malai.id52

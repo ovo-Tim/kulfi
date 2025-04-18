@@ -16,6 +16,8 @@ clap.workspace = true
 colored.workspace = true
 eyre.workspace = true
 ftnet-utils.workspace = true
+tauri.workspace = true
+tauri-plugin-opener.workspace = true
 http-body-util.workspace = true
 hyper-util.workspace = true
 hyper.workspace = true
@@ -29,3 +31,7 @@ tracing.workspace = true
 
 [target.'cfg(target_os = "linux")'.dependencies]
 libdbus-sys.workspace = true
+
+
+[build-dependencies]
+tauri-build.workspace = true

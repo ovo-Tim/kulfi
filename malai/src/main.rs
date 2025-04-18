@@ -1,3 +1,6 @@
+// Prevents additional console window on Windows in release, DO NOT REMOVE!!
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
     use clap::Parser;
@@ -28,6 +31,10 @@ async fn main() -> eyre::Result<()> {
         Command::TcpBridge { proxy_target, port } => {
             tracing::info!(port, proxy_target, verbose = ?cli.verbose, "Starting TCP bridge.");
             malai::tcp_bridge(proxy_target, port).await
+        }
+        Command::Ui => {
+            tracing::info!(verbose = ?cli.verbose, "Starting UI.");
+            malai::ui()
         }
     } {
         tracing::error!("Error: {e}");
@@ -111,4 +118,5 @@ argument to specify a What To Do service that can be used to add access control.
         )]
         port: u16,
     },
+    Ui,
 }
