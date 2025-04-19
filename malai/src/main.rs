@@ -5,6 +5,7 @@
 async fn main() -> eyre::Result<()> {
     use clap::Parser;
 
+    println!("args: {:?}", std::env::args());
     // run with RUST_LOG="malai=info" to only see our logs when running with the --trace flag
     tracing_subscriber::fmt::init();
 
@@ -32,7 +33,7 @@ async fn main() -> eyre::Result<()> {
             tracing::info!(port, proxy_target, verbose = ?cli.verbose, "Starting TCP bridge.");
             malai::tcp_bridge(proxy_target, port).await
         }
-        Command::Ui => {
+        Command::Ui { .. } => {
             tracing::info!(verbose = ?cli.verbose, "Starting UI.");
             malai::ui()
         }
@@ -118,5 +119,12 @@ argument to specify a What To Do service that can be used to add access control.
         )]
         port: u16,
     },
-    Ui,
+    Ui {
+        // adding these two because when we run `cargo tauri dev` it automatically passes these
+        // arguments. need to figure out why and how to disable that, till then this is workaround
+        #[arg(default_value = "true", long, hide = true)]
+        no_default_features: bool,
+        #[arg(default_value = "auto", long, hide = true)]
+        color: String,
+    },
 }

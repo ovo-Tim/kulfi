@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "identifier": "com.tauri-app.app",
   "build": {
-    "frontendDist": "kulfi://yo-yo.kulfi/whatever-path?query=string"
+    "frontendDist": "https://fastn.com"
   },
   "app": {
     "withGlobalTauri": true,
