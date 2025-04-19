@@ -12,28 +12,28 @@ async fn main() -> eyre::Result<()> {
     let cli = Cli::parse();
 
     if let Err(e) = match cli.command {
-        Command::ExposeHttp {
+        Some(Command::ExposeHttp {
             port,
             host,
             // secure,
             // what_to_do,
-        } => {
+        }) => {
             tracing::info!(port, host, verbose = ?cli.verbose, "Exposing HTTP service on kulfi.");
             malai::expose_http(host, port).await
         }
-        Command::HttpBridge { proxy_target, port } => {
+        Some(Command::HttpBridge { proxy_target, port }) => {
             tracing::info!(port, proxy_target, verbose = ?cli.verbose, "Starting HTTP bridge.");
             malai::http_bridge(proxy_target, port).await
         }
-        Command::ExposeTcp { port, host } => {
+        Some(Command::ExposeTcp { port, host }) => {
             tracing::info!(port, host, verbose = ?cli.verbose, "Exposing TCP service on kulfi.");
             malai::expose_tcp(host, port).await
         }
-        Command::TcpBridge { proxy_target, port } => {
+        Some(Command::TcpBridge { proxy_target, port }) => {
             tracing::info!(port, proxy_target, verbose = ?cli.verbose, "Starting TCP bridge.");
             malai::tcp_bridge(proxy_target, port).await
         }
-        Command::Ui { .. } => {
+        None => {
             tracing::info!(verbose = ?cli.verbose, "Starting UI.");
             malai::ui()
         }
@@ -52,7 +52,14 @@ pub struct Cli {
     verbose: clap_verbosity_flag::Verbosity,
 
     #[command(subcommand)]
-    pub command: Command,
+    pub command: Option<Command>,
+
+    // adding these two because when we run `cargo tauri dev` it automatically passes these
+    // arguments. need to figure out why and how to disable that, till then this is workaround
+    #[arg(default_value = "true", long, hide = true)]
+    no_default_features: bool,
+    #[arg(default_value = "auto", long, hide = true)]
+    color: String,
 }
 
 #[derive(clap::Subcommand, Debug)]
@@ -118,13 +125,5 @@ argument to specify a What To Do service that can be used to add access control.
             default_value = "8081"
         )]
         port: u16,
-    },
-    Ui {
-        // adding these two because when we run `cargo tauri dev` it automatically passes these
-        // arguments. need to figure out why and how to disable that, till then this is workaround
-        #[arg(default_value = "true", long, hide = true)]
-        no_default_features: bool,
-        #[arg(default_value = "auto", long, hide = true)]
-        color: String,
     },
 }
