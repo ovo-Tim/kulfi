@@ -2,7 +2,7 @@ pub async fn get_endpoint(secret_key: iroh::SecretKey) -> eyre::Result<iroh::End
     match iroh::Endpoint::builder()
         .discovery_n0()
         .discovery_local_network()
-        .alpns(vec![ftnet_utils::APNS_IDENTITY.into()])
+        .alpns(vec![kulfi_utils::APNS_IDENTITY.into()])
         .secret_key(secret_key)
         .bind()
         .await

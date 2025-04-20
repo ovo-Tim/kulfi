@@ -43,7 +43,7 @@ impl SecretStore for KeyringSecretStore {
     fn generate(mut rng: impl rand_core::CryptoRngCore) -> eyre::Result<iroh::PublicKey> {
         let secret_key = iroh::SecretKey::generate(&mut rng);
         // we do not want to keep secret key in memory, only in keychain
-        let store = Self::new(ftnet_utils::public_key_to_id52(&secret_key.public()));
+        let store = Self::new(kulfi_utils::public_key_to_id52(&secret_key.public()));
         store
             .save(&secret_key)
             .wrap_err_with(|| "failed to store secret key to keychain")?;
@@ -65,14 +65,14 @@ impl KeyringSecretStore {
 }
 
 pub async fn read_or_create_key() -> eyre::Result<String> {
-    use ftnet_utils::SecretStore;
+    use kulfi_utils::SecretStore;
 
     match tokio::fs::read_to_string(".malai.id52").await {
         Ok(v) => Ok(v),
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
             tracing::info!("no key found, creating new one");
-            let public_key = ftnet_utils::KeyringSecretStore::generate(rand::rngs::OsRng)?;
-            let public_key = ftnet_utils::public_key_to_id52(&public_key);
+            let public_key = kulfi_utils::KeyringSecretStore::generate(rand::rngs::OsRng)?;
+            let public_key = kulfi_utils::public_key_to_id52(&public_key);
             tokio::fs::write(".malai.id52", public_key.as_str()).await?;
             Ok(public_key)
         }

@@ -1,8 +1,8 @@
 pub async fn peer_to_http(
     addr: &str,
-    client_pools: ftnet_utils::HttpConnectionPools,
+    client_pools: kulfi_utils::HttpConnectionPools,
     send: &mut iroh::endpoint::SendStream,
-    mut recv: ftnet_utils::FrameReader,
+    mut recv: kulfi_utils::FrameReader,
 ) -> eyre::Result<()> {
     use eyre::WrapErr;
     use http_body_util::BodyExt;
@@ -11,7 +11,7 @@ pub async fn peer_to_http(
     tracing::info!("http request with {addr}");
     let start = std::time::Instant::now();
 
-    let req: ftnet_utils::http::Request = match recv.next().await {
+    let req: kulfi_utils::http::Request = match recv.next().await {
         Some(Ok(v)) => serde_json::from_str(&v)
             .wrap_err_with(|| "failed to serialize json while reading http request")?,
         Some(Err(e)) => {
@@ -75,7 +75,7 @@ pub async fn peer_to_http(
         .wrap_err_with(|| "failed to send request")?
         .into_parts();
 
-    let r = ftnet_utils::http::Response {
+    let r = kulfi_utils::http::Response {
         status: resp.status.as_u16(),
         headers: resp
             .headers
@@ -89,7 +89,7 @@ pub async fn peer_to_http(
             .wrap_err_with(|| "failed to serialize json while writing http response")?
             .as_bytes(),
     )
-    .await?;
+        .await?;
     send.write_all(b"\n").await?;
     let bytes = body.collect().await?.to_bytes();
     tracing::debug!("got response body: {} bytes", bytes.len());
@@ -113,8 +113,8 @@ pub async fn peer_to_http(
 
 async fn get_pool(
     addr: &str,
-    client_pools: ftnet_utils::HttpConnectionPools,
-) -> eyre::Result<bb8::Pool<ftnet_utils::HttpConnectionManager>> {
+    client_pools: kulfi_utils::HttpConnectionPools,
+) -> eyre::Result<bb8::Pool<kulfi_utils::HttpConnectionManager>> {
     tracing::trace!("get pool called");
     let mut pools = client_pools.lock().await;
 
@@ -127,7 +127,7 @@ async fn get_pool(
             tracing::debug!("creating new pool for {addr}");
 
             let pool = bb8::Pool::builder()
-                .build(ftnet_utils::HttpConnectionManager::new(addr.to_string()))
+                .build(kulfi_utils::HttpConnectionManager::new(addr.to_string()))
                 .await?;
 
             pools.insert(addr.to_string(), pool.clone());

@@ -1,12 +1,12 @@
 use eyre::WrapErr;
-use ftnet_utils::SecretStore;
+use kulfi_utils::SecretStore;
 
 impl kulfi::Identity {
     #[tracing::instrument(skip_all)]
     pub async fn run(
         self,
         graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
-        id_map: ftnet_utils::IDMap,
+        id_map: kulfi_utils::IDMap,
         data_dir: &std::path::Path,
     ) -> eyre::Result<()> {
         let port = start_fastn(
@@ -15,16 +15,16 @@ impl kulfi::Identity {
             &self.id52,
             data_dir,
         )
-        .await
-        .wrap_err_with(|| "failed to start fastn")
-        .unwrap_or_else(|e| {
-            tracing::error!("failed to start fastn: {e:?}, using 8000 for now");
-            8000
-        });
+            .await
+            .wrap_err_with(|| "failed to start fastn")
+            .unwrap_or_else(|e| {
+                tracing::error!("failed to start fastn: {e:?}, using 8000 for now");
+                8000
+            });
         tracing::info!("fastn started on port {port}");
 
-        let secret_key = ftnet_utils::KeyringSecretStore::new(self.id52.clone()).get()?;
-        let ep = ftnet_utils::get_endpoint(secret_key)
+        let secret_key = kulfi_utils::KeyringSecretStore::new(self.id52.clone()).get()?;
+        let ep = kulfi_utils::get_endpoint(secret_key)
             .await
             .wrap_err_with(|| "failed to bind to iroh network")?;
 
@@ -39,7 +39,7 @@ impl kulfi::Identity {
 /// launch fastn from the package directory and return the port
 #[tracing::instrument(skip_all)]
 async fn start_fastn(
-    _id_map: ftnet_utils::IDMap,
+    _id_map: kulfi_utils::IDMap,
     _graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
     id52: &str,
     data_dir: &std::path::Path,

@@ -20,7 +20,7 @@ pub async fn global_iroh_endpoint() -> iroh::Endpoint {
         iroh::Endpoint::builder()
             .discovery_n0()
             .discovery_local_network()
-            .alpns(vec![ftnet_utils::APNS_IDENTITY.into()])
+            .alpns(vec![kulfi_utils::APNS_IDENTITY.into()])
             .bind()
             .await
             .expect("failed to create iroh Endpoint")

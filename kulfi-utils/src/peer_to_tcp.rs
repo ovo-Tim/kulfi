@@ -18,7 +18,7 @@ pub async fn peer_to_tcp(
     _remote_id: &str,
     addr: &str,
     send: &mut iroh::endpoint::SendStream,
-    recv: ftnet_utils::FrameReader,
+    recv: kulfi_utils::FrameReader,
 ) -> eyre::Result<()> {
     // todo: call identity server (fastn server running on behalf of identity
     //       /api/v1/identity/{id}/tcp/ with remote_id and id and get the ip:port

@@ -27,12 +27,12 @@ impl kulfi::Identity {
     #[tracing::instrument(skip(client_pools))]
     pub async fn create(
         identities_folder: &std::path::Path,
-        client_pools: ftnet_utils::HttpConnectionPools,
+        client_pools: kulfi_utils::HttpConnectionPools,
     ) -> eyre::Result<Self> {
         use eyre::WrapErr;
-        use ftnet_utils::SecretStore;
+        use kulfi_utils::SecretStore;
 
-        let public_key = ftnet_utils::KeyringSecretStore::generate(rand::rngs::OsRng)?;
+        let public_key = kulfi_utils::KeyringSecretStore::generate(rand::rngs::OsRng)?;
 
         let now = std::time::SystemTime::now();
         let unixtime = now
@@ -41,7 +41,7 @@ impl kulfi::Identity {
             .as_secs();
         let tmp_dir = identities_folder.join(format!(
             "temp-{public_key}-{unixtime}",
-            public_key = ftnet_utils::public_key_to_id52(&public_key),
+            public_key = kulfi_utils::public_key_to_id52(&public_key),
         ));
 
         let package_template_folder = kulfi::utils::mkdir(&tmp_dir, "package-template")?;
@@ -51,7 +51,7 @@ impl kulfi::Identity {
             &package_template_folder,
             "kulfi-template".to_string(),
         )
-        .await?;
+            .await?;
 
         // copy package-template/template/ to package
         kulfi::utils::copy_dir(
@@ -69,7 +69,7 @@ impl kulfi::Identity {
         kulfi::utils::mkdir(&tmp_dir, "devices")?;
         kulfi::utils::mkdir(&tmp_dir, "logs")?;
 
-        let id52 = ftnet_utils::public_key_to_id52(&public_key);
+        let id52 = kulfi_utils::public_key_to_id52(&public_key);
         let dir = identities_folder.join(&id52);
         std::fs::rename(&tmp_dir, dir)
             .wrap_err_with(|| "failed to rename {tmp_dir:?} to {dir:?}")?;

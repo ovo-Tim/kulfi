@@ -19,7 +19,7 @@ pub fn public_key_to_id52(key: &iroh::PublicKey) -> String {
 }
 
 pub type FrameReader =
-    tokio_util::codec::FramedRead<iroh::endpoint::RecvStream, tokio_util::codec::LinesCodec>;
+tokio_util::codec::FramedRead<iroh::endpoint::RecvStream, tokio_util::codec::LinesCodec>;
 
 pub fn frame_reader(recv: iroh::endpoint::RecvStream) -> FrameReader {
     FrameReader::new(recv, tokio_util::codec::LinesCodec::new())
@@ -44,7 +44,7 @@ pub async fn get_remote_id52(conn: &iroh::endpoint::Connection) -> eyre::Result<
 }
 
 async fn ack(send: &mut iroh::endpoint::SendStream) -> eyre::Result<()> {
-    send.write_all(format!("{}\n", ftnet_utils::ACK).as_bytes())
+    send.write_all(format!("{}\n", kulfi_utils::ACK).as_bytes())
         .await?;
     Ok(())
 }
@@ -54,7 +54,7 @@ pub async fn accept_bi(
 ) -> eyre::Result<(
     iroh::endpoint::SendStream,
     FrameReader,
-    ftnet_utils::Protocol,
+    kulfi_utils::Protocol,
 )> {
     use tokio_stream::StreamExt;
 
@@ -68,7 +68,7 @@ pub async fn accept_bi(
             return Err(eyre::anyhow!("failed to read from incoming connection"));
         }
     };
-    let msg = serde_json::from_str::<ftnet_utils::Protocol>(&msg)
+    let msg = serde_json::from_str::<kulfi_utils::Protocol>(&msg)
         .inspect_err(|e| tracing::error!("json error for {msg}: {e}"))?;
     ack(&mut send).await?;
     Ok((send, recv, msg))

@@ -33,7 +33,7 @@ async fn http_bridge_(
 
     println!("Listening on http://127.0.0.1:{port}");
 
-    let peer_connections = ftnet_utils::PeerStreamSenders::default();
+    let peer_connections = kulfi_utils::PeerStreamSenders::default();
 
     loop {
         tokio::select! {
@@ -65,7 +65,7 @@ pub async fn handle_connection(
     self_endpoint: iroh::Endpoint,
     stream: tokio::net::TcpStream,
     mut graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
-    peer_connections: ftnet_utils::PeerStreamSenders,
+    peer_connections: kulfi_utils::PeerStreamSenders,
     proxy_target: Option<String>,
 ) {
     let io = hyper_util::rt::TokioIo::new(stream);
@@ -97,9 +97,9 @@ pub async fn handle_connection(
 async fn handle_request(
     r: hyper::Request<hyper::body::Incoming>,
     self_endpoint: iroh::Endpoint,
-    peer_connections: ftnet_utils::PeerStreamSenders,
+    peer_connections: kulfi_utils::PeerStreamSenders,
     proxy_target: Option<String>,
-) -> ftnet_utils::http::ProxyResult {
+) -> kulfi_utils::http::ProxyResult {
     let peer_id = match r
         .headers()
         .get("Host")
@@ -109,7 +109,7 @@ async fn handle_request(
         Some((first, _)) => {
             if first.len() != 52 {
                 tracing::error!(peer_id = %first, "request received for invalid peer id");
-                return Ok(ftnet_utils::bad_request!(
+                return Ok(kulfi_utils::bad_request!(
                     "got http request with invalid peer id"
                 ));
             }
@@ -117,7 +117,7 @@ async fn handle_request(
             if let Some(target) = proxy_target {
                 if first != target {
                     tracing::error!(peer_id = %first, proxy_target = %target, "request for peer_id is not allowed");
-                    return Ok(ftnet_utils::bad_request!(
+                    return Ok(kulfi_utils::bad_request!(
                         "got http request with invalid peer id"
                     ));
                 }
@@ -127,7 +127,7 @@ async fn handle_request(
         }
         None => {
             tracing::error!("got http request without Host header");
-            return Ok(ftnet_utils::bad_request!(
+            return Ok(kulfi_utils::bad_request!(
                 "got http request without Host header"
             ));
         }
@@ -135,12 +135,12 @@ async fn handle_request(
 
     tracing::info!("got request for {peer_id}");
 
-    ftnet_utils::http_to_peer(
+    kulfi_utils::http_to_peer(
         r,
         self_endpoint,
         &peer_id,
         peer_connections,
         Default::default(), /* RequestPatch */
     )
-    .await
+        .await
 }

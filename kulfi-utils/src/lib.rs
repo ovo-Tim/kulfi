@@ -1,4 +1,4 @@
-extern crate self as ftnet_utils;
+extern crate self as kulfi_utils;
 
 pub mod get_endpoint;
 mod get_stream;

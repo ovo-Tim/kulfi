@@ -9,17 +9,17 @@ mod run;
 pub struct Identity {
     pub id52: String,
     pub public_key: iroh::PublicKey,
-    pub client_pools: ftnet_utils::HttpConnectionPools,
+    pub client_pools: kulfi_utils::HttpConnectionPools,
 }
 
 impl Identity {
     pub fn from_id52(
         id: &str,
-        client_pools: ftnet_utils::HttpConnectionPools,
+        client_pools: kulfi_utils::HttpConnectionPools,
     ) -> eyre::Result<Self> {
-        let public_key = ftnet_utils::id52_to_public_key(id)?;
+        let public_key = kulfi_utils::id52_to_public_key(id)?;
         Ok(Self {
-            id52: ftnet_utils::public_key_to_id52(&public_key),
+            id52: kulfi_utils::public_key_to_id52(&public_key),
             public_key,
             client_pools,
         })

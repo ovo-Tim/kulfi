@@ -33,7 +33,7 @@ async fn http_bridge_(
 
     println!("Listening on http://127.0.0.1:{port}");
 
-    let peer_connections = ftnet_utils::PeerStreamSenders::default();
+    let peer_connections = kulfi_utils::PeerStreamSenders::default();
 
     loop {
         tokio::select! {
@@ -65,7 +65,7 @@ pub async fn handle_connection(
     _self_endpoint: iroh::Endpoint,
     _stream: tokio::net::TcpStream,
     _graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
-    _peer_connections: ftnet_utils::PeerStreamSenders,
+    _peer_connections: kulfi_utils::PeerStreamSenders,
     _proxy_target: String,
 ) {
     todo!()

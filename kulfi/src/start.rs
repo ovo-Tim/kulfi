@@ -9,8 +9,8 @@
 pub async fn start(_fg: bool, data_dir: std::path::PathBuf, control_port: u16) -> eyre::Result<()> {
     use eyre::WrapErr;
 
-    let client_pools = ftnet_utils::HttpConnectionPools::default();
-    let peer_connections = ftnet_utils::PeerStreamSenders::default();
+    let client_pools = kulfi_utils::HttpConnectionPools::default();
+    let peer_connections = kulfi_utils::PeerStreamSenders::default();
 
     let config = kulfi::Config::read(&data_dir, client_pools.clone())
         .await
@@ -38,7 +38,7 @@ pub async fn start(_fg: bool, data_dir: std::path::PathBuf, control_port: u16) -
         .map(|v| v.id52.clone())
         .ok_or_else(|| eyre::eyre!("no identities found"))?;
 
-    let id_map = ftnet_utils::IDMap::default();
+    let id_map = kulfi_utils::IDMap::default();
 
     for identity in identities {
         use std::sync::Arc;
@@ -64,8 +64,8 @@ pub async fn start(_fg: bool, data_dir: std::path::PathBuf, control_port: u16) -
             client_pools,
             peer_connections,
         )
-        .await
-        .unwrap()
+            .await
+            .unwrap()
     });
 
     tokio::signal::ctrl_c()

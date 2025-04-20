@@ -2,9 +2,9 @@ pub async fn http_to_peer<T>(
     req: hyper::Request<T>,
     self_endpoint: iroh::Endpoint,
     remote_node_id52: &str,
-    peer_connections: ftnet_utils::PeerStreamSenders,
+    peer_connections: kulfi_utils::PeerStreamSenders,
     _patch: ftnet_sdk::RequestPatch,
-) -> ftnet_utils::http::ProxyResult
+) -> kulfi_utils::http::ProxyResult
 where
     T: hyper::body::Body + Unpin + Send,
     T::Data: Into<hyper::body::Bytes> + Send,
@@ -15,13 +15,13 @@ where
 
     tracing::info!("peer_proxy: {remote_node_id52}");
 
-    let (mut send, mut recv) = ftnet_utils::get_stream(
+    let (mut send, mut recv) = kulfi_utils::get_stream(
         self_endpoint,
-        ftnet_utils::Protocol::Identity,
+        kulfi_utils::Protocol::Identity,
         remote_node_id52.to_string(),
         peer_connections.clone(),
     )
-    .await?;
+        .await?;
 
     tracing::info!("wrote protocol");
 
@@ -41,7 +41,7 @@ where
 
     tracing::info!("sent body");
 
-    let r: ftnet_utils::http::Response = match recv.next().await {
+    let r: kulfi_utils::http::Response = match recv.next().await {
         Some(Ok(v)) => serde_json::from_str(&v)?,
         Some(Err(e)) => {
             tracing::error!("failed to get bidirectional stream: {e:?}");

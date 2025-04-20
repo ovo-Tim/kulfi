@@ -5,13 +5,13 @@ pub type PeerStreamSenders = std::sync::Arc<
     tokio::sync::Mutex<std::collections::HashMap<(SelfID52, RemoteID52), StreamRequestSender>>,
 >;
 
-type Stream = (iroh::endpoint::SendStream, ftnet_utils::FrameReader);
+type Stream = (iroh::endpoint::SendStream, kulfi_utils::FrameReader);
 type StreamResult = eyre::Result<Stream>;
 type ReplyChannel = tokio::sync::oneshot::Sender<StreamResult>;
 type RemoteID52 = String;
 type SelfID52 = String;
 
-type StreamRequest = (ftnet_utils::Protocol, ReplyChannel);
+type StreamRequest = (kulfi_utils::Protocol, ReplyChannel);
 
 type StreamRequestSender = tokio::sync::mpsc::Sender<StreamRequest>;
 type StreamRequestReceiver = tokio::sync::mpsc::Receiver<StreamRequest>;
@@ -27,10 +27,10 @@ type StreamRequestReceiver = tokio::sync::mpsc::Receiver<StreamRequest>;
 /// and manages the connection as part of the task local data.
 pub async fn get_stream(
     self_endpoint: iroh::Endpoint,
-    protocol: ftnet_utils::Protocol,
+    protocol: kulfi_utils::Protocol,
     remote_node_id52: RemoteID52,
     peer_stream_senders: PeerStreamSenders,
-) -> eyre::Result<(iroh::endpoint::SendStream, ftnet_utils::FrameReader)> {
+) -> eyre::Result<(iroh::endpoint::SendStream, kulfi_utils::FrameReader)> {
     let stream_request_sender =
         get_stream_request_sender(self_endpoint, remote_node_id52, peer_stream_senders).await;
 
@@ -48,7 +48,7 @@ async fn get_stream_request_sender(
     remote_node_id52: RemoteID52,
     peer_stream_senders: PeerStreamSenders,
 ) -> StreamRequestSender {
-    let self_id52 = ftnet_utils::public_key_to_id52(&self_endpoint.node_id());
+    let self_id52 = kulfi_utils::public_key_to_id52(&self_endpoint.node_id());
     let mut senders = peer_stream_senders.lock().await;
 
     if let Some(sender) = senders.get(&(self_id52.clone(), remote_node_id52.clone())) {
@@ -71,7 +71,7 @@ async fn get_stream_request_sender(
             remote_node_id52,
             peer_stream_senders,
         )
-        .await;
+            .await;
     });
 
     sender
@@ -132,8 +132,8 @@ async fn connection_manager_(
 ) -> eyre::Result<()> {
     let conn = match self_endpoint
         .connect(
-            ftnet_utils::id52_to_public_key(&remote_node_id52)?,
-            ftnet_utils::APNS_IDENTITY,
+            kulfi_utils::id52_to_public_key(&remote_node_id52)?,
+            kulfi_utils::APNS_IDENTITY,
         )
         .await
     {
@@ -194,7 +194,7 @@ async fn connection_manager_(
 
 async fn handle_request(
     conn: &iroh::endpoint::Connection,
-    protocol: ftnet_utils::Protocol,
+    protocol: kulfi_utils::Protocol,
     reply_channel: ReplyChannel,
 ) -> eyre::Result<()> {
     use tokio_stream::StreamExt;
@@ -209,7 +209,7 @@ async fn handle_request(
 
     send.write_all(&serde_json::to_vec(&protocol)?).await?;
     send.write(b"\n").await?;
-    let mut recv = ftnet_utils::frame_reader(recv);
+    let mut recv = kulfi_utils::frame_reader(recv);
 
     let msg = match recv.next().await {
         Some(v) => v?,
@@ -219,7 +219,7 @@ async fn handle_request(
         }
     };
 
-    if msg != ftnet_utils::ACK {
+    if msg != kulfi_utils::ACK {
         tracing::error!("failed to read ack: {msg:?}");
         return Err(eyre::anyhow!("failed to read ack: {msg:?}"));
     }

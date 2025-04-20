@@ -9,7 +9,7 @@ impl kulfi::Config {
 
     pub async fn read(
         dir: &std::path::Path,
-        client_pools: ftnet_utils::HttpConnectionPools,
+        client_pools: kulfi_utils::HttpConnectionPools,
     ) -> eyre::Result<Self> {
         let dir = kulfi::config::dot_kulfi::init_if_required(dir, client_pools)
             .await
