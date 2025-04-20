@@ -9,9 +9,9 @@ use clap as _;
 use clap_verbosity_flag as _;
 use directories as _;
 use fastn_observer as _;
-use tracing_subscriber as _;
-use tauri_plugin_opener as _;
 use tauri as _;
+use tauri_plugin_opener as _;
+use tracing_subscriber as _;
 
 extern crate self as kulfi;
 
@@ -42,4 +42,3 @@ pub fn ui() -> eyre::Result<()> {
 
     Ok(())
 }
-
