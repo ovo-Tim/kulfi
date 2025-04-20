@@ -1,3 +1,6 @@
+// Prevents additional console window on Windows in release, DO NOT REMOVE!!
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
     use clap::Parser;
@@ -9,11 +12,11 @@ async fn main() -> eyre::Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
-        Command::Start {
+        Some(Command::Start {
             foreground,
             data_dir,
             control_port,
-        } => {
+        }) => {
             let data_dir = match data_dir {
                 Some(dir) => dir.into(),
                 // https://docs.rs/directories/6.0.0/directories/struct.ProjectDirs.html#method.data_dir
@@ -29,11 +32,15 @@ async fn main() -> eyre::Result<()> {
 
             kulfi::start(foreground, data_dir, control_port).await
         }
-        Command::TcpProxy { id, port } => {
+        Some(Command::TcpProxy { id, port }) => {
             tracing::info!(
                 "Proxying TCP server to remote kulfi service with id: {id}, port: {port}"
             );
             Ok(())
+        }
+        None => {
+            tracing::info!(verbose = ?cli.verbose, "Starting UI.");
+            kulfi::ui()
         }
     }
 }
@@ -53,11 +60,18 @@ fn configure_tracing_subscriber() {
 #[derive(clap::Parser, Debug)]
 #[command(version, about, long_about = None)]
 pub struct Cli {
-    #[command(subcommand)]
-    pub command: Command,
+    #[command(flatten)]
+    verbose: clap_verbosity_flag::Verbosity,
 
-    #[arg(long, global = true)]
-    pub trace: bool,
+    #[command(subcommand)]
+    pub command: Option<Command>,
+
+    // adding these two because when we run `cargo tauri dev,` it automatically passes these
+    // arguments. need to figure out why and how to disable that, till then this is a workaround
+    #[arg(default_value = "true", long, hide = true)]
+    no_default_features: bool,
+    #[arg(default_value = "auto", long, hide = true)]
+    color: String,
 }
 
 #[derive(clap::Subcommand, Debug)]

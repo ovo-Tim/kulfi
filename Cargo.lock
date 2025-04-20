@@ -3238,6 +3238,7 @@ name = "kulfi"
 version = "0.1.0"
 dependencies = [
  "clap",
+ "clap-verbosity-flag",
  "directories",
  "eyre",
  "fastn-observer",
@@ -3248,10 +3249,14 @@ dependencies = [
  "hyper",
  "hyper-util",
  "iroh",
+ "libdbus-sys",
  "rand 0.8.5",
  "reqwest",
  "serde",
  "serde_json",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-opener",
  "tokio",
  "tokio-stream",
  "tracing",

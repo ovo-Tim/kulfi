@@ -8,6 +8,7 @@ description = "Kulfi: Open Source, General Purpose, Sovereign, Decentralized, Pe
 
 
 [dependencies]
+clap-verbosity-flag.workspace = true
 clap.workspace = true
 directories.workspace = true
 eyre.workspace = true
@@ -15,6 +16,8 @@ fastn-observer.workspace = true
 file-guard.workspace = true
 ftnet-sdk.workspace = true
 ftnet-utils.workspace = true
+tauri.workspace = true
+tauri-plugin-opener.workspace = true
 http-body-util.workspace = true
 hyper-util.workspace = true
 hyper.workspace = true
@@ -28,3 +31,11 @@ tracing-subscriber.workspace = true
 tracing.workspace = true
 zip.workspace = true
 rand.workspace = true
+
+
+[target.'cfg(target_os = "linux")'.dependencies]
+libdbus-sys.workspace = true
+
+
+[build-dependencies]
+tauri-build.workspace = true
