@@ -5,14 +5,14 @@
 async fn main() -> eyre::Result<()> {
     use clap::Parser;
 
-    println!("args: {:?}", std::env::args());
     // run with RUST_LOG="malai=info" to only see our logs when running with the --trace flag
     tracing_subscriber::fmt::init();
 
     let cli = Cli::parse();
 
+
     if let Err(e) = match cli.command {
-        Some(Command::ExposeHttp {
+        Some(Command::Http {
             port,
             host,
             // secure,
@@ -25,7 +25,7 @@ async fn main() -> eyre::Result<()> {
             tracing::info!(port, proxy_target, verbose = ?cli.verbose, "Starting HTTP bridge.");
             malai::http_bridge(proxy_target, port).await
         }
-        Some(Command::ExposeTcp { port, host }) => {
+        Some(Command::Tcp { port, host }) => {
             tracing::info!(port, host, verbose = ?cli.verbose, "Exposing TCP service on kulfi.");
             malai::expose_tcp(host, port).await
         }
@@ -70,15 +70,11 @@ pub struct Cli {
 
 #[derive(clap::Subcommand, Debug)]
 pub enum Command {
-    #[clap(
-        about = "Expose HTTP Service on kulfi, connect using kulfi.",
-        long_about = r#"
-Expose HTTP Service on kulfi, connect using kulfi.
-
-By default it allows any peer to connecto to the HTTP(s) service. You can pass --what-to-do
-argument to specify a What To Do service that can be used to add access control."#
-    )]
-    ExposeHttp {
+    // TODO: add this to the docs when we have ACL
+    // By default it allows any peer to connect to the HTTP(s) service. You can pass --what-to-do
+    // argument to specify a What To Do service that can be used to add access control."
+    #[clap(about = "Expose HTTP Service on kulfi, connect using kulfi or browser")]
+    Http {
         port: u16,
         #[arg(
             long,
@@ -99,6 +95,16 @@ argument to specify a What To Do service that can be used to add access control.
         // this will be the id52 of the identity server that should be consulted
         // what_to_do: Option<String>,
     },
+    #[clap(about = "Expose TCP Service on kulfi")]
+    Tcp {
+        port: u16,
+        #[arg(
+            long,
+            default_value = "127.0.0.1",
+            help = "Host serving the TCP service."
+        )]
+        host: String,
+    },
     HttpBridge {
         #[arg(
             long,
@@ -113,15 +119,6 @@ argument to specify a What To Do service that can be used to add access control.
             default_value = "8080"
         )]
         port: u16,
-    },
-    ExposeTcp {
-        port: u16,
-        #[arg(
-            long,
-            default_value = "127.0.0.1",
-            help = "Host serving the TCP service."
-        )]
-        host: String,
     },
     TcpBridge {
         #[arg(help = "The id52 to which this bridge will forward incoming TCP request.")]

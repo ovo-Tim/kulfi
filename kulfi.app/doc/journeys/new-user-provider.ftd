@@ -59,7 +59,7 @@ To add a private service. Run the following command:
 -- ds.code: `malai` expose private http service
 lang: shell
 
-malai expose-http 8000 --org <org-id>
+malai http 8000 --org <org-id>
 
 -- ds.heading-small: Add a Public Service
 
@@ -68,7 +68,7 @@ To add a public service. Run the following command:
 -- ds.code: `malai` expose public http service
 lang: shell
 
-malai expose-http 8000 --org <org-id> --public
+malai http 8000 --org <org-id> --public
 
 -- ds.copy-regular:
 
