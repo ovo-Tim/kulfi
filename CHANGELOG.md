@@ -1,5 +1,11 @@
 # ChangeLog
 
+## Unreleased
+
+### malai 0.2.0
+
+- Rename subcommands `expose-http` -> `http` and `expose-tcp` -> `tcp`.
+
 ## 17 April 2025
 
 ### malai 0.1.1
