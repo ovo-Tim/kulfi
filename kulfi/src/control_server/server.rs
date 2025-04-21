@@ -48,12 +48,17 @@ pub async fn handle_connection(
     kulfi::OPEN_CONTROL_CONNECTION_COUNT.decr();
 }
 
-async fn handle_request(
-    r: hyper::Request<hyper::body::Incoming>,
+async fn handle_request<T>(
+    r: hyper::Request<T>,
     id_map: kulfi_utils::IDMap,
     client_pools: kulfi_utils::HttpConnectionPools,
     peer_connections: kulfi_utils::PeerStreamSenders,
-) -> kulfi_utils::http::ProxyResult {
+) -> kulfi_utils::http::ProxyResult
+where
+    T: hyper::body::Body + Unpin + Send + Sync,
+    T::Data: Into<hyper::body::Bytes> + Send + Sync,
+    T::Error: std::error::Error + Send + Sync + 'static,
+{
     kulfi::CONTROL_REQUEST_COUNT.incr();
     kulfi::IN_FLIGHT_REQUESTS.incr();
     let r = handle_request_(r, id_map, client_pools, peer_connections).await;
@@ -61,12 +66,17 @@ async fn handle_request(
     r
 }
 
-async fn handle_request_(
-    r: hyper::Request<hyper::body::Incoming>,
+async fn handle_request_<T>(
+    r: hyper::Request<T>,
     id_map: kulfi_utils::IDMap,
     client_pools: kulfi_utils::HttpConnectionPools,
     peer_connections: kulfi_utils::PeerStreamSenders,
-) -> kulfi_utils::http::ProxyResult {
+) -> kulfi_utils::http::ProxyResult
+where
+    T: hyper::body::Body + Unpin + Send + Sync,
+    T::Data: Into<hyper::body::Bytes> + Send + Sync,
+    T::Error: std::error::Error + Send + Sync + 'static,
+{
     let id = match r
         .headers()
         .get("Host")
@@ -93,7 +103,7 @@ async fn handle_request_(
             &addr,
             Default::default(),
         )
-            .await;
+        .await;
     }
 
     // TODO: maybe we should try all the identities not just default
@@ -108,9 +118,9 @@ async fn handle_request_(
         // if not identity, find if the id is an http device owned by identity, if so proxy-pass the
         // request to that device
         Ok(WhatToDo::ProxyPass {
-               port,
-               extra_headers,
-           }) => {
+            port,
+            extra_headers,
+        }) => {
             let addr = format!("127.0.0.1:{port}");
             kulfi::control_server::proxy_pass(
                 r,
@@ -118,7 +128,7 @@ async fn handle_request_(
                 &addr,
                 extra_headers,
             )
-                .await
+            .await
         }
         Ok(WhatToDo::UnknownPeer) => {
             tracing::error!("unknown peer: {id}");
