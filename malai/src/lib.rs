@@ -31,6 +31,7 @@ pub async fn global_iroh_endpoint() -> iroh::Endpoint {
     IROH_ENDPOINT.get_or_init(new_iroh_endpoint).await.clone()
 }
 
+#[cfg(feature = "ui")]
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn ui() -> eyre::Result<()> {
     tauri::Builder::default()

@@ -33,9 +33,15 @@ async fn main() -> eyre::Result<()> {
             tracing::info!(port, proxy_target, verbose = ?cli.verbose, "Starting TCP bridge.");
             malai::tcp_bridge(proxy_target, port).await
         }
+        #[cfg(feature = "ui")]
         None => {
             tracing::info!(verbose = ?cli.verbose, "Starting UI.");
             malai::ui()
+        }
+        #[cfg(not(feature = "ui"))]
+        None => {
+            use clap::CommandFactory;
+            Cli::command().print_help().map_err(Into::into)
         }
     } {
         tracing::error!("Error: {e}");
