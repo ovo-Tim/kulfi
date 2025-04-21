@@ -144,14 +144,25 @@ async fn connection_manager_(
         }
     };
 
-    let timeout = std::time::Duration::from_secs(5);
+    let timeout = std::time::Duration::from_secs(12);
+    let mut idle_counter = 0;
 
     loop {
+        if idle_counter > 4 {
+            // this ensures we keep a connection open only for 12 * 5 seconds = 1 min
+            break;
+        }
+
         tokio::select! {
             _ = tokio::time::sleep(timeout) => {
-                // todo: do ping pong
+                if let Err(e) = kulfi_utils::ping(&conn).await {
+                    tracing::error!("pinging failed: {e:?}");
+                    break;
+                }
+                idle_counter += 1;
             },
             Some((protocol, reply_channel)) = receiver.recv() => {
+                idle_counter = 0;
                 // is this a good idea to serialize this part? if 10 concurrent requests come in, we will
                 // handle each one sequentially. the other alternative is to spawn a task for each request.
                 // so which is better?
