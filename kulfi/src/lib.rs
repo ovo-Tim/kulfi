@@ -8,10 +8,8 @@ extern crate self as kulfi; // TODO: Remove this and separate kulfi binary from 
 use clap as _;
 use clap_verbosity_flag as _;
 use directories as _;
-use fastn_observer as _;
 use tracing_subscriber as _;
 
-mod client;
 mod config;
 pub mod control_server;
 mod counters;

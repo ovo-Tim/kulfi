@@ -1,6 +1,5 @@
 pub const PONG: &[u8] = b"pong\n";
 
-#[expect(unused)]
 pub async fn ping(conn: &iroh::endpoint::Connection) -> eyre::Result<()> {
     tracing::info!("ping called");
     let (mut send_stream, mut recv_stream) = conn.open_bi().await?;

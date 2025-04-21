@@ -45,18 +45,6 @@ async fn main() -> eyre::Result<()> {
     }
 }
 
-#[expect(dead_code)]
-fn configure_tracing_subscriber() {
-    use tracing_subscriber::layer::SubscriberExt;
-
-    tracing::subscriber::set_global_default(
-        tracing_subscriber::registry()
-            .with(fastn_observer::Layer::default())
-            .with(tracing_subscriber::EnvFilter::from_default_env()),
-    )
-    .unwrap();
-}
-
 #[derive(clap::Parser, Debug)]
 #[command(version, about, long_about = None)]
 pub struct Cli {

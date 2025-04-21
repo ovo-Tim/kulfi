@@ -91,7 +91,7 @@ pub async fn handle_connection(
                     break;
                 }
                 tracing::info!("sending PONG");
-                send.write_all(kulfi::client::PONG)
+                send.write_all(kulfi_utils::PONG)
                     .await
                     .inspect_err(|e| tracing::error!("failed to write PONG: {e:?}"))?;
                 tracing::info!("sent");
