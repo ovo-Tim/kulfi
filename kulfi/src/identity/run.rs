@@ -15,12 +15,12 @@ impl kulfi::Identity {
             &self.id52,
             data_dir,
         )
-            .await
-            .wrap_err_with(|| "failed to start fastn")
-            .unwrap_or_else(|e| {
-                tracing::error!("failed to start fastn: {e:?}, using 8000 for now");
-                8000
-            });
+        .await
+        .wrap_err_with(|| "failed to start fastn")
+        .unwrap_or_else(|e| {
+            tracing::error!("failed to start fastn: {e:?}, using 8000 for now");
+            8000
+        });
         tracing::info!("fastn started on port {port}");
 
         let secret_key = kulfi_utils::KeyringSecretStore::new(self.id52.clone()).get()?;

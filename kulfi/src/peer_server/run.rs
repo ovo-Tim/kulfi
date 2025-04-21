@@ -114,7 +114,7 @@ pub async fn handle_connection(
                     &mut send,
                     recv,
                 )
-                    .await
+                .await
                 {
                     tracing::error!("failed to proxy http: {e:?}");
                 }
