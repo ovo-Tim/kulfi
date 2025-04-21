@@ -80,7 +80,7 @@
 /// in future to webassembly, and JS engines have decent security sandbox. we do not allow npm/deno
 /// etc., and only run the most sandboxed, browser like JS code. fastn applications can also use
 /// webassembly compiled code, which again is sandboxed.
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq)]
 pub enum Protocol {
     /// client can send this message to check if the connection is open / healthy.
     Ping,
@@ -95,18 +95,12 @@ pub enum Protocol {
     /// client wants to make an HTTP request to a device whose ID is specified. note that the exact
     /// ip:port is not known to peers, they only the "device id" for the service. server will figure
     /// out the ip:port from the device id.
-    Http {
-        id: String,
-    },
+    Http,
     /// if the client wants their traffic to route via this server, they can send this. for this to
     /// work, the person owning the device must have created a SOCKS5 device, and allowed this peer
     /// to access it.
-    Socks5 {
-        id: String,
-    },
-    Tcp {
-        id: String,
-    },
+    Socks5,
+    Tcp,
     // TODO: RTP/"RTCP" for audio video streaming
 }
 
