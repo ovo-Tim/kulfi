@@ -1,27 +1,7 @@
-pub async fn tcp_bridge(proxy_target: String, port: u16) -> eyre::Result<()> {
-    use eyre::WrapErr;
-
-    let (graceful_shutdown_tx, graceful_shutdown_rx) = tokio::sync::watch::channel(false);
-
-    tokio::spawn(async move { http_bridge_(port, graceful_shutdown_rx, proxy_target).await });
-
-    tokio::signal::ctrl_c()
-        .await
-        .wrap_err_with(|| "failed to get ctrl-c signal handler")?;
-
-    graceful_shutdown_tx
-        .send(true)
-        .wrap_err_with(|| "failed to send graceful shutdown signal")?;
-
-    tracing::info!("Stopping HTTP bridge.");
-
-    Ok(())
-}
-
-async fn http_bridge_(
+pub async fn tcp_bridge(
     port: u16,
-    mut graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
     proxy_target: String,
+    mut graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
 ) -> eyre::Result<()> {
     use eyre::WrapErr;
 

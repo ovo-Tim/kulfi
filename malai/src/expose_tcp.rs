@@ -1,4 +1,8 @@
-pub async fn expose_tcp(host: String, port: u16) -> eyre::Result<()> {
+pub async fn expose_tcp(
+    host: String,
+    port: u16,
+    _graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
+) -> eyre::Result<()> {
     use eyre::WrapErr;
     use kulfi_utils::SecretStore;
 
@@ -65,7 +69,7 @@ async fn handle_connection(
                     &mut send,
                     recv,
                 )
-                    .await
+                .await
                 {
                     tracing::error!("failed to proxy http: {e:?}");
                 }

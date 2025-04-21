@@ -4,14 +4,17 @@
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
     use clap::Parser;
+    use eyre::WrapErr;
 
     // run with RUST_LOG="malai=info" to only see our logs when running with the --trace flag
     tracing_subscriber::fmt::init();
 
     let cli = Cli::parse();
 
+    let (graceful_shutdown_tx, graceful_shutdown_rx) = tokio::sync::watch::channel(false);
 
-    if let Err(e) = match cli.command {
+    // TODO: each subcommand should handle their error and return ()
+    match cli.command {
         Some(Command::Http {
             port,
             host,
@@ -19,34 +22,50 @@ async fn main() -> eyre::Result<()> {
             // what_to_do,
         }) => {
             tracing::info!(port, host, verbose = ?cli.verbose, "Exposing HTTP service on kulfi.");
-            malai::expose_http(host, port).await
+            let rx = graceful_shutdown_rx.clone();
+            tokio::spawn(async move { malai::expose_http(host, port, rx).await });
         }
         Some(Command::HttpBridge { proxy_target, port }) => {
             tracing::info!(port, proxy_target, verbose = ?cli.verbose, "Starting HTTP bridge.");
-            malai::http_bridge(proxy_target, port).await
+            let rx = graceful_shutdown_rx.clone();
+            tokio::spawn(async move { malai::http_bridge(port, proxy_target, rx).await });
         }
         Some(Command::Tcp { port, host }) => {
             tracing::info!(port, host, verbose = ?cli.verbose, "Exposing TCP service on kulfi.");
-            malai::expose_tcp(host, port).await
+            let rx = graceful_shutdown_rx.clone();
+            tokio::spawn(async move { malai::expose_tcp(host, port, rx).await });
         }
         Some(Command::TcpBridge { proxy_target, port }) => {
             tracing::info!(port, proxy_target, verbose = ?cli.verbose, "Starting TCP bridge.");
-            malai::tcp_bridge(proxy_target, port).await
+            let rx = graceful_shutdown_rx.clone();
+            tokio::spawn(async move { malai::tcp_bridge(port, proxy_target, rx).await });
         }
         #[cfg(feature = "ui")]
         None => {
             tracing::info!(verbose = ?cli.verbose, "Starting UI.");
-            malai::ui()
+            let _ = malai::ui();
         }
         #[cfg(not(feature = "ui"))]
         None => {
             use clap::CommandFactory;
-            Cli::command().print_help().map_err(Into::into)
+            // TODO: handle error here
+            Cli::command().print_help().unwrap();
         }
-    } {
-        tracing::error!("Error: {e}");
-        return Err(e);
-    }
+    };
+
+    tokio::signal::ctrl_c()
+        .await
+        .wrap_err_with(|| "failed to get ctrl-c signal handler")?;
+
+    println!("got the ctrl-c");
+
+    graceful_shutdown_tx
+        .send(true)
+        .wrap_err_with(|| "failed to send graceful shutdown signal")?;
+
+    // TODO: wait for the running task to finish with a timeout. Setup global counters.
+
+    tracing::info!("Stopping HTTP bridge.");
 
     Ok(())
 }
