@@ -38,9 +38,16 @@ async fn main() -> eyre::Result<()> {
             );
             Ok(())
         }
+        #[cfg(feature = "ui")]
         None => {
             tracing::info!(verbose = ?cli.verbose, "Starting UI.");
             kulfi::ui()
+        }
+        #[cfg(not(feature = "ui"))]
+        None => {
+            use clap::CommandFactory;
+            // TODO: handle error here
+            Cli::command().print_help().map_err(Into::into)
         }
     }
 }

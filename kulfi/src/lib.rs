@@ -16,6 +16,7 @@ mod counters;
 mod identity;
 pub mod peer_server;
 mod start;
+#[cfg(feature = "ui")]
 mod tauri;
 pub mod utils;
 
@@ -27,4 +28,5 @@ pub use counters::{
 // pub use identity::{Identity, PeerIdentity};
 pub use identity::Identity;
 pub use start::start;
+#[cfg(feature = "ui")]
 pub use tauri::ui;
