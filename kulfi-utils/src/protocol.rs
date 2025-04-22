@@ -87,11 +87,6 @@ pub enum Protocol {
     /// client may not be using NTP, or may only have p2p access and no other internet access, in
     /// which case it can ask for the time from the peers and try to create a consensus.
     WhatTimeIsIt,
-    /// client is done and want to end close the connection
-    Quit,
-    /// connect with the identity server. this means connect with the fastn service as part of the
-    /// identity server.
-    Identity,
     /// client wants to make an HTTP request to a device whose ID is specified. note that the exact
     /// ip:port is not known to peers, they only the "device id" for the service. server will figure
     /// out the ip:port from the device id.

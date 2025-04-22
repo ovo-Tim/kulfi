@@ -67,7 +67,7 @@ pub async fn handle_connection(
     tracing::info!("new client: {remote_id52}, waiting for bidirectional stream");
     loop {
         let client_pools = client_pools.clone();
-        let (mut send, recv) = kulfi_utils::accept_bi(&conn, kulfi_utils::Protocol::Identity)
+        let (mut send, recv) = kulfi_utils::accept_bi(&conn, kulfi_utils::Protocol::Http)
             .await
             .inspect_err(|e| tracing::error!("failed to accept bidirectional stream: {e:?}"))?;
         tracing::info!("{remote_id52}");
