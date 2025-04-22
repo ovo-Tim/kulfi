@@ -15,6 +15,7 @@ async fn main() -> eyre::Result<()> {
     let (show_info_tx, show_info_rx) = tokio::sync::watch::channel(false);
 
     // TODO: each subcommand should handle their error and return ()
+    let help_shown = cli.command.is_none();
     match cli.command {
         Some(Command::Http {
             port,
@@ -55,36 +56,38 @@ async fn main() -> eyre::Result<()> {
         }
     };
 
-    loop {
-        tokio::signal::ctrl_c()
-            .await
-            .wrap_err_with(|| "failed to get ctrl-c signal handler")?;
+    if !help_shown {
+        loop {
+            tokio::signal::ctrl_c()
+                .await
+                .wrap_err_with(|| "failed to get ctrl-c signal handler")?;
 
-        tracing::info!("Received ctrl-c signal, showing info.");
+            tracing::info!("Received ctrl-c signal, showing info.");
 
-        show_info_tx
-            .send(true)
-            .inspect_err(|e| tracing::error!("failed to send show info signal: {e:?}"))?;
+            show_info_tx
+                .send(true)
+                .inspect_err(|e| tracing::error!("failed to send show info signal: {e:?}"))?;
 
-        tokio::pin! {
-            let second_ctrl_c = tokio::signal::ctrl_c();
-            let timeout = tokio::time::sleep(std::time::Duration::from_secs(3));
-        };
+            tokio::pin! {
+                let second_ctrl_c = tokio::signal::ctrl_c();
+                let timeout = tokio::time::sleep(std::time::Duration::from_secs(3));
+            };
 
-        tokio::select! {
-            _ = &mut second_ctrl_c => {
-                tracing::info!("Received second ctrl-c signal, shutting down.");
+            tokio::select! {
+                _ = &mut second_ctrl_c => {
+                    tracing::info!("Received second ctrl-c signal, shutting down.");
 
-                graceful_shutdown_tx
-                    .send(true)
-                    .wrap_err_with(|| "failed to send graceful shutdown signal")?;
+                    graceful_shutdown_tx
+                        .send(true)
+                        .wrap_err_with(|| "failed to send graceful shutdown signal")?;
 
-                // TODO: wait for the running task to finish with a timeout. Setup global counters.
-                break;
-            }
-            _ = &mut timeout => {
-                tracing::info!("Timeout expired. Continuing...");
-                println!("Did not receive ctrl+c within 3 secs. Press ctrl+c in quick succession to exit.");
+                    // TODO: wait for the running task to finish with a timeout. Setup global counters.
+                    break;
+                }
+                _ = &mut timeout => {
+                    tracing::info!("Timeout expired. Continuing...");
+                    println!("Did not receive ctrl+c within 3 secs. Press ctrl+c in quick succession to exit.");
+                }
             }
         }
     }
@@ -136,7 +139,7 @@ pub enum Command {
         // this will be the id52 of the identity server that should be consulted
         // what_to_do: Option<String>,
     },
-    #[clap(about = "Expose TCP Service on kulfi")]
+    #[clap(about = "Expose TCP Service on kulfi", hide = true)]
     Tcp {
         port: u16,
         #[arg(
@@ -161,6 +164,7 @@ pub enum Command {
         )]
         port: u16,
     },
+    #[clap(hide = true)]
     TcpBridge {
         #[arg(help = "The id52 to which this bridge will forward incoming TCP request.")]
         proxy_target: String,
