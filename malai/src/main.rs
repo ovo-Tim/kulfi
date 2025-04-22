@@ -149,6 +149,9 @@ pub enum Command {
         )]
         host: String,
     },
+    #[clap(
+        about = "Run an http server that forwards requests to the given id52 taken from the HOST header"
+    )]
     HttpBridge {
         #[arg(
             long,
