@@ -20,13 +20,16 @@ async fn main() -> eyre::Result<()> {
         Some(Command::Http {
             port,
             host,
+            bridge,
             // secure,
             // what_to_do,
         }) => {
             tracing::info!(port, host, verbose = ?cli.verbose, "Exposing HTTP service on kulfi.");
             let rx = graceful_shutdown_rx.clone();
             let show_info_rx = show_info_rx.clone();
-            tokio::spawn(async move { malai::expose_http(host, port, rx, show_info_rx).await });
+            tokio::spawn(
+                async move { malai::expose_http(host, port, bridge, rx, show_info_rx).await },
+            );
         }
         Some(Command::HttpBridge { proxy_target, port }) => {
             tracing::info!(port, proxy_target, verbose = ?cli.verbose, "Starting HTTP bridge.");
@@ -126,6 +129,13 @@ pub enum Command {
             help = "Host serving the http service."
         )]
         host: String,
+        #[arg(
+            long,
+            default_value = "kulfi.site",
+            help = "Use this for the HTTP bridge. To run an HTTP bridge, use `malai http-bridge`",
+            env = "MALAI_HTTP_BRIDGE"
+        )]
+        bridge: String,
         // #[arg(
         //     long,
         //     default_value_t = false,

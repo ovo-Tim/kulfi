@@ -1,6 +1,7 @@
 pub async fn expose_http(
     host: String,
     port: u16,
+    bridge: String,
     _graceful_shutdown_rx: tokio::sync::watch::Receiver<bool>,
     mut show_info_rx: tokio::sync::watch::Receiver<bool>,
 ) -> eyre::Result<()> {
@@ -13,14 +14,14 @@ pub async fn expose_http(
         .await
         .wrap_err_with(|| "failed to bind to iroh network")?;
 
-    print_id52_info(&host, port, &id52, InfoMode::Startup);
+    print_id52_info(&host, port, &id52, &bridge, InfoMode::Startup);
 
     let client_pools = kulfi_utils::HttpConnectionPools::default();
 
     loop {
         tokio::select! {
             _ = show_info_rx.changed() => {
-                print_id52_info(&host, port, &id52, InfoMode::OnExit);
+                print_id52_info(&host, port, &id52, &bridge, InfoMode::OnExit);
             }
             conn = ep.accept() => {
                 let conn = match conn {
@@ -90,7 +91,7 @@ enum InfoMode {
     OnExit,
 }
 
-fn print_id52_info(host: &str, port: u16, id52: &str, mode: InfoMode) {
+fn print_id52_info(host: &str, port: u16, id52: &str, bridge: &str, mode: InfoMode) {
     use colored::Colorize;
 
     if mode == InfoMode::Startup {
@@ -109,11 +110,8 @@ fn print_id52_info(host: &str, port: u16, id52: &str, mode: InfoMode) {
 
     println!("ID52: {}", id52.yellow());
     println!(
-        "{} {}{}{}",
-        "Public kulfi proxy address:".dimmed(),
-        "https://".yellow(),
-        id52.yellow(),
-        ".kulfi.site".yellow()
+        "HTTP Address {}",
+        format!("https://{id52}.{bridge}").yellow(),
     );
 
     if mode == InfoMode::OnExit {
