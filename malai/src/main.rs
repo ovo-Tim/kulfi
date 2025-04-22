@@ -12,6 +12,7 @@ async fn main() -> eyre::Result<()> {
     let cli = Cli::parse();
 
     let (graceful_shutdown_tx, graceful_shutdown_rx) = tokio::sync::watch::channel(false);
+    let (show_info_tx, show_info_rx) = tokio::sync::watch::channel(false);
 
     // TODO: each subcommand should handle their error and return ()
     match cli.command {
@@ -23,7 +24,8 @@ async fn main() -> eyre::Result<()> {
         }) => {
             tracing::info!(port, host, verbose = ?cli.verbose, "Exposing HTTP service on kulfi.");
             let rx = graceful_shutdown_rx.clone();
-            tokio::spawn(async move { malai::expose_http(host, port, rx).await });
+            let show_info_rx = show_info_rx.clone();
+            tokio::spawn(async move { malai::expose_http(host, port, rx, show_info_rx).await });
         }
         Some(Command::HttpBridge { proxy_target, port }) => {
             tracing::info!(port, proxy_target, verbose = ?cli.verbose, "Starting HTTP bridge.");
@@ -53,19 +55,39 @@ async fn main() -> eyre::Result<()> {
         }
     };
 
-    tokio::signal::ctrl_c()
-        .await
-        .wrap_err_with(|| "failed to get ctrl-c signal handler")?;
+    loop {
+        tokio::signal::ctrl_c()
+            .await
+            .wrap_err_with(|| "failed to get ctrl-c signal handler")?;
 
-    println!("got the ctrl-c");
+        tracing::info!("Received ctrl-c signal, showing info.");
 
-    graceful_shutdown_tx
-        .send(true)
-        .wrap_err_with(|| "failed to send graceful shutdown signal")?;
+        show_info_tx
+            .send(true)
+            .inspect_err(|e| tracing::error!("failed to send show info signal: {e:?}"))?;
 
-    // TODO: wait for the running task to finish with a timeout. Setup global counters.
+        tokio::pin! {
+            let second_ctrl_c = tokio::signal::ctrl_c();
+            let timeout = tokio::time::sleep(std::time::Duration::from_secs(3));
+        };
 
-    tracing::info!("Stopping HTTP bridge.");
+        tokio::select! {
+            _ = &mut second_ctrl_c => {
+                tracing::info!("Received second ctrl-c signal, shutting down.");
+
+                graceful_shutdown_tx
+                    .send(true)
+                    .wrap_err_with(|| "failed to send graceful shutdown signal")?;
+
+                // TODO: wait for the running task to finish with a timeout. Setup global counters.
+                break;
+            }
+            _ = &mut timeout => {
+                tracing::info!("Timeout expired. Continuing...");
+                println!("Did not receive ctrl+c within 3 secs. Press ctrl+c in quick succession to exit.");
+            }
+        }
+    }
 
     Ok(())
 }
