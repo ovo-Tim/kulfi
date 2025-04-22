@@ -103,9 +103,8 @@ fn print_id52_info(host: &str, port: u16, id52: &str, mode: InfoMode) {
 
     if mode == InfoMode::OnExit {
         // an extra empty line to make the output more readable
-        // otherwise the first line is mised with keyboard input
-        println!("");
-        println!("Serving: {}", format!("http://{host}:{port}").yellow());
+        // otherwise the first line is missed with keyboard input
+        println!("\nServing: {}", format!("http://{host}:{port}").yellow());
     }
 
     println!("ID52: {}", id52.yellow());
