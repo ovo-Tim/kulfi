@@ -71,13 +71,8 @@ async fn main() -> eyre::Result<()> {
                 .send(true)
                 .inspect_err(|e| tracing::error!("failed to send show info signal: {e:?}"))?;
 
-            tokio::pin! {
-                let second_ctrl_c = tokio::signal::ctrl_c();
-                let timeout = tokio::time::sleep(std::time::Duration::from_secs(3));
-            };
-
             tokio::select! {
-                _ = &mut second_ctrl_c => {
+                _ = tokio::signal::ctrl_c() => {
                     tracing::info!("Received second ctrl-c signal, shutting down.");
 
                     graceful_shutdown_tx
@@ -87,7 +82,7 @@ async fn main() -> eyre::Result<()> {
                     // TODO: wait for the running task to finish with a timeout. Setup global counters.
                     break;
                 }
-                _ = &mut timeout => {
+                _ = tokio::time::sleep(std::time::Duration::from_secs(3)) => {
                     tracing::info!("Timeout expired. Continuing...");
                     println!("Did not receive ctrl+c within 3 secs. Press ctrl+c in quick succession to exit.");
                 }
