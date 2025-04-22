@@ -141,11 +141,11 @@ async fn connection_manager_(
         }
     };
 
-    let timeout = std::time::Duration::from_secs(1);
+    let timeout = std::time::Duration::from_secs(12);
     let mut idle_counter = 0;
 
     loop {
-        if idle_counter > 30 {
+        if idle_counter > 4 {
             tracing::info!("connection idle timeout, returning");
             // this ensures we keep a connection open only for 12 * 5 seconds = 1 min
             break;
