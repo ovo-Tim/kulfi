@@ -31,6 +31,8 @@ pub async fn get_stream(
     remote_node_id52: RemoteID52,
     peer_stream_senders: PeerStreamSenders,
 ) -> eyre::Result<(iroh::endpoint::SendStream, kulfi_utils::FrameReader)> {
+    use eyre::WrapErr;
+
     let stream_request_sender =
         get_stream_request_sender(self_endpoint, remote_node_id52, peer_stream_senders).await;
 
@@ -38,7 +40,8 @@ pub async fn get_stream(
 
     stream_request_sender
         .send((protocol, reply_channel))
-        .await?;
+        .await
+        .wrap_err_with(|| "failed to send on stream_request_sender")?;
 
     receiver.await?
 }
@@ -86,7 +89,10 @@ async fn connection_manager(
 ) {
     let e = match connection_manager_(&mut receiver, self_endpoint, remote_node_id52.clone()).await
     {
-        Ok(()) => return,
+        Ok(()) => {
+            tracing::info!("connection manager closed");
+            return;
+        }
         Err(e) => e,
     };
 
@@ -144,11 +150,12 @@ async fn connection_manager_(
         }
     };
 
-    let timeout = std::time::Duration::from_secs(12);
+    let timeout = std::time::Duration::from_secs(1);
     let mut idle_counter = 0;
 
     loop {
-        if idle_counter > 4 {
+        if idle_counter > 30 {
+            tracing::info!("connection idle timeout, returning");
             // this ensures we keep a connection open only for 12 * 5 seconds = 1 min
             break;
         }
@@ -162,6 +169,7 @@ async fn connection_manager_(
                 idle_counter += 1;
             },
             Some((protocol, reply_channel)) = receiver.recv() => {
+                tracing::info!("connection ping: {protocol:?}, idle counter: {idle_counter}");
                 idle_counter = 0;
                 // is this a good idea to serialize this part? if 10 concurrent requests come in, we will
                 // handle each one sequentially. the other alternative is to spawn a task for each request.
@@ -216,22 +224,34 @@ async fn handle_request(
     protocol: kulfi_utils::Protocol,
     reply_channel: ReplyChannel,
 ) -> eyre::Result<()> {
+    use eyre::WrapErr;
     use tokio_stream::StreamExt;
 
+    tracing::trace!("handling request: {protocol:?}");
+
     let (mut send, recv) = match conn.open_bi().await {
-        Ok(v) => v,
+        Ok(v) => {
+            tracing::trace!("opened bi-stream");
+            v
+        }
         Err(e) => {
             tracing::error!("failed to open_bi: {e:?}");
             return Err(eyre::anyhow!("failed to open_bi: {e:?}"));
         }
     };
 
-    send.write_all(&serde_json::to_vec(&protocol)?).await?;
-    send.write(b"\n").await?;
+    send.write_all(
+        &serde_json::to_vec(&protocol)
+            .wrap_err_with(|| format!("failed to serialize protocol: {protocol:?}"))?,
+    )
+    .await?;
+    send.write(b"\n")
+        .await
+        .wrap_err_with(|| "failed to write newline")?;
     let mut recv = kulfi_utils::frame_reader(recv);
 
     let msg = match recv.next().await {
-        Some(v) => v?,
+        Some(v) => v.wrap_err_with(|| "failed to receive response for protocol")?,
         None => {
             tracing::error!("failed to read from incoming connection");
             return Err(eyre::anyhow!("failed to read from incoming connection"));
@@ -243,9 +263,13 @@ async fn handle_request(
         return Err(eyre::anyhow!("failed to read ack: {msg:?}"));
     }
 
-    reply_channel.send(Ok((send, recv))).unwrap_or_else(|_| {
-        tracing::error!("failed to send reply");
+    tracing::trace!("received ack");
+
+    reply_channel.send(Ok((send, recv))).unwrap_or_else(|e| {
+        tracing::error!("failed to send reply: {e:?}");
     });
+
+    tracing::trace!("handle_request done");
 
     Ok(())
 }
