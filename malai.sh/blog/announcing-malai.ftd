@@ -80,11 +80,30 @@ it.
 
 -- ds.copy-regular:
 
-We're actively working on expanding what you can do with `malai`:
+We're actively working on expanding what you can do with `malai`. Here’s a peek
+at what’s coming:
 
-- Share any **TCP server** (like your postgres database), not just HTTP.
-- Native support for **SSH** using `malai ssh`.
-- Experimental support for sharing **local devices** like printers and storage over peer-to-peer.
+- Share any **TCP server**, not just HTTP  
+  Soon you'll be able to share any TCP-based service running locally —
+  including your Postgres database, Redis, or even a custom TCP protocol — using
+  the same seamless workflow.
+
+- Native support for **SSH** using `malai ssh`  
+  We're adding support for secure shell access over P2P with `malai ssh`. This
+  will let you remotely access your development machine or share a shell session
+  without needing public IPs or VPNs.
+
+- Experimental support for sharing **local devices** like printers and storage over peer-to-peer  
+  We're exploring ways to let you securely share physical hardware — like
+  printers or external drives — directly from your machine over P2P, with
+  fine-grained access controls.
+
+In parallel, we're building a companion GUI app called **Kulfi**. Kulfi will
+make it easy to browse and connect to shared services — no bridge required.
+It'll also include built-in access control (ACL) management, so you can choose
+exactly who gets access to what. Whether you’re sharing with teammates,
+friends, or devices across your network, Kulfi will give you visibility and
+control.
 
 -- ds.copy-regular:
 
