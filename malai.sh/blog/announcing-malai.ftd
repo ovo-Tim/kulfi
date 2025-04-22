@@ -1,6 +1,10 @@
 -- ds.site-page: Announcing Malai
 description: Introducing Malai, a new open-source tool to share your local HTTP server with the world. Read more in this blog.
 
+-- ds.section-column:
+flush: narrow
+align-content: left
+
 -- ds.heading-large: Announcing Malai!
 
 -- ds.copy-regular:
@@ -122,5 +126,7 @@ If you like what we're building, consider [starring the
 repo](https://github.com/kulfi-project/kulfi) on GitHub. It helps others
 discover the project and keeps us motivated to build more!
 
+-- end: ds.section-column
 
 -- end: ds.site-page
+
