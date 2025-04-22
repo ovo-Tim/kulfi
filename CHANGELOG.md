@@ -5,6 +5,7 @@
 ### malai 0.2.0
 
 - Rename subcommands `expose-http` -> `http` and `expose-tcp` -> `tcp`.
+- `ctrl+c` to print info. Quick succession of `ctrl+c` within 3sec to exit.
 
 ## 17 April 2025
 
