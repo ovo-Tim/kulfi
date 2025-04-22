@@ -9,6 +9,8 @@ use clap as _;
 use clap_verbosity_flag as _;
 use directories as _;
 use tracing_subscriber as _;
+#[cfg(target_os = "linux")]
+use libdbus_sys as _;
 
 mod config;
 pub mod control_server;
