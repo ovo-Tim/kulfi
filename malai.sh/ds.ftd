@@ -14,7 +14,7 @@ wide.px: 1600
 -- ftd.image-src site-logo: $assets.files.assets.logo.png
 
 
--- string copyright: 2025 FifthTry, Inc
+-- string copyright: © 2025 FifthTry, Inc
 
 -- component site-header:
 
