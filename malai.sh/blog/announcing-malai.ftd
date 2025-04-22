@@ -65,9 +65,8 @@ All this without any config, DNS setup, or cloud deploys.
 -- ds.copy-regular:
 
 Malai is designed with decentralization in mind. By default, Malai uses a free
-public HTTP bridge hosted at [`kulfi.site`](https://kulfi.site). This means you
-can start sharing your local server with the world right away — no setup
-required.
+public HTTP bridge hosted at `kulfi.site`. This means you can start sharing
+your local server with the world right away — no setup required.
 
 But if you'd prefer more control, privacy, or reliability, you can run your own
 bridge. Malai makes it easy to self-host your own HTTP bridge, and you can
