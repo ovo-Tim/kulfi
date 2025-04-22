@@ -42,7 +42,7 @@ malai http 3000
 This will share your local HTTP server running on `http://localhost:3000` with the
 world via a secure, shareable URL.
 
-See the [Getting Started guide](/docs/getting-started/) or run `malai --help` to explore all the options.
+See the [Getting Started guide](/getting-started/) or run `malai --help` to explore all the options.
 
 -- ds.heading-medium: Use Cases
 
@@ -129,4 +129,3 @@ discover the project and keeps us motivated to build more!
 -- end: ds.section-column
 
 -- end: ds.site-page
-
