@@ -67,14 +67,11 @@ async fn get_stream_request_sender(
     drop(senders);
 
     tokio::spawn(async move {
-        connection_manager(
-            receiver,
-            self_id52,
-            self_endpoint,
-            remote_node_id52,
-            peer_stream_senders,
-        )
-        .await;
+        connection_manager(receiver, self_endpoint, remote_node_id52.clone()).await;
+
+        // cleanup the peer_stream_senders map, so no future tasks will try to use this.
+        let mut senders = peer_stream_senders.lock().await;
+        senders.remove(&(self_id52.clone(), remote_node_id52));
     });
 
     sender
@@ -82,10 +79,8 @@ async fn get_stream_request_sender(
 
 async fn connection_manager(
     mut receiver: StreamRequestReceiver,
-    self_id52: SelfID52,
     self_endpoint: iroh::Endpoint,
     remote_node_id52: RemoteID52,
-    peer_stream_senders: PeerStreamSenders,
 ) {
     let e = match connection_manager_(&mut receiver, self_endpoint, remote_node_id52.clone()).await
     {
@@ -125,10 +120,6 @@ async fn connection_manager(
             tracing::error!("failed to send error reply: {e:?}");
         }
     }
-
-    // cleanup the peer_stream_senders map, so no future tasks will try to use this.
-    let mut senders = peer_stream_senders.lock().await;
-    senders.remove(&(self_id52.clone(), remote_node_id52.clone()));
 }
 
 async fn connection_manager_(
