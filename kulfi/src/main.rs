@@ -12,7 +12,6 @@ async fn main() -> eyre::Result<()> {
     let cli = Cli::parse();
 
     let graceful = kulfi_utils::Graceful::default();
-    let (show_info_tx, _show_info_rx) = tokio::sync::watch::channel(false);
 
     if let Err(e) = match cli.command {
         Some(Command::Start {
@@ -56,7 +55,7 @@ async fn main() -> eyre::Result<()> {
         tracing::error!("Error: {e:?}");
     }
 
-    graceful.shutdown(show_info_tx).await
+    graceful.shutdown().await
 }
 
 #[derive(clap::Parser, Debug)]

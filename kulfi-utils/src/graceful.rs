@@ -1,13 +1,39 @@
 use eyre::Context;
 use tokio::task::JoinHandle;
 
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub struct Graceful {
     cancel: tokio_util::sync::CancellationToken,
     tracker: tokio_util::task::TaskTracker,
+    show_info_tx: tokio::sync::watch::Sender<bool>,
+    show_info_rx: tokio::sync::watch::Receiver<bool>,
+}
+
+impl Default for Graceful {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl Graceful {
+    pub fn new() -> Self {
+        let (show_info_tx, show_info_rx) = tokio::sync::watch::channel(false);
+
+        Self {
+            cancel: tokio_util::sync::CancellationToken::new(),
+            tracker: tokio_util::task::TaskTracker::new(),
+            show_info_tx,
+            show_info_rx,
+        }
+    }
+
+    pub async fn show_info(&mut self) -> eyre::Result<()> {
+        self.show_info_rx
+            .changed()
+            .await
+            .map_err(|e| eyre::anyhow!("failed to get show info signal: {e:?}"))
+    }
+
     #[inline]
     #[track_caller]
     pub fn spawn<F>(&self, task: F) -> JoinHandle<F::Output>
@@ -18,10 +44,7 @@ impl Graceful {
         self.tracker.spawn(task)
     }
 
-    pub async fn shutdown(
-        &self,
-        show_info_tx: tokio::sync::watch::Sender<bool>,
-    ) -> eyre::Result<()> {
+    pub async fn shutdown(&self) -> eyre::Result<()> {
         loop {
             tokio::signal::ctrl_c()
                 .await
@@ -30,7 +53,7 @@ impl Graceful {
             tracing::info!("Received ctrl-c signal, showing info.");
             tracing::info!("Pending tasks: {}", self.tracker.len());
 
-            show_info_tx
+            self.show_info_tx
                 .send(true)
                 .inspect_err(|e| tracing::error!("failed to send show info signal: {e:?}"))?;
 

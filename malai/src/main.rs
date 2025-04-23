@@ -10,7 +10,6 @@ async fn main() -> eyre::Result<()> {
 
     let cli = Cli::parse();
 
-    let (show_info_tx, show_info_rx) = tokio::sync::watch::channel(false);
     let graceful = kulfi_utils::Graceful::default();
 
     // TODO: each subcommand should handle their error and return ()
@@ -24,10 +23,7 @@ async fn main() -> eyre::Result<()> {
         }) => {
             tracing::info!(port, host, verbose = ?cli.verbose, "Exposing HTTP service on kulfi.");
             let g = graceful.clone();
-            let show_info_rx = show_info_rx.clone();
-            graceful.spawn(
-                async move { malai::expose_http(host, port, bridge, g, show_info_rx).await },
-            );
+            graceful.spawn(async move { malai::expose_http(host, port, bridge, g).await });
         }
         Some(Command::HttpBridge { proxy_target, port }) => {
             tracing::info!(port, proxy_target, verbose = ?cli.verbose, "Starting HTTP bridge.");
@@ -58,7 +54,7 @@ async fn main() -> eyre::Result<()> {
         }
     };
 
-    graceful.shutdown(show_info_tx).await
+    graceful.shutdown().await
 }
 
 #[derive(clap::Parser, Debug)]
