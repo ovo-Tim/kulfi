@@ -42,7 +42,7 @@ malai http 3000
 This will share your local HTTP server running on `http://localhost:3000` with the
 world via a secure, shareable URL.
 
-See the [Getting Started guide](/getting-started/) or run `malai --help` to explore all the options.
+See the [Getting Started guide](/get-started/) or run `malai --help` to explore all the options.
 
 -- ds.heading-medium: Use Cases
 
@@ -76,7 +76,7 @@ But if you'd prefer more control, privacy, or reliability, you can run your own
 bridge. Malai makes it easy to self-host your own HTTP bridge, and you can
 configure the CLI to use your custom bridge instead of the default one.
 
-See the [Getting Started](/docs/getting-started/#run-your-own-bridge) guide for
+See the [Getting Started](/docs/get-started/#run-your-own-bridge) guide for
 step-by-step instructions on setting up your own bridge and pointing Malai to
 it.
 
