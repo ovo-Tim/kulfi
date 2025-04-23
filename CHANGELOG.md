@@ -1,5 +1,16 @@
 # ChangeLog
 
+## 23 April 2025
+
+### malai 0.2.1
+
+This is a minor release with not changes to `malai`. We've restricted the
+release binary to be only available for **Apple M series Macs (arm64)**. This
+is done because the x86_64 build is segfaulting when run on intel macs and we
+can't figure out the cause.
+
+More details at: https://github.com/kulfi-project/kulfi/issues/28
+
 ## 22 April 2025
 
 ### malai 0.2.0
