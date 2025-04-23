@@ -13,3 +13,12 @@ provided-via: malai.sh/ds
 -- fastn.url-mappings:
 
 /discord/ -> https://discord.gg/nK4ZP8HpV7
+/blog/announcing-malai/ -> /announcing-malai/
+
+
+-- fastn.sitemap:
+
+# Blog
+
+- url: /announcing-malai/
+  document: blog/announcing-malai.ftd

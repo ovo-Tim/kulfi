@@ -4,7 +4,7 @@
 -- ds.site-page: Malai.sh
 
 -- banner.banner: Read the **Announcement Post**
-cta-link: blog/announcing-malai/
+cta-link: /announcing-malai/
 
 -- hero.hero: Secure 
 highlight-text-1: Server 
