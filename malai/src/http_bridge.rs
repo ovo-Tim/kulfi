@@ -2,6 +2,7 @@ pub async fn http_bridge(
     port: u16,
     proxy_target: Option<String>,
     graceful: kulfi_utils::Graceful,
+    post_start: impl FnOnce(u16) -> eyre::Result<()>,
 ) -> eyre::Result<()> {
     use eyre::WrapErr;
 
@@ -11,15 +12,26 @@ pub async fn http_bridge(
             || "can not listen to port 80, is it busy, or you do not have root access?",
         )?;
 
+    // because the caller can pass the port as 0 if they want to bind to a random port
+    let port = listener.local_addr()?.port();
+
+    post_start(port)?;
+
     println!("Listening on http://127.0.0.1:{port}");
 
     let peer_connections = kulfi_utils::PeerStreamSenders::default();
+
+    let mut g = graceful.clone();
 
     loop {
         tokio::select! {
             _ = graceful.cancelled() => {
                 tracing::info!("Stopping control server.");
                 break;
+            }
+            _ = g.show_info() => {
+                println!("Listening on http://127.0.0.1:{port}");
+                println!("Press ctrl+c again to exit.");
             }
             val = listener.accept() => {
                 let self_endpoint = malai::global_iroh_endpoint().await;
@@ -81,35 +93,15 @@ async fn handle_request(
     proxy_target: Option<String>,
     graceful: kulfi_utils::Graceful,
 ) -> kulfi_utils::http::ProxyResult {
-    let peer_id = match r
-        .headers()
-        .get("Host")
-        .and_then(|h| h.to_str().ok())
-        .and_then(|h| h.split_once('.'))
-    {
-        Some((first, _)) => {
-            if first.len() != 52 {
-                tracing::error!(peer_id = %first, "request received for invalid peer id");
-                return Ok(kulfi_utils::bad_request!(
-                    "got http request with invalid peer id"
-                ));
-            }
-
-            if let Some(target) = proxy_target {
-                if first != target {
-                    tracing::error!(peer_id = %first, proxy_target = %target, "request for peer_id is not allowed");
-                    return Ok(kulfi_utils::bad_request!(
-                        "got http request with invalid peer id"
-                    ));
-                }
-            }
-
-            first.to_string()
-        }
-        None => {
-            tracing::error!("got http request without Host header");
+    let peer_id = match get_peer_id52_from_host(
+        r.headers().get("Host").and_then(|h| h.to_str().ok()),
+        proxy_target,
+    ) {
+        Ok(peer_id) => peer_id,
+        Err(e) => {
+            tracing::error!("failed to get peer id from request: {e:?}");
             return Ok(kulfi_utils::bad_request!(
-                "got http request without Host header"
+                "failed to get peer id from request"
             ));
         }
     };
@@ -125,4 +117,37 @@ async fn handle_request(
         graceful,
     )
     .await
+}
+
+fn get_peer_id52_from_host(
+    host: Option<&str>,
+    proxy_target: Option<String>,
+) -> eyre::Result<String> {
+    let first = match host.and_then(|h| h.split_once('.')) {
+        Some((first, _)) => first,
+        None => {
+            tracing::error!("got http request without Host header");
+            return Err(eyre::anyhow!("got http request without Host header"));
+        }
+    };
+
+    if first == "127" {
+        if let Some(target) = proxy_target {
+            return Ok(target);
+        }
+    }
+
+    if first.len() != 52 && proxy_target.is_none() {
+        tracing::error!(peer_id = %first, "request received for invalid peer id");
+        return Err(eyre::anyhow!("got http request with invalid peer id"));
+    }
+
+    if let Some(target) = proxy_target {
+        if first != target {
+            tracing::error!(peer_id = %first, proxy_target = %target, "request for peer_id is not allowed");
+            return Err(eyre::anyhow!("got http request with invalid peer id"));
+        }
+    }
+
+    Ok(first.to_string())
 }

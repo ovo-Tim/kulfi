@@ -28,7 +28,8 @@ async fn main() -> eyre::Result<()> {
         Some(Command::HttpBridge { proxy_target, port }) => {
             tracing::info!(port, proxy_target, verbose = ?cli.verbose, "Starting HTTP bridge.");
             let g = graceful.clone();
-            graceful.spawn(async move { malai::http_bridge(port, proxy_target, g).await });
+            graceful
+                .spawn(async move { malai::http_bridge(port, proxy_target, g, |_| Ok(())).await });
         }
         Some(Command::Tcp { port, host }) => {
             tracing::info!(port, host, verbose = ?cli.verbose, "Exposing TCP service on kulfi.");
@@ -39,6 +40,11 @@ async fn main() -> eyre::Result<()> {
             tracing::info!(port, proxy_target, verbose = ?cli.verbose, "Starting TCP bridge.");
             let g = graceful.clone();
             graceful.spawn(async move { malai::tcp_bridge(port, proxy_target, g).await });
+        }
+        Some(Command::Browse { url }) => {
+            tracing::info!(url, verbose = ?cli.verbose, "Opening browser.");
+            let g = graceful.clone();
+            graceful.spawn(async move { malai::browse(url, g).await });
         }
         #[cfg(feature = "ui")]
         None => {
@@ -108,7 +114,9 @@ pub enum Command {
         // this will be the id52 of the identity server that should be consulted
         // what_to_do: Option<String>,
     },
-    #[clap(about = "Expose TCP Service on kulfi", hide = true)]
+    #[clap(about = "Browse a kulfi site.")]
+    Browse { url: String },
+    #[clap(about = "Expose TCP Service on kulfi.", hide = true)]
     Tcp {
         port: u16,
         #[arg(

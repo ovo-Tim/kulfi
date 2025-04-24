@@ -1,5 +1,10 @@
 # ChangeLog
 
+## Unreleased
+
+- Implemented `malai browse`. You can now browse a malai powered site without
+  using any bridge.
+
 ## 23 April 2025
 
 ### malai 0.2.1
@@ -15,9 +20,12 @@ More details at: https://github.com/kulfi-project/kulfi/issues/28
 
 ### malai 0.2.0
 
-- Feat: `ctrl+c` to print info. Quick succession of `ctrl+c` within 3 seconds to exit. [More details](https://github.com/kulfi-project/kulfi/discussions/9)
-- Feat: Configurable HTTP bridge address in the output. [More details](https://github.com/kulfi-project/kulfi/discussions/17)
-- Breaking: Rename subcommands `expose-http` -> `http` and `expose-tcp` -> `tcp`.
+- Feat: `ctrl+c` to print info. Quick succession of `ctrl+c` within 3 seconds to
+  exit. [More details](https://github.com/kulfi-project/kulfi/discussions/9)
+- Feat: Configurable HTTP bridge address in the
+  output. [More details](https://github.com/kulfi-project/kulfi/discussions/17)
+- Breaking: Rename subcommands `expose-http` -> `http` and `expose-tcp` ->
+  `tcp`.
 - Breaking [Networking Internals]: Merged `Protocol::Identity` with
   `Protocol::Http`, this means a `malai 0.1` http-bridge can not connect with
   `malai 0.2 http`.

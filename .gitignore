@@ -26,8 +26,11 @@ kulfi/gen
 
 *.sqlite
 
+
+# fastn stuff
 .fastn
 .packages
+.build
 *.wasm
 
 .malai.id52
