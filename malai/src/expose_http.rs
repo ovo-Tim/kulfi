@@ -13,7 +13,7 @@ pub async fn expose_http(
         .await
         .wrap_err_with(|| "failed to bind to iroh network")?;
 
-    print_id52_info(&host, port, &id52, &bridge, InfoMode::Startup);
+    InfoMode::Startup.print(&host, port, &id52, &bridge);
 
     let client_pools = kulfi_utils::HttpConnectionPools::default();
 
@@ -22,7 +22,7 @@ pub async fn expose_http(
     loop {
         tokio::select! {
             _ = graceful.show_info() => {
-                print_id52_info(&host, port, &id52, &bridge, InfoMode::OnExit);
+                InfoMode::OnExit.print(&host, port, &id52, &bridge);
             }
             _ = g.cancelled() => {
                 tracing::info!("Stopping control server.");
@@ -96,30 +96,32 @@ enum InfoMode {
     OnExit,
 }
 
-fn print_id52_info(host: &str, port: u16, id52: &str, bridge: &str, mode: InfoMode) {
-    use colored::Colorize;
+impl InfoMode {
+    fn print(&self, host: &str, port: u16, id52: &str, bridge: &str) {
+        use colored::Colorize;
 
-    if mode == InfoMode::Startup {
+        if self == &InfoMode::Startup {
+            println!(
+                "{} is now serving {}",
+                "Malai".on_green().black(),
+                format!("http://{host}:{port}").yellow()
+            );
+        }
+
+        if self == &InfoMode::OnExit {
+            // an extra empty line to make the output more readable
+            // otherwise the first line is missed with keyboard input
+            println!("\nServing: {}", format!("http://{host}:{port}").yellow());
+        }
+
+        println!("ID52: {}", id52.yellow());
         println!(
-            "{} is now serving {}",
-            "Malai".on_green().black(),
-            format!("http://{host}:{port}").yellow()
+            "HTTP Address {}",
+            format!("https://{id52}.{bridge}").yellow(),
         );
-    }
 
-    if mode == InfoMode::OnExit {
-        // an extra empty line to make the output more readable
-        // otherwise the first line is missed with keyboard input
-        println!("\nServing: {}", format!("http://{host}:{port}").yellow());
-    }
-
-    println!("ID52: {}", id52.yellow());
-    println!(
-        "HTTP Address {}",
-        format!("https://{id52}.{bridge}").yellow(),
-    );
-
-    if mode == InfoMode::OnExit {
-        println!("Press ctrl+c again to exit.");
+        if self == &InfoMode::OnExit {
+            println!("Press ctrl+c again to exit.");
+        }
     }
 }
