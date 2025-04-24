@@ -8,9 +8,9 @@ pub async fn http_bridge(
 
     let listener = tokio::net::TcpListener::bind(format!("127.0.0.1:{port}"))
         .await
-        .wrap_err_with(
-            || "can not listen to port 80, is it busy, or you do not have root access?",
-        )?;
+        .wrap_err_with(|| {
+            format!("can not listen on port {port}, is it busy, or you do not have root access?")
+        })?;
 
     // because the caller can pass the port as 0 if they want to bind to a random port
     let port = listener.local_addr()?.port();
