@@ -88,6 +88,12 @@ pub fn bytes_to_resp(bytes: Vec<u8>, status: hyper::StatusCode) -> ProxyResponse
     r
 }
 
+pub fn vec_u8_to_bytes(req: hyper::Request<Vec<u8>>) -> hyper::Request<hyper::body::Bytes> {
+    let (head, body) = req.into_parts();
+    let body = hyper::body::Bytes::from(body);
+    hyper::Request::from_parts(head, body)
+}
+
 pub async fn incoming_to_bytes(
     req: hyper::Request<hyper::body::Incoming>,
 ) -> eyre::Result<hyper::Request<hyper::body::Bytes>> {
@@ -103,4 +109,8 @@ pub async fn incoming_to_bytes(
     }
 
     Ok(hyper::Request::from_parts(head, body.freeze()))
+}
+
+pub fn response_to_static(_resp: ProxyResult) -> eyre::Result<hyper::Response<hyper::body::Bytes>> {
+    todo!()
 }

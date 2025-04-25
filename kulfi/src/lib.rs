@@ -12,11 +12,11 @@ use directories as _;
 use libdbus_sys as _;
 use tracing_subscriber as _;
 
+#[cfg(feature = "ui")]
+mod browse;
 mod config;
 pub mod control_server;
 mod counters;
-#[cfg(feature = "ui")]
-mod browse;
 mod identity;
 pub mod peer_server;
 mod start;
@@ -30,9 +30,9 @@ pub use counters::{
     OPEN_CONTROL_CONNECTION_COUNT,
 };
 // pub use identity::{Identity, PeerIdentity};
-pub use identity::Identity;
 #[cfg(feature = "ui")]
 pub use browse::browse;
+pub use identity::Identity;
 pub use start::start;
 #[cfg(feature = "ui")]
 pub use tauri::ui;
