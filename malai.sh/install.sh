@@ -166,8 +166,10 @@ setup() {
 check_architecture() {
     if [ "$(uname)" = "Darwin" ]; then
         ARCH=$(arch)
-        if [ "$ARCH" = "x86_64" ]; then
-            log_error "Intel-based Macs are not yet supported."
+        if [ "$ARCH" != "arm64" ]; then
+            log_error "Only Apple Silicon (arm64) is supported on macOS."
+            log_error "Subscribe to https://github.com/kulfi-project/kulfi/issues/28"
+            log_error "to get notified when x86_64 support is added."
             exit 1
         fi
     fi
