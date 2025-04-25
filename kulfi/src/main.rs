@@ -41,6 +41,11 @@ async fn main() -> eyre::Result<()> {
             Ok(())
         }
         #[cfg(feature = "ui")]
+        Some(Command::Browse { url }) => {
+            tracing::info!(url, verbose = ?cli.verbose, "Opening browser.");
+            kulfi::browse(url, graceful.clone()).await
+        }
+        #[cfg(feature = "ui")]
         None => {
             tracing::info!(verbose = ?cli.verbose, "Starting UI.");
             kulfi::ui()
@@ -92,4 +97,7 @@ pub enum Command {
         #[arg(default_value_t = 2345)]
         port: u16,
     },
+    #[cfg(feature = "ui")]
+    #[clap(about = "Browse a kulfi site.")]
+    Browse { url: String },
 }

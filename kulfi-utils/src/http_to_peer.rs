@@ -1,17 +1,12 @@
-pub async fn http_to_peer<T>(
-    req: hyper::Request<T>,
+pub async fn http_to_peer(
+    req: hyper::Request<hyper::body::Bytes>,
     self_endpoint: iroh::Endpoint,
     remote_node_id52: &str,
     peer_connections: kulfi_utils::PeerStreamSenders,
     _patch: ftnet_sdk::RequestPatch,
     graceful: kulfi_utils::Graceful,
-) -> kulfi_utils::http::ProxyResult
-where
-    T: hyper::body::Body + Unpin + Send,
-    T::Data: Into<hyper::body::Bytes> + Send,
-    T::Error: std::error::Error + Send + Sync + 'static,
-{
-    use http_body_util::{BodyDataStream, BodyExt};
+) -> kulfi_utils::http::ProxyResult {
+    use http_body_util::BodyExt;
     use tokio_stream::StreamExt;
 
     tracing::info!("peer_proxy: {remote_node_id52}");
@@ -34,12 +29,7 @@ where
 
     tracing::info!("sent request header");
 
-    let mut stream = BodyDataStream::new(body);
-
-    while let Some(chunk) = stream.next().await {
-        let bytes: hyper::body::Bytes = chunk?.into(); // requires T::Data: Into<Bytes>
-        send.write_all(&bytes).await?;
-    }
+    send.write_all(&body).await?;
 
     tracing::info!("sent body");
 

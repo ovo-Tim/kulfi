@@ -87,3 +87,20 @@ pub fn bytes_to_resp(bytes: Vec<u8>, status: hyper::StatusCode) -> ProxyResponse
     *r.status_mut() = status;
     r
 }
+
+pub async fn incoming_to_bytes(
+    req: hyper::Request<hyper::body::Incoming>,
+) -> eyre::Result<hyper::Request<hyper::body::Bytes>> {
+    use http_body_util::BodyDataStream;
+    use tokio_stream::StreamExt;
+
+    let (head, body) = req.into_parts();
+    let mut stream = BodyDataStream::new(body);
+    let mut body = bytes::BytesMut::new();
+
+    while let Some(chunk) = stream.next().await {
+        body.extend_from_slice(&chunk?);
+    }
+
+    Ok(hyper::Request::from_parts(head, body.freeze()))
+}

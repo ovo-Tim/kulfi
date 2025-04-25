@@ -105,7 +105,7 @@ async fn handle_request_(
         Ok(WhatToDo::ForwardToPeer { peer_id, patch }) => {
             let self_endpoint = get_endpoint(default_id.as_str(), id_map).await?;
             kulfi_utils::http_to_peer(
-                r,
+                kulfi_utils::http::incoming_to_bytes(r).await?,
                 self_endpoint,
                 peer_id.as_str(),
                 peer_connections,

@@ -15,6 +15,8 @@ use tracing_subscriber as _;
 mod config;
 pub mod control_server;
 mod counters;
+#[cfg(feature = "ui")]
+mod browse;
 mod identity;
 pub mod peer_server;
 mod start;
@@ -29,6 +31,8 @@ pub use counters::{
 };
 // pub use identity::{Identity, PeerIdentity};
 pub use identity::Identity;
+#[cfg(feature = "ui")]
+pub use browse::browse;
 pub use start::start;
 #[cfg(feature = "ui")]
 pub use tauri::ui;

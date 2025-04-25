@@ -9,6 +9,7 @@ license.workspace = true
 
 [dependencies]
 bb8.workspace = true
+bytes.workspace = true
 colored.workspace = true
 data-encoding.workspace = true
 eyre.workspace = true
