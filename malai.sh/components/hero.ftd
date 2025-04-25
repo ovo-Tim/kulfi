@@ -47,14 +47,8 @@ color: $ds.colors.accent.primary
 
 -- end: ds.column
 
--- ds.column:
-background.solid: $ds.colors.background.step-1
-width.fixed.vh: 100
-height.fixed.px: 500
-inset: $ds.spaces.inset-square.zero
-z-index: 5
-
--- end: ds.column
+-- ds.image:
+src: $assets.files.assets.demo.svg
 
 -- end: ds.row
 
@@ -92,12 +86,8 @@ color: $ds.colors.accent.primary
 
 -- end: ds.column 
 
--- ds.column:
-background.solid: $ds.colors.background.step-1
-height.fixed.px: 250
-inset: $ds.spaces.inset-square.zero
-
--- end: ds.column
+-- ds.image:
+src: $assets.files.assets.demo.svg
 
 -- end: ds.column
 
