@@ -1,10 +1,19 @@
-pub async fn browse(url: String, graceful: kulfi_utils::Graceful) -> eyre::Result<()> {
-    let (id52, path) = parse_url(&url)?;
+pub async fn browse(url: String, graceful: kulfi_utils::Graceful) {
+    let (id52, path) = match parse_url(&url) {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!(error = ?e, url, "Failed to parse URL");
+            eprintln!("Failed to parse URL: {e}");
+            return;
+        }
+    };
+
     malai::http_bridge(0, Some(id52.to_string()), graceful, |port| {
         let url = format!("http://127.0.0.1:{}/{}", port, path);
         webbrowser::open(&url).map_err(Into::into)
     })
     .await
+    .expect("Failed to start HTTP bridge");
 }
 
 /// This function extracts the id52 and the path from the URL
