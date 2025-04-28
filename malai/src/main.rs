@@ -18,9 +18,27 @@ async fn main() -> eyre::Result<()> {
             port,
             host,
             bridge,
+            public,
             // secure,
             // what_to_do,
         }) => {
+            if !public {
+                use colored::Colorize;
+
+                tracing::info!("--public not passed. Quitting!");
+                eprintln!(
+                    "You need to pass --public to expose the HTTP service. \
+                    This is a security feature to prevent exposing your service \
+                    to the public without your knowledge."
+                );
+                eprintln!(
+                    "Instead, run: {}",
+                    format!("malai http {port} --public").yellow()
+                );
+                eprintln!("In future, we will add a way to add access control.");
+                return Ok(());
+            }
+
             tracing::info!(port, host, verbose = ?cli.verbose, "Exposing HTTP service on kulfi.");
             let g = graceful.clone();
             graceful.spawn(async move { malai::expose_http(host, port, bridge, g).await });
@@ -101,6 +119,11 @@ pub enum Command {
             env = "MALAI_HTTP_BRIDGE"
         )]
         bridge: String,
+        #[arg(
+            long,
+            help = "Make the exposed service public. Anyone will be able to access."
+        )]
+        public: bool,
         // #[arg(
         //     long,
         //     default_value_t = false,
