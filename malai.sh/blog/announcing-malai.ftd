@@ -36,12 +36,21 @@ And run:
 -- ds.code:
 lang: bash
 
-malai http 3000
+malai http 3000 --public
 
 -- ds.copy-regular:
 
 This will share your local HTTP server running on `http://localhost:3000` with the
 world via a secure, shareable URL.
+
+You can also use `malai browse` subcommand to access this from another computer:
+
+-- ds.code:
+lang: bash
+
+malai browse kulfi://<id52-from-the-above-output>
+
+-- ds.copy-regular:
 
 See the [Getting Started guide](/get-started/) or run `malai --help` to explore all the options.
 
