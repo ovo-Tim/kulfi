@@ -1,6 +1,7 @@
 -- import: fastn
 
 -- fastn.package: malai.sh
+zip: https://www.fifthtry.com/malai-www.zip
 
 -- fastn.dependency: design-system.fifthtry.site
 provided-via: malai.sh/ds
@@ -18,7 +19,5 @@ provided-via: malai.sh/ds
 
 -- fastn.sitemap:
 
-# Blog
-
-- url: /announcing-malai/
-  document: blog/announcing-malai.ftd
+# Blog: /announcing-malai/
+document: blog/announcing-malai.ftd
