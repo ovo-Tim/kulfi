@@ -7,6 +7,61 @@ align-content: left
 
 -- ds.heading-large: Getting Started
 
+To help you get started with `malai`, we'll cover the following:
+
+- [Installing `malai`](/get-started/#install)
+- [First steps after installation](/get-started/#first-steps)
+- [How to get help](/get-started/#help)
+
+-- ds.heading-medium: Installing `malai`
+id: install
+
+-- ds.code:
+lang: bash
+
+\$ curl -fsSL https://malai.sh/install.sh | sh
+
+-- ds.copy-regular:
+
+TBD: Windows installation
+
+-- ds.heading-medium: First steps after installation
+id: first-steps
+
+After installing `malai`, you can check that `malai` is available in your terminal by running:
+
+-- ds.code:
+lang: bash
+
+\$ malai
+
+malai: Kulfi Network Toolkit
+
+Usage: malai [OPTIONS] [COMMAND]
+
+...
+
+
+-- ds.copy-regular:
+
+You should see the help text listing available commands.
+
+You can now use `malai` to expose your local server to the internet. For
+example, if you have a local web server running on port 8080, you can use the
+following command to expose it:
+
+-- ds.code:
+lang: bash
+
+\$ malai http 8080
+
+-- ds.heading-medium: How to get help
+id: help
+
+- Chat with us on [Discord](https://discord.gg/nK4ZP8HpV7)
+- Create a new discussion on [GitHub](https://github.com/kulfi-project/kulfi/discussions)
+
+
 -- end: ds.section-column
 
 -- end: ds.site-page
