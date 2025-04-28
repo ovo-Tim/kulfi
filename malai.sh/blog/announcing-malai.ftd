@@ -10,7 +10,8 @@ align-content: left
 -- ds.copy-regular:
 
 [`malai`](https://github.com/kulfi-project/kulfi) is a new open-source tool
-that helps you share your local HTTP server with the world — instantly and securely.
+from the team at [FifthTry](https://fifthtry.com/team/). It helps you share
+your local HTTP server with the world — instantly and securely.
 
 Built on top of the powerful [iroh](https://iroh.computer) P2P stack, `malai`
 lets you expose your local development environment without deploying it to a
@@ -108,6 +109,9 @@ It'll also include built-in access control (ACL) management, so you can choose
 exactly who gets access to what. Whether you’re sharing with teammates,
 friends, or devices across your network, Kulfi will give you visibility and
 control.
+
+You can learn more about our plans for `kulfi` and `malai` on our [GitHub
+Discussions](https://github.com/kulfi-project/kulfi/discussions) page.
 
 -- ds.copy-regular:
 
