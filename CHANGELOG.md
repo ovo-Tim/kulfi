@@ -4,6 +4,8 @@
 
 - Implemented `malai browse`. You can now browse a malai powered site without
   using any bridge.
+- `malai http` subcommand requires a `--public` flag to run. This will be made
+  optional when we have access control.
 - `malai.sh/install.sh`: refuse to install on non-Apple M series Macs. This is
   to prevent segfaults on Intel Macs. See [issue
   #28](https://github.com/kulfi-project/kulfi/issues/28).
