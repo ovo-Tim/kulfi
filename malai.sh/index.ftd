@@ -6,12 +6,10 @@
 -- banner.banner: Read the **Announcement Post**
 cta-link: /announcing-malai/
 
--- hero.hero: Secure 
-highlight-text-1: Server 
-highlight-text-2: handling 
-sub-title: made easy
+-- hero.hero: The simplest way to share your dev server (and more) over P2P
 
-Expose local servers to the internet securely. Perfect for demos, webhooks,
-and testing without the hassle of deployment.
+Malai lets you share localhost over peer-to-peer with zero config. Expose
+HTTP/TCP servers instantly with the world. Open source, no cloud needed, and
+SSH support is on the way.
 
 -- end: ds.site-page

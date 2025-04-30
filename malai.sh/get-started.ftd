@@ -48,7 +48,6 @@ lang: bash
 \$ malai
 
 malai: Kulfi Network Toolkit
-
 Usage: malai [OPTIONS] [COMMAND]
 
 ...
@@ -65,7 +64,12 @@ following command to expose it:
 -- ds.code:
 lang: bash
 
-\$ malai http 8080
+\$ malai http 8080 --public
+Malai: Sharing http://127.0.0.1:3000 at
+https://pubqaksutn9im0ncln2bki3i8diekh3sr4vp94o2cg1agjrb8dhg.kulfi.site
+To avoid the public proxy, run your own with: malai http-bridge
+
+Or use: malai browse kulfi://pubqaksutn9im0ncln2bki3i8diekh3sr4vp94o2cg1agjrb8dhg
 
 -- ds.heading-medium: How to get help
 id: help
