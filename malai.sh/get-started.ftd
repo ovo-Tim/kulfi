@@ -16,14 +16,26 @@ To help you get started with `malai`, we'll cover the following:
 -- ds.heading-medium: Installing `malai`
 id: install
 
+-- ds.heading-small: MacOS/Linux
+
+Run the following command in your terminal. Alternatively, you can download the
+binaries directly from [GitHub Releases](https://github.com/kulfi-project/kulfi/releases/).
+
 -- ds.code:
 lang: bash
 
 \$ curl -fsSL https://malai.sh/install.sh | sh
 
+-- ds.heading-small: Windows
+
+- Download `malai_windows_x86_64.zip` file from [GitHub Releases](https://github.com/kulfi-project/kulfi/releases/).
+- Unzip the file to a directory of your choice.
+- Add the directory to your system's `PATH` environment variable.
+
 -- ds.copy-regular:
 
-TBD: Windows installation
+For most updated install instructions see the INSTALL.md file in the unzipped
+directory.
 
 -- ds.heading-medium: First steps after installation
 id: first-steps
