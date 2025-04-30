@@ -100,24 +100,30 @@ impl InfoMode {
     fn print(&self, host: &str, port: u16, id52: &str, bridge: &str) {
         use colored::Colorize;
 
-        if self == &InfoMode::Startup {
-            println!(
-                "{} is now serving {}",
-                "Malai".on_green().black(),
-                format!("http://{host}:{port}").yellow()
-            );
-        }
+        // Malai: Sharing http://127.0.0.1:3000 at
+        // https://68tr15k68lu9f05tk03j9nnjcn1n0fqb5vdb1c3205nj8nv974ng.kulfi.site/
+        // To avoid the public proxy, run your own with: malai http-bridge
+        // Or use: malai browse kulfi://68tr15k68lu9f05tk03j9nnjcn1n0fqb5vdb1c3205nj8nv974ng
 
         if self == &InfoMode::OnExit {
-            // an extra empty line to make the output more readable
-            // otherwise the first line is missed with keyboard input
-            println!("\nServing: {}", format!("http://{host}:{port}").yellow());
+            println!();
         }
 
-        println!("ID52: {}", id52.yellow());
         println!(
-            "HTTP Address {}",
-            format!("https://{id52}.{bridge}").yellow(),
+            "{}: Sharing {} at",
+            "Malai".on_green().black(),
+            format!("http://{host}:{port}").yellow()
+        );
+
+        println!("{}", format!("https://{id52}.{bridge}").yellow(),);
+
+        if self != &InfoMode::OnExit {
+            println!("To avoid the public proxy, run your own with: malai http-bridge");
+        }
+
+        println!(
+            "\nOr use: {}",
+            format!("malai browse kulfi://{id52}").yellow()
         );
 
         if self == &InfoMode::OnExit {
