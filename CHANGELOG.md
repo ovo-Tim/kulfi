@@ -1,6 +1,8 @@
 # ChangeLog
 
-## Unreleased
+## 30 April 2025
+
+### malai 0.2.2
 
 - Implemented `malai browse`. You can now browse a malai powered site without
   using any bridge.
