@@ -6,7 +6,7 @@
 -- banner.banner: Read the **Announcement Post**
 cta-link: /announcing-malai/
 
--- hero.hero: The simplest way to share your dev server (and more) over P2P
+-- hero.hero: Share your dev server (and more) over P2P
 
 Malai lets you share localhost over peer-to-peer with zero config. Expose
 HTTP/TCP servers instantly with the world. Open source, no cloud needed, and
