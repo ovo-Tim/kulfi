@@ -48,6 +48,7 @@ color: $ds.colors.accent.primary
 -- end: ds.column
 
 -- ds.image:
+link: /-/malai.sh/assets/demo.svg
 src: $assets.files.assets.demo.svg
 
 -- end: ds.row
