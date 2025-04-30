@@ -138,7 +138,10 @@ pub enum Command {
         // what_to_do: Option<String>,
     },
     #[clap(about = "Browse a kulfi site.")]
-    Browse { url: String },
+    Browse { 
+        #[arg(help = "The Kulfi URL to browse. Should look like kulfi://<id52>/<path>")]
+        url: String 
+    },
     #[clap(about = "Expose TCP Service on kulfi.", hide = true)]
     Tcp {
         port: u16,
