@@ -98,8 +98,9 @@ jobs:
           Copy-Item target/release/malai.exe target/release/bundle/malai.exe
           Copy-Item .github/MALAI_WIN_INSTALL.md target/release/bundle/INSTALL.md
           Copy-Item CHANGELOG.md target/release/bundle/CHANGELOG.md
+          Copy-Item LICENSE target/release/bundle/LICENSE
           Set-Location target/release/bundle
-          7z a -tzip malai.zip malai.exe INSTALL.md CHANGELOG.md
+          7z a -tzip malai.zip malai.exe INSTALL.md CHANGELOG.md LICENSE
       - uses: actions/upload-artifact@v4
         with:
           name: windows_x64_latest
