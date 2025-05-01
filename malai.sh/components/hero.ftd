@@ -1,9 +1,6 @@
 -- component hero:
 caption title:
-string sub-title:
 body body:
-string highlight-text-1:
-string highlight-text-2:
 ;;string github-star:
 
 -- ds.section-column:
@@ -18,12 +15,9 @@ spacing: $ds.spaces.horizontal-gap.extra-large
 inset: $ds.spaces.inset-square.zero
 align-content: left
 spacing: $ds.spaces.vertical-gap.large
-width.fixed.vh: 100
+width.fixed.percent: 50
 
 -- highlight-hero-title: $hero.title
-highlight-text-1: $hero.highlight-text-1 
-highlight-text-2: $hero.highlight-text-2 
-sub-title: $hero.sub-title
 
 -- ds.copy-regular: $hero.body
 color: $ds.colors.text-strong
@@ -36,7 +30,13 @@ spacing: $ds.spaces.vertical-gap.small
 -- ds.code:
 lang: bash
 
-\curl -fsSL https://malai.sh/install.sh | sh
+\$ malai http 3000 --public
+Malai: Sharing http://127.0.0.1:3000 at
+https://pubqaksutn9im0ncln2bki3i8diekh3sr4vp94o2cg1agjrb8dhg.kulfi.site
+To avoid the public proxy, run your own with: malai http-bridge
+
+Or use: malai browse kulfi://pubqaksutn9im0ncln2bki3i8diekh3sr4vp94o2cg1agjrb8dhg
+
 
 -- ds.copy-small: ⭐️ Star us on GitHub
 link: https://github.com/kulfi-project/kulfi
@@ -48,6 +48,7 @@ color: $ds.colors.accent.primary
 -- end: ds.column
 
 -- ds.image:
+link: /-/malai.sh/assets/demo.svg
 src: $assets.files.assets.demo.svg
 
 -- end: ds.row
@@ -62,9 +63,6 @@ align-content: left
 spacing: $ds.spaces.vertical-gap.large
 
 -- highlight-hero-title: $hero.title
-highlight-text-1: $hero.highlight-text-1 
-highlight-text-2: $hero.highlight-text-2 
-sub-title: $hero.sub-title
 
 -- ds.copy-regular: $hero.body
 color: $ds.colors.text-strong
@@ -103,9 +101,6 @@ src: $assets.files.assets.demo.svg
 
 -- component highlight-hero-title:
 caption title:
-string sub-title:
-string highlight-text-1:
-string highlight-text-2:
 
 -- ds.column:
 inset: $ds.spaces.inset-square.zero
@@ -125,20 +120,6 @@ spacing: $ds.spaces.horizontal-gap.large
 
 -- ds.heading-hero: $highlight-hero-title.title
 
--- ds.heading-hero: $highlight-hero-title.highlight-text-1
-color: $ds.colors.accent.primary
-
--- end: ds.row
-
--- ds.row:
-align-content: left
-spacing: $ds.spaces.horizontal-gap.large
-
--- ds.heading-hero: $highlight-hero-title.highlight-text-2
-color: $ds.colors.accent.primary
-
--- ds.heading-hero: $highlight-hero-title.sub-title
-
 -- end: ds.row
 
 -- end: ds.column
@@ -153,14 +134,6 @@ align-content: left
 spacing: $ds.spaces.vertical-gap.extra-small
 
 -- ds.heading-hero: $highlight-hero-title.title
-
--- ds.heading-hero: $highlight-hero-title.highlight-text-1
-color: $ds.colors.accent.primary
-
--- ds.heading-hero: $highlight-hero-title.highlight-text-2
-color: $ds.colors.accent.primary
-
--- ds.heading-hero: $highlight-hero-title.sub-title
 
 -- end: ds.column
 
