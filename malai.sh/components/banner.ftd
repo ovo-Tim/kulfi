@@ -9,15 +9,11 @@ boolean $close: false
 if: { !banner.close }
 background.solid: $ds.colors.accent.primary
 spacing: $ds.spaces.horizontal-gap.large
-anchor: parent
 width: hug-content
 width if { ftd.device == "mobile" }: fill-container
-z-index: 999
-inset: $ds.spaces.inset-wide.small
+inset: $ds.spaces.inset-square.small
 inset if { ftd.device == "mobile" }: $ds.spaces.inset-wide.medium
 align-content: center
-top: -118
-top if { ftd.device == "mobile" }: -52
 
 -- ds.row:
 align-content: left

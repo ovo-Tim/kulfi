@@ -1,23 +1,32 @@
+-- import: malai.sh/components/banner
+
 -- component header:
 ftd.image-src logo:
 
 -- ds.section-row:
 align-content: left
-inset: $ds.spaces.inset-square.medium
 spacing: $ds.spaces.horizontal-gap.space-between
 margin: $ds.spaces.vertical-gap.large
 
+-- ds.row:
+if: { ftd.device != "mobile" }
+inset: $ds.spaces.inset-square.medium
+
         -- ftd.image:
         src: $header.logo
-        width.fixed.px: 100
+        width.fixed.px: 120
+        height.fixed.px: 48
         width.fixed.px if { ftd.device == "mobile" }: 90
         link: /
+
+        -- banner.banner: Read the **Announcement Post**
+        cta-link: /announcing-malai/
 
         -- ds.row:
         align-content: right
         width: hug-content
 
-        /-- ds.secondary-button: GitHub
+        -- ds.secondary-button: GitHub
         link: https://github.com/kulfi-project/kulfi
         open-in-new-tab: true
 
@@ -25,6 +34,33 @@ margin: $ds.spaces.vertical-gap.large
         link: get-started/
 
         -- end: ds.row
+
+        -- end: ds.row
+
+        -- ds.column:
+        if: { ftd.device == "mobile" }
+        inset: $ds.spaces.inset-square.medium
+
+        -- ds.row:
+
+        -- ftd.image:
+        src: $header.logo
+        width.fixed.px: 68
+        link: /
+
+        -- ds.secondary-button: GitHub
+        link: https://github.com/kulfi-project/kulfi
+        open-in-new-tab: true
+
+        -- ds.primary-button: Get Started
+        link: get-started/
+
+        -- end: ds.row
+        
+        -- banner.banner: Read the **Announcement Post**
+        cta-link: /announcing-malai/
+        
+        -- end: ds.column
 
     -- end: ds.section-row
 

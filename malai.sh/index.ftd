@@ -1,10 +1,6 @@
 -- import: malai.sh/components/hero
--- import: malai.sh/components/banner
 
 -- ds.site-page: Malai.sh
-
--- banner.banner: Read the **Announcement Post**
-cta-link: /announcing-malai/
 
 -- hero.hero: Secure 
 highlight-text-1: Server 
