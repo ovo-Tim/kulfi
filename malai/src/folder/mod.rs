@@ -27,6 +27,42 @@ mod render_folder;
 ///
 /// having said all that, the first version of malai browsing will be a simple HTML page, and we
 /// will compile `folder.html` template as part of the build process.
-pub async fn folder(_path: String, _graceful: kulfi_utils::Graceful) -> eyre::Result<()> {
-    todo!()
+pub async fn folder(
+    _path: String,
+    bridge: String,
+    graceful: kulfi_utils::Graceful,
+) -> eyre::Result<()> {
+    use eyre::WrapErr;
+
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+        .await
+        .wrap_err_with(|| "can not listen, is it busy, or you do not have root access?")?;
+
+    let port = listener.local_addr()?.port();
+    println!("Listening on http://127.0.0.1:{port}");
+
+    let g = graceful.clone();
+
+    graceful
+        .spawn(async move { malai::expose_http("127.0.0.1".to_string(), port, bridge, g).await });
+
+    let mut g = graceful.clone();
+
+    loop {
+        tokio::select! {
+            _ = graceful.cancelled() => {
+                tracing::info!("Stopping control server.");
+                break;
+            }
+            _ = g.show_info() => {
+                println!("Listening on http://127.0.0.1:{port}");
+                println!("Press ctrl+c again to exit.");
+            }
+            _val = listener.accept() => {
+                todo!()
+            }
+        }
+    }
+
+    Ok(())
 }

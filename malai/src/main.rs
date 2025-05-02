@@ -25,20 +25,11 @@ async fn main() -> eyre::Result<()> {
             // secure,
             // what_to_do,
         }) => {
-            if !public {
-                use colored::Colorize;
-
-                tracing::info!("--public not passed. Quitting!");
-                eprintln!(
-                    "You need to pass --public to expose the HTTP service. \
-                    This is a security feature to prevent exposing your service \
-                    to the public without your knowledge."
-                );
-                eprintln!(
-                    "Instead, run: {}",
-                    format!("malai http {port} --public").yellow()
-                );
-                eprintln!("In future, we will add a way to add access control.");
+            if !malai::public_check(
+                public,
+                "HTTP service",
+                &format!("malai http {port} --public"),
+            ) {
                 return Ok(());
             }
 
@@ -67,10 +58,18 @@ async fn main() -> eyre::Result<()> {
             let g = graceful.clone();
             graceful.spawn(async move { malai::browse(url, g).await });
         }
-        Some(Command::Folder { path }) => {
+        Some(Command::Folder {
+            path,
+            bridge,
+            public,
+        }) => {
+            if !malai::public_check(public, "folder", &format!("malai folder --public {path}")) {
+                return Ok(());
+            }
+
             tracing::info!(path, verbose = ?cli.verbose, "Exposing folder to kulfi network.");
             let g = graceful.clone();
-            graceful.spawn(async move { malai::folder(path, g).await });
+            graceful.spawn(async move { malai::folder(path, bridge, g).await });
         }
         #[cfg(feature = "ui")]
         None => {
@@ -192,5 +191,14 @@ pub enum Command {
     Folder {
         #[arg(help = "The folder to expose.")]
         path: String,
+        #[arg(
+            long,
+            default_value = "kulfi.site",
+            help = "Use this for the HTTP bridge. To run an HTTP bridge, use `malai http-bridge`",
+            env = "MALAI_HTTP_BRIDGE"
+        )]
+        bridge: String,
+        #[arg(long, help = "Make the folder public. Anyone will be able to access.")]
+        public: bool,
     },
 }

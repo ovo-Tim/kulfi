@@ -45,3 +45,20 @@ pub fn ui() -> eyre::Result<()> {
 
     Ok(())
 }
+
+pub fn public_check(public: bool, service: &str, cmd: &str) -> bool {
+    use colored::Colorize;
+
+    if !public {
+        tracing::info!("--public not passed. Quitting!");
+        eprintln!(
+            "You need to pass --public to expose the {service}. \
+                    This is a security feature to prevent exposing your service \
+                    to the public without your knowledge."
+        );
+        eprintln!("Instead, run: {}", cmd.yellow());
+        eprintln!("In future, we will add a way to add access control.");
+    }
+
+    public
+}
