@@ -16,7 +16,6 @@ spacing: $ds.spaces.horizontal-gap.space-between
         link: /
 
         -- ds.row:
-        if: { ftd.device != "mobile" }
         align-content: right
         width: hug-content
         spacing: $ds.spaces.horizontal-gap.large
@@ -30,40 +29,9 @@ spacing: $ds.spaces.horizontal-gap.space-between
         width.fixed.px: 28
         height.fixed.px: 28
         margin-top.px: 2
+        open-in-new-tab: true
 
         -- end: ds.row
-
-        -- ds.phosphor-icon-button:
-        if: { header.open || ftd.device == "mobile" }
-        icon: list
-        icon if { header.open }: x
-        icon-size: 24
-        kind: secondary
-        variant: outline
-        $on-click$: $ftd.toggle($a = $header.open)
-
-        -- ftd.column:
-        if: { header.open }
-        background.solid: $ds.colors.background.step-1
-        anchor: parent
-        top.px: 64
-        width.fixed.vw: 92
-        border-radius.px: 8
-        spacing.fixed.px: 24
-        align-content: center
-        padding.px: 24
-
-        -- ds.primary-button: Get Started
-        link: get-started/
-        
-        -- ftd.image: 
-        src: $assets.files.assets.github.svg
-        link: https://github.com/kulfi-project/kulfi
-        width.fixed.px: 28
-        height.fixed.px: 28
-        margin-top.px: 2
-
-        -- end: ftd.column
 
     -- end: ds.section-row
 
