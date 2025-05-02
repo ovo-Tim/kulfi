@@ -36,7 +36,12 @@ And run:
 -- ds.code:
 lang: bash
 
-malai http 3000 --public
+\$ malai http 3000 --public
+Malai: Sharing http://127.0.0.1:3000 at
+https://pubqaksutn9im0ncln2bki3i8diekh3sr4vp94o2cg1agjrb8dhg.kulfi.site
+To avoid the public proxy, run your own with: malai http-bridge
+
+Or use: malai browse kulfi://pubqaksutn9im0ncln2bki3i8diekh3sr4vp94o2cg1agjrb8dhg
 
 -- ds.copy-regular:
 
