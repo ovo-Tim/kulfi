@@ -28,7 +28,7 @@ spacing: $ds.spaces.horizontal-gap.space-between
         link: https://github.com/kulfi-project/kulfi
         width.fixed.px: 28
         height.fixed.px: 28
-        margin-top.px: 2
+        padding-top.px: 4
         open-in-new-tab: true
 
         -- end: ds.row
