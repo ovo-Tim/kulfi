@@ -26,8 +26,8 @@ spacing: $ds.spaces.horizontal-gap.space-between
         -- ftd.image: 
         src: $assets.files.assets.github.svg
         link: https://github.com/kulfi-project/kulfi
-        width.fixed.px: 28
-        height.fixed.px: 28
+        width.fixed.px: 24
+        height.fixed.px: 24
         padding-top.px: 4
         open-in-new-tab: true
 
