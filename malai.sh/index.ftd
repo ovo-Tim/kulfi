@@ -1,15 +1,17 @@
 -- import: malai.sh/components/hero
--- import: malai.sh/components/banner
+
 
 -- ds.site-page: Malai.sh
+inset: $ds.spaces.inset-square.zero
 
--- banner.banner: Read the **Announcement Post**
-cta-link: /announcing-malai/
+-- ds.column:
 
 -- hero.hero: Share your dev server (and more) over P2P
 
 Malai lets you share localhost over peer-to-peer with zero config. Expose
 HTTP/TCP servers instantly with the world. Open source, no cloud needed, and
 SSH support is on the way.
+
+-- end: ds.column
 
 -- end: ds.site-page
