@@ -30,6 +30,8 @@ inset: $ds.spaces.inset-square.medium
         src: $assets.files.assets.github.svg
         link: https://github.com/kulfi-project/kulfi
         width.fixed.px: 28
+        height.fixed.px: 28
+        margin-top.px: 2
 
         -- ds.primary-button: Get Started
         link: get-started/
@@ -58,7 +60,9 @@ inset: $ds.spaces.inset-square.medium
         -- ftd.image: 
         src: $assets.files.assets.github.svg
         link: https://github.com/kulfi-project/kulfi
-        width.fixed.px: 28
+        width.fixed.px: 26
+        height.fixed.px: 26
+        margin-top.px: 2
 
         -- ds.primary-button: Get Started
         link: get-started/
