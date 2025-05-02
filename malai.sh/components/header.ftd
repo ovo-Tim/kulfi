@@ -1,31 +1,29 @@
--- import: malai.sh/components/banner
-
 -- component header:
 ftd.image-src logo:
+boolean $open: false
 
 -- ds.section-row:
 align-content: left
-spacing: $ds.spaces.horizontal-gap.space-between
-margin: $ds.spaces.vertical-gap.large
-
--- ds.row:
-if: { ftd.device != "mobile" }
+margin: $ds.spaces.vertical-gap.zero
 inset: $ds.spaces.inset-square.medium
+spacing: $ds.spaces.horizontal-gap.space-between
 
         -- ftd.image:
         src: $header.logo
         width.fixed.px: 120
-        height.fixed.px: 48
-        width.fixed.px if { ftd.device == "mobile" }: 90
+        height.fixed.px if { ftd.device != "mobile" }: 46
+        width.fixed.px if { ftd.device == "mobile" }: 80
         link: /
 
-        -- banner.banner: Read the **Announcement Post**
-        cta-link: /announcing-malai/
-
         -- ds.row:
+        if: { ftd.device != "mobile" }
         align-content: right
         width: hug-content
+        spacing: $ds.spaces.horizontal-gap.large
 
+        -- ds.primary-button: Get Started
+        link: get-started/
+        
         -- ftd.image: 
         src: $assets.files.assets.github.svg
         link: https://github.com/kulfi-project/kulfi
@@ -33,47 +31,39 @@ inset: $ds.spaces.inset-square.medium
         height.fixed.px: 28
         margin-top.px: 2
 
+        -- end: ds.row
+
+        -- ds.phosphor-icon-button:
+        if: { header.open || ftd.device == "mobile" }
+        icon: list
+        icon if { header.open }: x
+        icon-size: 24
+        kind: secondary
+        variant: outline
+        $on-click$: $ftd.toggle($a = $header.open)
+
+        -- ftd.column:
+        if: { header.open }
+        background.solid: $ds.colors.background.step-1
+        anchor: parent
+        top.px: 64
+        width.fixed.vw: 92
+        border-radius.px: 8
+        spacing.fixed.px: 24
+        align-content: center
+        padding.px: 24
+
         -- ds.primary-button: Get Started
         link: get-started/
-
-        -- end: ds.row
-
-        -- end: ds.row
-
-        -- ds.column:
-        if: { ftd.device == "mobile" }
-        inset: $ds.spaces.inset-square.medium
-
-        -- ds.row:
-        align-content: left
-        spacing: $ds.spaces.horizontal-gap.space-between
-
-        -- ftd.image:
-        src: $header.logo
-        width.fixed.px: 68
-        link: /
-
-        -- ds.row:
-        width: hug-content
-        align-content: right
-
+        
         -- ftd.image: 
         src: $assets.files.assets.github.svg
         link: https://github.com/kulfi-project/kulfi
-        width.fixed.px: 26
-        height.fixed.px: 26
+        width.fixed.px: 28
+        height.fixed.px: 28
         margin-top.px: 2
 
-        -- ds.primary-button: Get Started
-        link: get-started/
-
-        -- end: ds.row
-        -- end: ds.row
-        
-        -- banner.banner: Read the **Announcement Post**
-        cta-link: /announcing-malai/
-        
-        -- end: ds.column
+        -- end: ftd.column
 
     -- end: ds.section-row
 

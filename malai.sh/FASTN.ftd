@@ -6,6 +6,8 @@ zip: https://www.fifthtry.com/malai-www.zip
 -- fastn.dependency: design-system.fifthtry.site
 provided-via: malai.sh/ds
 
+-- fastn.dependency: site-banner.fifthtry.site
+
 -- fastn.dependency: jetbrains-mono-typography.fifthtry.site
 
 -- fastn.auto-import: malai.sh/assets
