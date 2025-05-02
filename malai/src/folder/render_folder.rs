@@ -1,7 +1,7 @@
 /// We will use few templates actually, skeleton.html, show-folder.html, show-file.html. We
 /// will loop through each folder and file using the show-file/folder, and then pass the joined
 /// HTML to folder-skeleton.html.
-pub fn render_folder(path: &str) -> eyre::Result<String> {
+pub fn render_folder(path: &std::path::Path) -> eyre::Result<String> {
     let mut html = String::new();
     // for content of this folder
     for entry in std::fs::read_dir(path)? {
@@ -17,7 +17,7 @@ pub fn render_folder(path: &str) -> eyre::Result<String> {
     return Ok(format!(
         include_str!("skeleton.html"),
         content = html,
-        path = path
+        path = path.to_string_lossy()
     ));
 
     macro_rules! render_template {

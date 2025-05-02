@@ -36,12 +36,14 @@ pub async fn folder(
 ) -> eyre::Result<()> {
     use eyre::WrapErr;
 
+    let path = validate_path(&path)?;
+
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
         .await
         .wrap_err_with(|| "can not listen, is it busy, or you do not have root access?")?;
 
     let port = listener.local_addr()?.port();
-    println!("Listening on http://127.0.0.1:{port}");
+    println!("Serving {path:?} on http://127.0.0.1:{port}");
 
     let g = graceful.clone();
 
@@ -76,7 +78,7 @@ pub async fn folder(
 
 pub async fn handle_connection(
     stream: tokio::net::TcpStream,
-    path: String,
+    path: std::path::PathBuf,
     graceful: kulfi_utils::Graceful,
 ) {
     let io = hyper_util::rt::TokioIo::new(stream);
@@ -109,7 +111,7 @@ pub async fn handle_connection(
 
 async fn handle_request(
     r: hyper::Request<hyper::body::Incoming>,
-    base_path: std::sync::Arc<String>,
+    base_path: std::sync::Arc<std::path::PathBuf>,
 ) -> kulfi_utils::http::ProxyResult {
     let path = r.uri().path().to_string();
     let path = join_path(&base_path, &path)?;
@@ -122,8 +124,29 @@ async fn handle_request(
     ))
 }
 
-fn join_path(_base_path: &str, path: &str) -> eyre::Result<String> {
-    // TODO: do canonical resolution stuff to make sure joined path
-    // TODO: base path should ideally be PathBuf or something
-    Ok(".".to_string() + path.strip_prefix('/').unwrap_or(path))
+fn join_path(base_path: &std::path::Path, o_path: &str) -> eyre::Result<std::path::PathBuf> {
+    let path = base_path
+        .join(o_path.strip_prefix('/').unwrap_or(o_path))
+        .canonicalize()?;
+
+    if !path.starts_with(base_path) {
+        eprintln!("{o_path} to a folder outside {base_path:?}");
+        return Err(eyre::anyhow!("oops"));
+    }
+
+    Ok(path)
+}
+
+fn validate_path(path: &str) -> eyre::Result<std::path::PathBuf> {
+    let path = std::path::PathBuf::from(path);
+
+    if !path.exists() {
+        return Err(eyre::anyhow!("{path:?} doesn't exist"));
+    }
+
+    if !path.is_dir() {
+        return Err(eyre::anyhow!("{path:?} is not a directory"));
+    }
+
+    Ok(path.canonicalize()?)
 }
