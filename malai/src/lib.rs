@@ -7,12 +7,14 @@ extern crate self as malai;
 mod browse;
 mod expose_http;
 mod expose_tcp;
+mod folder;
 mod http_bridge;
 mod tcp_bridge;
 
 pub use browse::browse;
 pub use expose_http::expose_http;
 pub use expose_tcp::expose_tcp;
+pub use folder::folder;
 pub use http_bridge::http_bridge;
 pub use tcp_bridge::tcp_bridge;
 

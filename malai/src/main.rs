@@ -1,5 +1,8 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
-#![cfg_attr(all(not(debug_assertions), feature = "ui"), windows_subsystem = "windows")]
+#![cfg_attr(
+    all(not(debug_assertions), feature = "ui"),
+    windows_subsystem = "windows"
+)]
 
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
@@ -63,6 +66,11 @@ async fn main() -> eyre::Result<()> {
             tracing::info!(url, verbose = ?cli.verbose, "Opening browser.");
             let g = graceful.clone();
             graceful.spawn(async move { malai::browse(url, g).await });
+        }
+        Some(Command::Folder { path }) => {
+            tracing::info!(path, verbose = ?cli.verbose, "Exposing folder to kulfi network.");
+            let g = graceful.clone();
+            graceful.spawn(async move { malai::folder(path, g).await });
         }
         #[cfg(feature = "ui")]
         None => {
@@ -179,5 +187,10 @@ pub enum Command {
             default_value = "8081"
         )]
         port: u16,
+    },
+    #[clap(about = "Expose a folder to kulfi network", hide = true)]
+    Folder {
+        #[arg(help = "The folder to expose.")]
+        path: String,
     },
 }
