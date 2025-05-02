@@ -26,9 +26,10 @@ inset: $ds.spaces.inset-square.medium
         align-content: right
         width: hug-content
 
-        -- ds.secondary-button: GitHub
+        -- ftd.image: 
+        src: $assets.files.assets.github.svg
         link: https://github.com/kulfi-project/kulfi
-        open-in-new-tab: true
+        width.fixed.px: 28
 
         -- ds.primary-button: Get Started
         link: get-started/
@@ -42,19 +43,27 @@ inset: $ds.spaces.inset-square.medium
         inset: $ds.spaces.inset-square.medium
 
         -- ds.row:
+        align-content: left
+        spacing: $ds.spaces.horizontal-gap.space-between
 
         -- ftd.image:
         src: $header.logo
         width.fixed.px: 68
         link: /
 
-        -- ds.secondary-button: GitHub
+        -- ds.row:
+        width: hug-content
+        align-content: right
+
+        -- ftd.image: 
+        src: $assets.files.assets.github.svg
         link: https://github.com/kulfi-project/kulfi
-        open-in-new-tab: true
+        width.fixed.px: 28
 
         -- ds.primary-button: Get Started
         link: get-started/
 
+        -- end: ds.row
         -- end: ds.row
         
         -- banner.banner: Read the **Announcement Post**
