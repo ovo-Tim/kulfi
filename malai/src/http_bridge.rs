@@ -33,20 +33,16 @@ pub async fn http_bridge(
                 println!("Listening on http://127.0.0.1:{port}");
                 println!("Press ctrl+c again to exit.");
             }
-            val = listener.accept() => {
+            Ok((stream, _addr)) = listener.accept() => {
                 let self_endpoint = malai::global_iroh_endpoint().await;
                 let g = graceful.clone();
                 let peer_connections = peer_connections.clone();
                 let proxy_target = proxy_target.clone();
-                match val {
-                    Ok((stream, _addr)) => {
-                        graceful.spawn(async move { handle_connection(self_endpoint, stream, g, peer_connections, proxy_target).await });
-                    },
-                    Err(e) => {
-                        tracing::error!("failed to accept: {e:?}");
-                    }
-                }
+                graceful.spawn(async move { handle_connection(self_endpoint, stream, g, peer_connections, proxy_target).await });
             }
+            Err(e) = listener.accept() => {
+                tracing::error!("failed to accept: {e:?}");
+            },
         }
     }
 

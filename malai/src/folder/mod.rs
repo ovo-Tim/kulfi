@@ -1,5 +1,7 @@
 mod render_folder;
 
+use render_folder::render_folder;
+
 /// folder() exposes a folder on the kulfi network
 ///
 /// the folder needs a little bit of user interface, the directory listing page. there are many
@@ -28,7 +30,7 @@ mod render_folder;
 /// having said all that, the first version of malai browsing will be a simple HTML page, and we
 /// will compile `folder.html` template as part of the build process.
 pub async fn folder(
-    _path: String,
+    path: String,
     bridge: String,
     graceful: kulfi_utils::Graceful,
 ) -> eyre::Result<()> {
@@ -58,11 +60,70 @@ pub async fn folder(
                 println!("Listening on http://127.0.0.1:{port}");
                 println!("Press ctrl+c again to exit.");
             }
-            _val = listener.accept() => {
-                todo!()
+            Ok((stream, _addr)) = listener.accept() => {
+                let g = graceful.clone();
+                let path = path.clone();
+                graceful.spawn(async move { handle_connection(stream, path, g).await });
             }
+            Err(e) = listener.accept() => {
+                tracing::error!("failed to accept: {e:?}");
+            },
         }
     }
 
     Ok(())
+}
+
+pub async fn handle_connection(
+    stream: tokio::net::TcpStream,
+    path: String,
+    graceful: kulfi_utils::Graceful,
+) {
+    let io = hyper_util::rt::TokioIo::new(stream);
+
+    let path = std::sync::Arc::new(path);
+
+    let builder =
+        hyper_util::server::conn::auto::Builder::new(hyper_util::rt::tokio::TokioExecutor::new());
+    // the following builder runs only http2 service, whereas the hyper_util auto Builder runs an
+    // http1.1 server that upgrades to http2 if the client requests.
+    // let builder = hyper::server::conn::http2::Builder::new(hyper_util::rt::tokio::TokioExecutor::new());
+    tokio::pin! {
+        let conn = builder
+            .serve_connection(
+                io,
+                hyper::service::service_fn(|r| handle_request(r, path.clone())),
+            );
+    }
+
+    if let Err(e) = tokio::select! {
+        _ = graceful.cancelled() => {
+            conn.as_mut().graceful_shutdown();
+            conn.await
+        }
+        r = &mut conn => r,
+    } {
+        tracing::error!("connection error1: {e:?}");
+    }
+}
+
+async fn handle_request(
+    r: hyper::Request<hyper::body::Incoming>,
+    base_path: std::sync::Arc<String>,
+) -> kulfi_utils::http::ProxyResult {
+    let path = r.uri().path().to_string();
+    let path = join_path(&base_path, &path)?;
+
+    // TODO: the path can be either a folder, or a file, if folder use render_folder, else serve file
+
+    Ok(kulfi_utils::http::bytes_to_resp(
+        malai::folder::render_folder(&path)?.into_bytes(),
+        hyper::StatusCode::OK,
+    ))
+}
+
+fn join_path(_base_path: &str, path: &str) -> eyre::Result<String> {
+    // TODO: do canonical resolution stuff to make sure joined path
+    // TODO: base path should ideally be PathBuf or something
+    Ok(".".to_string() + path.strip_prefix('/').unwrap_or(path))
 }
