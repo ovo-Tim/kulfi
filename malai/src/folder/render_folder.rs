@@ -2,7 +2,7 @@
 /// will loop through each folder and file using the show-file/folder, and then pass the joined
 /// HTML to folder-skeleton.html.
 pub fn render_folder(path: &std::path::Path, base_path: &std::path::Path) -> eyre::Result<String> {
-    let mut html = String::new();
+    let mut html = vec![];
     let display_path = relative_path(path, base_path);
 
     let (title, parent) = if display_path.is_empty() {
@@ -22,15 +22,17 @@ pub fn render_folder(path: &std::path::Path, base_path: &std::path::Path) -> eyr
         let entry = entry?;
         let path = entry.path();
         if path.is_dir() {
-            html.push_str(&show_folder(path, base_path)?);
+            html.push(show_folder(path, base_path)?);
         } else {
-            html.push_str(&show_file(path, base_path)?);
+            html.push(show_file(path, base_path)?);
         }
     }
 
+    html.sort();
+
     Ok(format!(
         include_str!("skeleton.html"),
-        content = html,
+        content = html.join(""),
         parent = parent,
         title = title
     ))

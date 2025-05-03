@@ -187,7 +187,7 @@ pub enum Command {
         )]
         port: u16,
     },
-    #[clap(about = "Expose a folder to kulfi network", hide = true)]
+    #[clap(about = "Expose a folder to kulfi network")]
     Folder {
         #[arg(help = "The folder to expose.")]
         path: String,

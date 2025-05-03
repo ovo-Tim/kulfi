@@ -116,12 +116,27 @@ async fn handle_request(
     let path = r.uri().path().to_string();
     let path = join_path(&base_path, &path)?;
 
-    // TODO: the path can be either a folder, or a file, if folder use render_folder, else serve file
+    if path.is_dir() {
+        return Ok(kulfi_utils::http::bytes_to_resp(
+            malai::folder::render_folder(&path, &base_path)?.into_bytes(),
+            hyper::StatusCode::OK,
+        ));
+    }
 
-    Ok(kulfi_utils::http::bytes_to_resp(
-        malai::folder::render_folder(&path, &base_path)?.into_bytes(),
-        hyper::StatusCode::OK,
-    ))
+    let mime = path
+        .extension()
+        .and_then(|v| v.to_str())
+        .map(mime_guess::from_ext)
+        .and_then(|v| v.first())
+        .unwrap_or(mime_guess::mime::APPLICATION_OCTET_STREAM);
+
+    let mut r = // TODO: streaming response
+        kulfi_utils::http::bytes_to_resp(tokio::fs::read(path).await?, hyper::StatusCode::OK);
+
+    r.headers_mut()
+        .insert("content-type", mime.to_string().parse()?);
+
+    Ok(r)
 }
 
 fn join_path(base_path: &std::path::Path, o_path: &str) -> eyre::Result<std::path::PathBuf> {

@@ -2,6 +2,12 @@
 
 ## 30 April 2025
 
+### Unreleased
+
+- Implemented `malai folder`. You can now share a folder with people without
+  having to manually run another HTTP server. Requires `--public` flag as no
+  ACL yet, also readonly mode for now.
+
 ### malai 0.2.2
 
 - Implemented `malai browse`. You can now browse a malai powered site without
