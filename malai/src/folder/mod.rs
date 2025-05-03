@@ -119,7 +119,7 @@ async fn handle_request(
     // TODO: the path can be either a folder, or a file, if folder use render_folder, else serve file
 
     Ok(kulfi_utils::http::bytes_to_resp(
-        malai::folder::render_folder(&path)?.into_bytes(),
+        malai::folder::render_folder(&path, &base_path)?.into_bytes(),
         hyper::StatusCode::OK,
     ))
 }
