@@ -8,7 +8,7 @@ description = "Kulfi: Open Source, General Purpose, Sovereign, Decentralized, Pe
 
 
 [features]
-ui = ["tauri", "tauri-plugin-opener", "tauri-build", "http"]
+ui = ["tauri", "tauri-plugin-opener", "tauri-build"]
 
 [dependencies]
 clap-verbosity-flag.workspace = true
@@ -18,7 +18,6 @@ eyre.workspace = true
 file-guard.workspace = true
 ftnet-sdk.workspace = true
 http-body-util.workspace = true
-http = { workspace = true, optional = true }
 hyper-util.workspace = true
 hyper.workspace = true
 iroh.workspace = true
