@@ -43,7 +43,15 @@ async fn main() -> eyre::Result<()> {
             graceful
                 .spawn(async move { malai::http_bridge(port, proxy_target, g, |_| Ok(())).await });
         }
-        Some(Command::Tcp { port, host }) => {
+        Some(Command::Tcp { port, host, public }) => {
+            if !malai::public_check(
+                public,
+                "HTTP service",
+                &format!("malai http {port} --public"),
+            ) {
+                return Ok(());
+            }
+
             tracing::info!(port, host, verbose = ?cli.verbose, "Exposing TCP service on kulfi.");
             let g = graceful.clone();
             graceful.spawn(async move { malai::expose_tcp(host, port, g).await });
@@ -149,7 +157,7 @@ pub enum Command {
         #[arg(help = "The Kulfi URL to browse. Should look like kulfi://<id52>/<path>")]
         url: String,
     },
-    #[clap(about = "Expose TCP Service on kulfi.", hide = true)]
+    #[clap(about = "Expose TCP Service on kulfi.")]
     Tcp {
         port: u16,
         #[arg(
@@ -158,6 +166,11 @@ pub enum Command {
             help = "Host serving the TCP service."
         )]
         host: String,
+        #[arg(
+            long,
+            help = "Make the exposed service public. Anyone will be able to access."
+        )]
+        public: bool,
     },
     #[clap(
         about = "Run an http server that forwards requests to the given id52 taken from the HOST header"
@@ -177,7 +190,6 @@ pub enum Command {
         )]
         port: u16,
     },
-    #[clap(hide = true)]
     TcpBridge {
         #[arg(help = "The id52 to which this bridge will forward incoming TCP request.")]
         proxy_target: String,
