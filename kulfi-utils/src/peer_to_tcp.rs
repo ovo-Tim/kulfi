@@ -20,10 +20,18 @@ pub async fn peer_to_tcp(
     send: &mut iroh::endpoint::SendStream,
     recv: kulfi_utils::FrameReader,
 ) -> eyre::Result<()> {
+    let stream = tokio::net::TcpStream::connect(addr).await?;
+    pipe_tcp_stream_over_iroh(stream, send, recv).await
+}
+
+pub async fn pipe_tcp_stream_over_iroh(
+    stream: tokio::net::TcpStream,
+    send: &mut iroh::endpoint::SendStream,
+    recv: kulfi_utils::FrameReader,
+) -> eyre::Result<()> {
     // todo: call identity server (fastn server running on behalf of identity
     //       /api/v1/identity/{id}/tcp/ with remote_id and id and get the ip:port
     //       to connect to.
-    let stream = tokio::net::TcpStream::connect(addr).await?;
     let (mut tcp_recv, tcp_send) = tokio::io::split(stream);
 
     let t = tokio::spawn(async move {

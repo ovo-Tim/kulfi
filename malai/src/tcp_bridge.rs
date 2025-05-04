@@ -11,7 +11,7 @@ pub async fn tcp_bridge(
             || "can not listen to port 80, is it busy, or you do not have root access?",
         )?;
 
-    println!("Listening on http://127.0.0.1:{port}");
+    println!("Listening on 127.0.0.1:{port}");
 
     let peer_connections = kulfi_utils::PeerStreamSenders::default();
 
@@ -48,6 +48,7 @@ pub async fn handle_connection(
     peer_connections: kulfi_utils::PeerStreamSenders,
     remote_node_id52: String,
 ) {
+    println!("handling connection from {remote_node_id52}");
     if let Err(e) = kulfi_utils::tcp_to_peer(
         self_endpoint,
         stream,
