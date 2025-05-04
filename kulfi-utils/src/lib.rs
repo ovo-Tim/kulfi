@@ -11,6 +11,7 @@ mod peer_to_tcp;
 mod ping;
 pub mod protocol;
 mod secret;
+mod tcp_to_peer;
 mod utils;
 
 #[cfg(feature = "keyring")]
@@ -27,6 +28,7 @@ pub use peer_to_tcp::peer_to_tcp;
 pub use ping::{PONG, ping};
 pub use protocol::{APNS_IDENTITY, Protocol};
 pub use secret::{SecretStore, read_or_create_key};
+pub use tcp_to_peer::tcp_to_peer;
 pub use utils::{
     FrameReader, accept_bi, frame_reader, get_remote_id52, id52_to_public_key, public_key_to_id52,
 };

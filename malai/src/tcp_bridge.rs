@@ -42,11 +42,21 @@ pub async fn tcp_bridge(
 }
 
 pub async fn handle_connection(
-    _self_endpoint: iroh::Endpoint,
-    _stream: tokio::net::TcpStream,
-    _graceful_shutdown_rx: kulfi_utils::Graceful,
-    _peer_connections: kulfi_utils::PeerStreamSenders,
-    _proxy_target: String,
+    self_endpoint: iroh::Endpoint,
+    stream: tokio::net::TcpStream,
+    graceful: kulfi_utils::Graceful,
+    peer_connections: kulfi_utils::PeerStreamSenders,
+    remote_node_id52: String,
 ) {
-    todo!()
+    if let Err(e) = kulfi_utils::tcp_to_peer(
+        self_endpoint,
+        stream,
+        &remote_node_id52,
+        peer_connections,
+        graceful,
+    )
+    .await
+    {
+        tracing::error!("failed to proxy http: {e:?}");
+    }
 }
