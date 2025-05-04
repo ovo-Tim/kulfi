@@ -34,12 +34,6 @@ async fn main() -> eyre::Result<()> {
 
             kulfi::start(foreground, data_dir, control_port, graceful.clone()).await
         }
-        Some(Command::TcpProxy { id, port }) => {
-            tracing::info!(
-                "Proxying TCP server to remote kulfi service with id: {id}, port: {port}"
-            );
-            Ok(())
-        }
         #[cfg(feature = "ui")]
         Some(Command::Browse { url }) => {
             tracing::info!(url, verbose = ?cli.verbose, "Opening browser.");
@@ -90,12 +84,6 @@ pub enum Command {
         data_dir: Option<String>,
         #[arg(default_value_t = 80, long, short = 'p')]
         control_port: u16,
-    },
-    #[clap(about = "Proxy TCP server to a remote kulfi service.")]
-    TcpProxy {
-        id: String,
-        #[arg(default_value_t = 2345)]
-        port: u16,
     },
     #[cfg(feature = "ui")]
     #[clap(about = "Browse a kulfi site.")]
