@@ -1,5 +1,3 @@
-use tokio::io::AsyncWriteExt;
-
 /// this is the tcp proxy.
 ///
 /// the other side has indicated they want to access our TCP device, whose id is specified in the
@@ -20,6 +18,10 @@ pub async fn peer_to_tcp(
     send: &mut iroh::endpoint::SendStream,
     recv: kulfi_utils::FrameReader,
 ) -> eyre::Result<()> {
+    // todo: call identity server (fastn server running on behalf of identity
+    //       /api/v1/identity/{id}/tcp/ with remote_id and id and get the ip:port
+    //       to connect to.
+
     let stream = tokio::net::TcpStream::connect(addr).await?;
     pipe_tcp_stream_over_iroh(stream, send, recv).await
 }
@@ -29,9 +31,8 @@ pub async fn pipe_tcp_stream_over_iroh(
     send: &mut iroh::endpoint::SendStream,
     recv: kulfi_utils::FrameReader,
 ) -> eyre::Result<()> {
-    // todo: call identity server (fastn server running on behalf of identity
-    //       /api/v1/identity/{id}/tcp/ with remote_id and id and get the ip:port
-    //       to connect to.
+    use tokio::io::AsyncWriteExt;
+
     let (mut tcp_recv, tcp_send) = tokio::io::split(stream);
 
     let t = tokio::spawn(async move {
@@ -44,4 +45,27 @@ pub async fn pipe_tcp_stream_over_iroh(
     tokio::io::copy(&mut tcp_recv, send).await?;
 
     Ok(t.await?.map(|_| ())?)
+}
+
+pub async fn tcp_to_peer(
+    self_endpoint: iroh::Endpoint,
+    stream: tokio::net::TcpStream,
+    remote_node_id52: &str,
+    peer_connections: kulfi_utils::PeerStreamSenders,
+    graceful: kulfi_utils::Graceful,
+) -> eyre::Result<()> {
+    tracing::info!("peer_proxy: {remote_node_id52}");
+
+    let (mut send, recv) = kulfi_utils::get_stream(
+        self_endpoint,
+        kulfi_utils::Protocol::Tcp,
+        remote_node_id52.to_string(),
+        peer_connections.clone(),
+        graceful,
+    )
+    .await?;
+
+    tracing::info!("wrote protocol");
+
+    kulfi_utils::pipe_tcp_stream_over_iroh(stream, &mut send, recv).await
 }
