@@ -28,7 +28,10 @@
             nativeBuildInputs = with pkgs; [
               pkg-config
 
-            ] ++ lib.optionals stdenv.isDarwin [ darwin.apple_sdk.frameworks.Foundation ];
+            ] ++ lib.optionals stdenv.isDarwin [
+                darwin.apple_sdk.frameworks.Foundation
+                darwin.apple_sdk.frameworks.WebKit
+            ];
             buildInputs = with pkgs; [
               toolchain
               rust-analyzer-unwrapped
