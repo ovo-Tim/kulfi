@@ -1,7 +1,5 @@
 # ChangeLog
 
-## 30 April 2025
-
 ### Unreleased
 
 - Implemented `malai folder`. You can now share a folder with people without
@@ -9,6 +7,8 @@
   ACL yet, also readonly mode for now.
 - Implemented `malai tcp` and `malai tcp-bridge` to expose any TCP service over
   kulfi network.
+
+## 30 April 2025
 
 ### malai 0.2.2
 
