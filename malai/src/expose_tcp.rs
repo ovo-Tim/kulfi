@@ -1,7 +1,7 @@
 pub async fn expose_tcp(
     host: String,
     port: u16,
-    _graceful: kulfi_utils::Graceful,
+    mut graceful: kulfi_utils::Graceful,
 ) -> eyre::Result<()> {
     use eyre::WrapErr;
     use kulfi_utils::SecretStore;
@@ -12,34 +12,44 @@ pub async fn expose_tcp(
         .await
         .wrap_err_with(|| "failed to bind to iroh network")?;
 
-    println!(
-        "Connect to {port} by running `malai tcp-bridge {id52} <some-port>` from any machine.",
-    );
+    InfoMode::Startup.print(port, &id52);
 
+    let g = graceful.clone();
     loop {
-        let conn = match ep.accept().await {
-            Some(conn) => conn,
-            None => {
-                tracing::info!("no connection");
+        tokio::select! {
+            _ = graceful.show_info() => {
+                InfoMode::OnExit.print(port, &id52);
+            }
+            _ = g.cancelled() => {
+                tracing::info!("Stopping control server.");
                 break;
             }
-        };
-        let host = host.clone();
+            conn = ep.accept() => {
+                let conn = match conn {
+                    Some(conn) => conn,
+                    None => {
+                        tracing::info!("no connection");
+                        break;
+                    }
+                };
+                let host = host.clone();
 
-        tokio::spawn(async move {
-            let start = std::time::Instant::now();
-            let conn = match conn.await {
-                Ok(c) => c,
-                Err(e) => {
-                    tracing::error!("failed to convert incoming to connection: {:?}", e);
-                    return;
-                }
-            };
-            if let Err(e) = handle_connection(conn, host, port).await {
-                tracing::error!("connection error3: {:?}", e);
+                graceful.spawn(async move {
+                    let start = std::time::Instant::now();
+                    let conn = match conn.await {
+                        Ok(c) => c,
+                        Err(e) => {
+                            tracing::error!("failed to convert incoming to connection: {:?}", e);
+                            return;
+                        }
+                    };
+                    if let Err(e) = handle_connection(conn, host, port).await {
+                        tracing::error!("connection error3: {:?}", e);
+                    }
+                    tracing::info!("connection handled in {:?}", start.elapsed());
+                });
             }
-            tracing::info!("connection handled in {:?}", start.elapsed());
-        });
+        }
     }
 
     ep.close().await;
@@ -68,5 +78,39 @@ async fn handle_connection(
         }
         tracing::info!("closing send stream");
         send.finish()?;
+    }
+}
+
+#[derive(PartialEq, Debug)]
+enum InfoMode {
+    Startup,
+    OnExit,
+}
+
+impl InfoMode {
+    fn print(&self, port: u16, id52: &str) {
+        use colored::Colorize;
+
+        // Malai: Sharing port <port>
+        // Run malai tcp-bridge <id52> <some-port> to connect to it from any machine.
+        // Press ctrl+c again to exit.
+
+        if self == &InfoMode::OnExit {
+            println!();
+        }
+
+        if self == &InfoMode::Startup {
+            println!("{}: Sharing port {port}", "Malai".on_green().black(),);
+        }
+
+        println!(
+            "Run {}",
+            format!("malai tcp-bridge {id52} <some-port>").yellow()
+        );
+        println!("to connect to it from any machine.");
+
+        if self == &InfoMode::OnExit {
+            println!("Press ctrl+c again to exit.");
+        }
     }
 }
