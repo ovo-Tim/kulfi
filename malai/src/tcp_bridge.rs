@@ -7,9 +7,9 @@ pub async fn tcp_bridge(
 
     let listener = tokio::net::TcpListener::bind(format!("127.0.0.1:{port}"))
         .await
-        .wrap_err_with(
-            || "can not listen to port 80, is it busy, or you do not have root access?",
-        )?;
+        .wrap_err_with(|| {
+            format!("can not listen to port {port}, is it busy, or you do not have root access?")
+        })?;
 
     println!("Listening on 127.0.0.1:{port}");
 

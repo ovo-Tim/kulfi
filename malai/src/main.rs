@@ -190,6 +190,7 @@ pub enum Command {
         )]
         port: u16,
     },
+    #[clap(about = "Run a TCP server that forwards incoming requests to the given id52.")]
     TcpBridge {
         #[arg(help = "The id52 to which this bridge will forward incoming TCP request.")]
         proxy_target: String,
