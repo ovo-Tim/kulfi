@@ -9,6 +9,7 @@ To help you get started with `malai`, we'll cover the following:
 
 - [Installing `malai`](/get-started/#install)
 - [First steps after installation](/get-started/#first-steps)
+- [What else `malai` can do](/get-started/#more)
 - [How to get help](/get-started/#help)
 
 -- ds.heading-medium: Installing `malai`
@@ -68,6 +69,11 @@ https://pubqaksutn9im0ncln2bki3i8diekh3sr4vp94o2cg1agjrb8dhg.kulfi.site
 To avoid the public proxy, run your own with: malai http-bridge
 
 Or use: malai browse kulfi://pubqaksutn9im0ncln2bki3i8diekh3sr4vp94o2cg1agjrb8dhg
+
+-- ds.heading-medium: What else `malai` can do
+id: more
+
+- Expose your local TCP server using [`malai tcp`](/tcp/)
 
 -- ds.heading-medium: How to get help
 id: help

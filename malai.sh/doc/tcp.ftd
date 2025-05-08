@@ -1,0 +1,53 @@
+-- import: malai.sh/components/page as p
+
+-- p.doc-page: Share TCP with Malai
+description: Malai can be used to share your local TCP server with the world. This can be your database server or ssh server. Learn more about "malai tcp" on this page.
+
+-- ds.heading-large: Share a TCP Server Using `malai`
+
+-- ds.copy-regular: 
+
+Starting
+[`malai-0.2.3`](https://github.com/kulfi-project/kulfi/releases/tag/malai-0.2.3).
+You can share your local TCP server with the world. This can be your database
+server or ssh server for example.
+
+Assuming a tcp server is running on your local machine on port 5432, you can
+use the following command to share it:
+
+-- ds.code: Malai Expose TCP
+lang: bash
+
+\$ malai tcp 5432 --public
+Malai: Sharing port 5432
+Run malai tcp-bridge <id52> <some-port>
+to connect to it from any machine.
+
+-- ds.copy-regular:
+
+Now anyone can connect to this exposed server from their machine using the
+jommand:
+
+-- ds.code: Connect to TCP Server
+lang: bash
+
+\$ malai tcp-bridge <id52> 9091
+Listening on 127.0.0.1:9091
+
+-- ds.copy-regular:
+
+This will start a TCP server on their computer and they'll use this TCP server
+as if they're connecting to your real TCP server running on port 5432.
+
+So if it's a postgres server, they can connect to it using the following command:
+
+-- ds.code: Connect to TCP Server
+lang: bash
+
+psql 'postgresql://user:passwd@localhost:9091/db_name'
+
+-- ds.copy-regular:
+
+And it'll connect to your postgres server listening on port 5432 on your machine!
+
+-- end: p.doc-page
