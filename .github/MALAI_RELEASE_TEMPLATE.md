@@ -1,5 +1,7 @@
 `malai` - Expose any local service (HTTP, TCP and, SSH etc.) to the world
 
+<details><summary>OS specific notes</summary>
+
 ## Linux (x64)
 
 Minimum glibc version to run these releases is 2.35.
@@ -17,3 +19,5 @@ sudo xattr -d com.apple.quarantine /path/to/malai
 
 GitHub Sha: GITHUB_SHA  
 Date: DATE  
+
+</details>
