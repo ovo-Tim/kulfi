@@ -9,10 +9,12 @@ string description:
 children content:
 
 -- ds.site-page: $doc-page.title
+inset: $ds.spaces.inset-square.zero
 description: $doc-page.description
 
 -- ds.section-row:
 align-content: top-left
+margin: $ds.spaces.vertical-gap.zero
 
 -- ds.column:
 inset: $ds.spaces.inset-square.zero
@@ -25,12 +27,13 @@ for: item in $map.toc
 
 -- end: ds.column
 
--- ds.column:
+-- ds.section-column:
 inset: $ds.spaces.inset-square.zero
 align-content: left
 content: $doc-page.content
+flush: narrow
 
--- end: ds.column
+-- end: ds.section-column
 
 
 -- end: ds.section-row
