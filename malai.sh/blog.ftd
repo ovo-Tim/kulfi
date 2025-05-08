@@ -2,6 +2,7 @@
 
 ;; WARN: Update FASTN.ftd when you change links here
 -- ds.site-page: Blog
+inset: $ds.spaces.inset-square.zero
 
 -- ds.section-column:
 flush: narrow

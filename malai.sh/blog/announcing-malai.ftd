@@ -3,6 +3,7 @@
 
 -- ds.site-page: $title
 description: $description
+inset: $ds.spaces.inset-square.zero
 
 -- ds.section-column:
 flush: narrow
