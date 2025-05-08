@@ -1,9 +1,7 @@
--- ds.site-page: Announcing Malai
-description: Introducing Malai, a new open-source tool to share your local HTTP server with the world. Read more in this blog.
+-- import: malai.sh/components/page as p
 
--- ds.section-column:
-flush: narrow
-align-content: left
+-- p.doc-page: Announcing Malai
+description: Introducing Malai, a new open-source tool to share your local HTTP server with the world. Read more in this blog.
 
 -- ds.heading-large: Getting Started
 
@@ -78,6 +76,4 @@ id: help
 - Create a new discussion on [GitHub](https://github.com/kulfi-project/kulfi/discussions)
 
 
--- end: ds.section-column
-
--- end: ds.site-page
+-- end: p.doc-page

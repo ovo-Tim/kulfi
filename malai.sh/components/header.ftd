@@ -20,9 +20,12 @@ spacing: $ds.spaces.horizontal-gap.space-between
         width: hug-content
         spacing: $ds.spaces.horizontal-gap.large
 
+        -- ds.link: Blog
+        link: /blog/
+
         -- ds.primary-button: Get Started
-        link: get-started/
-        
+        link: /get-started/
+
         -- ftd.image: 
         src: $assets.files.assets.github.svg
         link: https://github.com/kulfi-project/kulfi

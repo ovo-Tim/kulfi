@@ -1,0 +1,9 @@
+-- import: malai.sh/components/page as p
+
+-- p.doc-page: Share TCP with Malai
+description: Malai can be used to share your local TCP server with the world. This can be your database server or ssh server. Learn more about "malai tcp" on this page.
+
+;; TODO: check casing
+-- ds.heading-large: Share a TCP Server Using `malai`
+
+-- end: p.doc-page

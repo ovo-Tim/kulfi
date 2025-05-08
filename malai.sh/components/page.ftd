@@ -1,0 +1,50 @@
+-- import: fastn/processors as pr
+
+-- pr.sitemap-data map:
+$processor$: pr.sitemap
+
+-- component doc-page:
+caption title:
+string description:
+children content:
+
+-- ds.site-page: $doc-page.title
+description: $doc-page.description
+
+-- ds.section-row:
+align-content: top-left
+
+-- ds.column:
+inset: $ds.spaces.inset-square.zero
+align-content: top-left
+width: hug-content
+
+-- doc-link:
+item: $item
+for: item in $map.toc
+
+-- end: ds.column
+
+-- ds.column:
+inset: $ds.spaces.inset-square.zero
+align-content: left
+content: $doc-page.content
+
+-- end: ds.column
+
+
+-- end: ds.section-row
+
+-- end: ds.site-page
+
+-- end: doc-page
+
+
+-- component doc-link:
+pr.toc-item item:
+
+-- ds.copy-small: $doc-link.item.title
+color if { doc-link.item.is-active }: $ds.colors.accent.primary
+link: $doc-link.item.url
+
+-- end: doc-link

@@ -21,5 +21,12 @@ provided-via: malai.sh/ds
 
 -- fastn.sitemap:
 
-# Blog: /announcing-malai/
+# Docs: /get-started/
+- Get Started: /get-started/
+- Share TCP server with Malai: /tcp/
+
+# Blog: /blog/
+description: Siddhant was here!
+
+- Announcing Malai: /announcing-malai/
 document: blog/announcing-malai.ftd

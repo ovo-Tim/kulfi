@@ -1,0 +1,39 @@
+-- import: malai.sh/blog/announcing-malai
+
+;; WARN: Update FASTN.ftd when you change links here
+-- ds.site-page: Blog
+
+-- ds.section-column:
+flush: narrow
+
+-- blog-item: $announcing-malai.title
+description: $announcing-malai.description
+url: /announcing-malai/
+
+-- end: ds.section-column
+
+-- end: ds.site-page
+
+
+-- component blog-item:
+caption title:
+string url:
+string description:
+private boolean $hover: false
+
+-- ds.column:
+border: $ds.borders.uniform.small
+align-content: left
+link: $blog-item.url
+$on-mouse-enter$: $ftd.set-bool($a = $blog-item.hover, v = true)
+$on-mouse-leave$: $ftd.set-bool($a = $blog-item.hover, v = false)
+
+-- ds.heading-medium: $blog-item.title
+color if { blog-item.hover }: $ds.colors.accent.primary
+color: $ds.colors.text-strong
+
+-- ds.copy-regular: $blog-item.description
+
+-- end: ds.column
+
+-- end: blog-item

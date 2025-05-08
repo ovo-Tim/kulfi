@@ -1,5 +1,8 @@
--- ds.site-page: Announcing Malai
-description: Introducing Malai, a new open-source tool to share your local HTTP server with the world. Read more in this blog.
+-- string title: Announcing Malai
+-- string description: Introducing Malai, a new open-source tool to share your local HTTP server with the world.
+
+-- ds.site-page: $title
+description: $description
 
 -- ds.section-column:
 flush: narrow
