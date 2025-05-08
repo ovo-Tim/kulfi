@@ -22,7 +22,11 @@ provided-via: malai.sh/ds
 -- fastn.sitemap:
 
 # Docs: /get-started/
+document: doc/get-started.ftd
+
 - Get Started: /get-started/
+document: doc/get-started.ftd
+
 - Share TCP server with Malai: /tcp/
 
 # Blog: /blog/
