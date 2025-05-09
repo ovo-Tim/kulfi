@@ -25,8 +25,8 @@ flush if { ftd.device != "mobile" }: wide
 margin: $ds.spaces.vertical-gap.large
 
     -- banner.cta-banner:
-    cta-text: Read the Announcement Post
-    cta-link: https://malai.sh/announcing-malai/
+    cta-text: `malai-0.2.3` is out. Learn More!
+    cta-link: /malai-tcp-announcement/
     bgcolor: $inherited.colors.cta-primary.base
 
     -- header.header:

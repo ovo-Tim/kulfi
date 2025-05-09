@@ -1,4 +1,5 @@
 -- import: malai.sh/blog/announcing-malai
+-- import: malai.sh/blog/malai-tcp-announcement
 
 ;; WARN: Update FASTN.ftd when you change links here
 -- ds.site-page: Blog
@@ -6,6 +7,10 @@ inset: $ds.spaces.inset-square.zero
 
 -- ds.section-column:
 flush: narrow
+
+-- blog-item: $malai-tcp-announcement.title
+description: $malai-tcp-announcement.description
+url: /malai-tcp-announcement/
 
 -- blog-item: $announcing-malai.title
 description: $announcing-malai.description

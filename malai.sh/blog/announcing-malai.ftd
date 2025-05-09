@@ -8,6 +8,7 @@ inset: $ds.spaces.inset-square.zero
 -- ds.section-column:
 flush: narrow
 align-content: left
+inset if { ftd.device == "mobile" }: $ds.spaces.inset-square.small
 
 -- ds.heading-large: Announcing Malai!
 
