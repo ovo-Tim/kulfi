@@ -17,6 +17,7 @@ align-content: top-left
 margin: $ds.spaces.vertical-gap.zero
 
 -- ds.column:
+if: { ftd.device != "mobile" }
 inset: $ds.spaces.inset-square.zero
 align-content: top-left
 width: hug-content
@@ -28,6 +29,7 @@ for: item in $map.toc
 -- end: ds.column
 
 -- ds.section-column:
+inset if { ftd.device == "mobile" }: $ds.spaces.inset-square.small
 inset: $ds.spaces.inset-square.zero
 align-content: left
 content: $doc-page.content

@@ -16,6 +16,7 @@ Assuming a tcp server is running on your local machine on port 5432, you can
 use the following command to share it:
 
 -- ds.code: Malai Expose TCP
+max-width: fill-container
 lang: bash
 
 \$ malai tcp 5432 --public
@@ -29,6 +30,7 @@ Now anyone can connect to this exposed server from their machine using the
 jommand:
 
 -- ds.code: Connect to TCP Server
+max-width: fill-container
 lang: bash
 
 \$ malai tcp-bridge <id52> 9091
@@ -42,6 +44,7 @@ as if they're connecting to your real TCP server running on port 5432.
 So if it's a postgres server, they can connect to it using the following command:
 
 -- ds.code: Connect to TCP Server
+max-width: fill-container
 lang: bash
 
 psql 'postgresql://user:passwd@localhost:9091/db_name'
