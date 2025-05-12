@@ -9,7 +9,7 @@ pub async fn browse(url: String, graceful: kulfi_utils::Graceful) {
     };
 
     malai::http_bridge(0, Some(id52.to_string()), graceful, |port| {
-        let url = format!("http://127.0.0.1:{}/{}", port, path);
+        let url = format!("http://127.0.0.1:{port}/{path}");
         webbrowser::open(&url).map_err(Into::into)
     })
     .await

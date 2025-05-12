@@ -36,13 +36,12 @@ clap = { version = "4", features = ["derive", "env"] }
 clap-verbosity-flag = "3"
 colored = "3"
 data-encoding = "2.8"
-diesel = { version = "2", default-features = false, features = ["chrono"] }
+# diesel = { version = "2", default-features = false, features = ["chrono"] }
 directories = "6.0.0"
 eyre = "0.6"
 file-guard = "0.2.0"
 ft-sdk = { version = "0.6.3", features = ["sqlite-default", "auth-provider", "field-extractors"] }
 ftnet-sdk = { path = "sdk", version = "0.1.0" }
-glib = "0.20"
 http = "1"
 http-body-util = "0.1"
 hyper = { version = "1", features = ["full"] }
@@ -55,7 +54,6 @@ mime_guess = "2"
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-tauri = { version = "2", features = ["custom-protocol"] }
 tauri-build = { version = "2", features = [] }
 tauri-plugin-opener = "2"
 tokio = { version = "1", features = ["full"] }
@@ -70,10 +68,14 @@ zip = { version = "2", default-features = false }
 git = "https://github.com/fastn-stack/fastn-observer"
 rev = "5f64c7b"
 
+[workspace.dependencies.tauri]
+version = "2"
+default-features = false
+features = ["custom-protocol", "wry", "common-controls-v6"]
+
 [workspace.dependencies.rand_core]
 # iroh is on 0.6 so we use the same to avoid building multiple crates
 version = "0.6"
-
 
 [workspace.dependencies.rand]
 # we are intentionally using an older version to be compatible with the rand
