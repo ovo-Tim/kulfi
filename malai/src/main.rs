@@ -185,8 +185,8 @@ pub enum Command {
         #[arg(
             long,
             short('p'),
-            help = "The port on which this bridge will listen for incoming HTTP requests.",
-            default_value = "8080"
+            help = "The port on which this bridge will listen for incoming HTTP requests. If you pass 0, it will bind to a random port.",
+            default_value = "0"
         )]
         port: u16,
     },
@@ -195,8 +195,10 @@ pub enum Command {
         #[arg(help = "The id52 to which this bridge will forward incoming TCP request.")]
         proxy_target: String,
         #[arg(
-            help = "The port on which this bridge will listen for incoming TCP requests.",
-            default_value = "8081"
+            long,
+            short('p'),
+            help = "The port on which this bridge will listen for incoming TCP requests. If you pass 0, it will bind to a random port.",
+            default_value = "0"
         )]
         port: u16,
     },

@@ -1,5 +1,15 @@
 # ChangeLog
 
+## Unreleased
+
+### malai ??
+
+- `malai {http, tcp}-bridge`: `port` is now optional, if you don't provide a
+  port, it will be assigned a random port.
+- breaking: `malai tcp-bridge` accepts port using `--port` or `-p` flag. Earlier
+  it used to accept the port as second positional parameter. This is breaking
+  change and is done to be consistent with `malai http-bridge` command.
+
 ## 06 May 2025
 
 ### malai 0.2.3
