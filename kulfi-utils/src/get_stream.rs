@@ -25,6 +25,7 @@ type StreamRequestReceiver = tokio::sync::mpsc::Receiver<StreamRequest>;
 ///
 /// for managing connection, we use a spawned task. this task listens for incoming stream requests
 /// and manages the connection as part of the task local data.
+#[tracing::instrument(skip_all)]
 pub async fn get_stream(
     self_endpoint: iroh::Endpoint,
     protocol: kulfi_utils::Protocol,
@@ -58,6 +59,7 @@ pub async fn get_stream(
     r
 }
 
+#[tracing::instrument(skip_all)]
 async fn get_stream_request_sender(
     self_endpoint: iroh::Endpoint,
     remote_node_id52: RemoteID52,
@@ -135,6 +137,7 @@ async fn connection_manager(
     }
 }
 
+#[tracing::instrument(skip_all)]
 async fn connection_manager_(
     receiver: &mut StreamRequestReceiver,
     self_endpoint: iroh::Endpoint,
