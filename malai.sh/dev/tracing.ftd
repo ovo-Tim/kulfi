@@ -1,0 +1,21 @@
+-- ds.site-page: Tracing In Malai
+
+-- ds.heading-large: Tracing In Malai
+
+We have built in tracing support, which can output more information to help
+debug issues. You can enabled it by setting RUST_LOG environment variable to
+`trace` before running the command. But this is too verbose, so we usually
+set it to `malai=trace,kulfi_util=trace` to only get the tracing information
+from the `malai` and `kulfi-util` crates.
+
+-- ds.code: Enable Tracing
+lang: sh
+
+RUST_LOG="malai=trace,kulfi_utils=trace" cargo run --bin malai -- tcp-bridge
+
+-- ds.copy-regular:
+
+Feel free to add more tracing information to the codebase. We are happy to
+accept them, keep things logged and easy to debug.
+
+-- end: ds.site-page

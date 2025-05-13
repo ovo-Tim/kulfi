@@ -34,6 +34,7 @@ pub async fn get_stream(
 ) -> eyre::Result<(iroh::endpoint::SendStream, kulfi_utils::FrameReader)> {
     use eyre::WrapErr;
 
+    tracing::trace!("get_stream: {protocol:?}");
     let stream_request_sender = get_stream_request_sender(
         self_endpoint,
         remote_node_id52,
@@ -41,7 +42,7 @@ pub async fn get_stream(
         graceful,
     )
     .await;
-
+    tracing::trace!("got stream_request_sender");
     let (reply_channel, receiver) = tokio::sync::oneshot::channel();
 
     stream_request_sender
@@ -49,7 +50,12 @@ pub async fn get_stream(
         .await
         .wrap_err_with(|| "failed to send on stream_request_sender")?;
 
-    receiver.await?
+    tracing::trace!("sent stream request");
+
+    let r = receiver.await?;
+
+    tracing::trace!("got stream request reply");
+    r
 }
 
 async fn get_stream_request_sender(
