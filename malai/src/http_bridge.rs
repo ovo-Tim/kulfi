@@ -21,11 +21,18 @@ pub async fn http_bridge(
 
     let peer_connections = kulfi_utils::PeerStreamSenders::default();
 
-    let mut g = graceful.clone();
-    let g2 = graceful.clone();
-    let listener_handle =
-        g.spawn(async move { listener_loop(listener, g2, peer_connections, proxy_target).await });
+    let graceful_for_listener = graceful.clone();
+    let listener_handle = graceful.spawn(async move {
+        listener_loop(
+            listener,
+            graceful_for_listener,
+            peer_connections,
+            proxy_target,
+        )
+        .await
+    });
 
+    let mut graceful_mut = graceful.clone();
     loop {
         tokio::select! {
             () = graceful.cancelled() => {
@@ -33,7 +40,7 @@ pub async fn http_bridge(
                 listener_handle.abort();
                 break;
             }
-            r = g.show_info() => {
+            r = graceful_mut.show_info() => {
                 match r {
                     Ok(_) => {
                         println!("Listening on http://127.0.0.1:{port}");
@@ -62,13 +69,19 @@ async fn listener_loop(
         match listener.accept().await {
             Ok((stream, _addr)) => {
                 tracing::info!("got connection");
-                let g = graceful.clone();
+                let graceful_for_handle_connection = graceful.clone();
                 let peer_connections = peer_connections.clone();
                 let proxy_target = proxy_target.clone();
                 graceful.spawn(async move {
                     let self_endpoint = malai::global_iroh_endpoint().await;
-                    handle_connection(self_endpoint, stream, g, peer_connections, proxy_target)
-                        .await
+                    handle_connection(
+                        self_endpoint,
+                        stream,
+                        graceful_for_handle_connection,
+                        peer_connections,
+                        proxy_target,
+                    )
+                    .await
                 });
             }
             Err(e) => {

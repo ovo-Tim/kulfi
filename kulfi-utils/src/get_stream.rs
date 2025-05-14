@@ -81,9 +81,15 @@ async fn get_stream_request_sender(
     );
     drop(senders);
 
-    let g = graceful.clone();
+    let graceful_for_connection_manager = graceful.clone();
     graceful.spawn(async move {
-        connection_manager(receiver, self_endpoint, remote_node_id52.clone(), g).await;
+        connection_manager(
+            receiver,
+            self_endpoint,
+            remote_node_id52.clone(),
+            graceful_for_connection_manager,
+        )
+        .await;
 
         // cleanup the peer_stream_senders map, so no future tasks will try to use this.
         let mut senders = peer_stream_senders.lock().await;

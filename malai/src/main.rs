@@ -34,14 +34,17 @@ async fn main() -> eyre::Result<()> {
             }
 
             tracing::info!(port, host, verbose = ?cli.verbose, "Exposing HTTP service on kulfi.");
-            let g = graceful.clone();
-            graceful.spawn(async move { malai::expose_http(host, port, bridge, g).await });
+            let graceful_for_export_http = graceful.clone();
+            graceful.spawn(async move {
+                malai::expose_http(host, port, bridge, graceful_for_export_http).await
+            });
         }
         Some(Command::HttpBridge { proxy_target, port }) => {
             tracing::info!(port, proxy_target, verbose = ?cli.verbose, "Starting HTTP bridge.");
-            let g = graceful.clone();
-            graceful
-                .spawn(async move { malai::http_bridge(port, proxy_target, g, |_| Ok(())).await });
+            let graceful_for_http_bridge = graceful.clone();
+            graceful.spawn(async move {
+                malai::http_bridge(port, proxy_target, graceful_for_http_bridge, |_| Ok(())).await
+            });
         }
         Some(Command::Tcp { port, host, public }) => {
             if !malai::public_check(
@@ -53,18 +56,21 @@ async fn main() -> eyre::Result<()> {
             }
 
             tracing::info!(port, host, verbose = ?cli.verbose, "Exposing TCP service on kulfi.");
-            let g = graceful.clone();
-            graceful.spawn(async move { malai::expose_tcp(host, port, g).await });
+            let graceful_for_expose_tcp = graceful.clone();
+            graceful
+                .spawn(async move { malai::expose_tcp(host, port, graceful_for_expose_tcp).await });
         }
         Some(Command::TcpBridge { proxy_target, port }) => {
             tracing::info!(port, proxy_target, verbose = ?cli.verbose, "Starting TCP bridge.");
-            let g = graceful.clone();
-            graceful.spawn(async move { malai::tcp_bridge(port, proxy_target, g).await });
+            let graceful_for_tcp_bridge = graceful.clone();
+            graceful.spawn(async move {
+                malai::tcp_bridge(port, proxy_target, graceful_for_tcp_bridge).await
+            });
         }
         Some(Command::Browse { url }) => {
             tracing::info!(url, verbose = ?cli.verbose, "Opening browser.");
-            let g = graceful.clone();
-            graceful.spawn(async move { malai::browse(url, g).await });
+            let graceful_for_browse = graceful.clone();
+            graceful.spawn(async move { malai::browse(url, graceful_for_browse).await });
         }
         Some(Command::Folder {
             path,
@@ -76,8 +82,8 @@ async fn main() -> eyre::Result<()> {
             }
 
             tracing::info!(path, verbose = ?cli.verbose, "Exposing folder to kulfi network.");
-            let g = graceful.clone();
-            graceful.spawn(async move { malai::folder(path, bridge, g).await });
+            let graceful_for_folder = graceful.clone();
+            graceful.spawn(async move { malai::folder(path, bridge, graceful_for_folder).await });
         }
         #[cfg(feature = "ui")]
         None => {

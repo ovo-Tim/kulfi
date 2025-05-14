@@ -1,7 +1,7 @@
 pub async fn expose_tcp(
     host: String,
     port: u16,
-    mut graceful: kulfi_utils::Graceful,
+    graceful: kulfi_utils::Graceful,
 ) -> eyre::Result<()> {
     use eyre::WrapErr;
     use kulfi_utils::SecretStore;
@@ -14,13 +14,13 @@ pub async fn expose_tcp(
 
     InfoMode::Startup.print(port, &id52);
 
-    let g = graceful.clone();
+    let mut graceful_mut = graceful.clone();
     loop {
         tokio::select! {
-            _ = graceful.show_info() => {
+            _ = graceful_mut.show_info() => {
                 InfoMode::OnExit.print(port, &id52);
             }
-            _ = g.cancelled() => {
+            _ = graceful.cancelled() => {
                 tracing::info!("Stopping control server.");
                 break;
             }

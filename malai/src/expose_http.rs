@@ -2,7 +2,7 @@ pub async fn expose_http(
     host: String,
     port: u16,
     bridge: String,
-    mut graceful: kulfi_utils::Graceful,
+    graceful: kulfi_utils::Graceful,
 ) -> eyre::Result<()> {
     use eyre::WrapErr;
     use kulfi_utils::SecretStore;
@@ -17,14 +17,14 @@ pub async fn expose_http(
 
     let client_pools = kulfi_utils::HttpConnectionPools::default();
 
-    let g = graceful.clone();
+    let mut graceful_mut = graceful.clone();
 
     loop {
         tokio::select! {
-            _ = graceful.show_info() => {
+            _ = graceful_mut.show_info() => {
                 InfoMode::OnExit.print(&host, port, &id52, &bridge);
             }
-            _ = g.cancelled() => {
+            _ = graceful.cancelled() => {
                 tracing::info!("Stopping control server.");
                 break;
             }

@@ -46,24 +46,24 @@ pub async fn start(
     for identity in identities {
         use std::sync::Arc;
 
-        let g = graceful.clone();
+        let graceful_for_run = graceful.clone();
         let id_map = Arc::clone(&id_map);
         let data_dir = data_dir.clone();
         graceful.spawn(async move {
             let public_key = identity.public_key;
-            if let Err(e) = identity.run(g, id_map, &data_dir).await {
+            if let Err(e) = identity.run(graceful_for_run, id_map, &data_dir).await {
                 tracing::error!("failed to run identity: {public_key}: {e:?}");
             }
         });
     }
 
-    let g = graceful.clone();
+    let graceful_for_start = graceful.clone();
     graceful.spawn(async move {
         tracing::info!("Starting control server with identity: {first}");
         kulfi::control_server::start(
             control_port,
             first,
-            g,
+            graceful_for_start,
             id_map,
             client_pools,
             peer_connections,
