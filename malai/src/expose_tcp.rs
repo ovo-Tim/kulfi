@@ -74,7 +74,7 @@ async fn handle_connection(
         if let Err(e) =
             kulfi_utils::peer_to_tcp(&remote_id52, &format!("{host}:{port}"), &mut send, recv).await
         {
-            tracing::error!("failed to proxy http: {e:?}");
+            tracing::error!("failed to proxy tcp: {e:?}");
         }
         tracing::info!("closing send stream");
         send.finish()?;

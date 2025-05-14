@@ -176,6 +176,8 @@ async fn connection_manager_(
     let mut idle_counter = 0;
 
     loop {
+        tracing::trace!("connection manager loop");
+
         if idle_counter > 4 {
             tracing::info!("connection idle timeout, returning");
             // this ensures we keep a connection open only for 12 * 5 seconds = 1 min
@@ -188,6 +190,7 @@ async fn connection_manager_(
                 break;
             },
             _ = tokio::time::sleep(timeout) => {
+                tracing::info!("woken up");
                 if let Err(e) = kulfi_utils::ping(&conn).await {
                     tracing::error!("pinging failed: {e:?}");
                     break;
@@ -195,7 +198,7 @@ async fn connection_manager_(
                 idle_counter += 1;
             },
             Some((protocol, reply_channel)) = receiver.recv() => {
-                tracing::info!("connection ping: {protocol:?}, idle counter: {idle_counter}");
+                tracing::info!("connection: {protocol:?}, idle counter: {idle_counter}");
                 idle_counter = 0;
                 // is this a good idea to serialize this part? if 10 concurrent requests come in, we will
                 // handle each one sequentially. the other alternative is to spawn a task for each request.
@@ -237,8 +240,12 @@ async fn connection_manager_(
                     // on its own, maybe it will work, maybe it will not.
                     return Err(e);
                 }
+                tracing::info!("handled connection");
             }
-            else => break,
+            else => {
+                tracing::error!("failed to read from receiver");
+                break
+            },
         }
     }
 
@@ -271,9 +278,13 @@ async fn handle_request(
             .wrap_err_with(|| format!("failed to serialize protocol: {protocol:?}"))?,
     )
     .await?;
+    tracing::trace!("wrote protocol");
+
     send.write(b"\n")
         .await
         .wrap_err_with(|| "failed to write newline")?;
+
+    tracing::trace!("wrote newline");
     let mut recv = kulfi_utils::frame_reader(recv);
 
     let msg = match recv.next().await {

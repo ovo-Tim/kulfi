@@ -88,18 +88,26 @@ async fn accept_bi_(
     use tokio_stream::StreamExt;
 
     let (mut send, recv) = conn.accept_bi().await?;
-    tracing::info!("got bidirectional stream");
+    tracing::trace!("got bidirectional stream");
     let mut recv = frame_reader(recv);
     let msg = match recv.next().await {
-        Some(v) => v?,
+        Some(v) => {
+            tracing::trace!("got message: {v:?}");
+            v?
+        }
         None => {
             tracing::error!("failed to read from incoming connection");
             return Err(eyre::anyhow!("failed to read from incoming connection"));
         }
     };
+
     let msg = serde_json::from_str::<kulfi_utils::Protocol>(&msg)
         .inspect_err(|e| tracing::error!("json error for {msg}: {e}"))?;
 
+    tracing::trace!("msg: {msg:?}");
+
     ack(&mut send).await?;
+
+    tracing::trace!("ack sent");
     Ok((send, recv, msg))
 }
