@@ -46,7 +46,7 @@ http = "1"
 http-body-util = "0.1"
 hyper = { version = "1", features = ["full"] }
 hyper-util = { version = "0.1.10", features = ["tokio", "server"] }
-iroh = { version = "0.34", features = ["discovery-local-network"] }
+iroh = { version = "0.35", features = ["discovery-local-network"] }
 keyring = "4.0.0-rc.1"
 kulfi-utils = { path = "kulfi-utils", version = "0.1.0", features = ["keyring"] }
 libdbus-sys = { version = "0.2", features = ["vendored"] }
@@ -75,9 +75,11 @@ features = ["custom-protocol", "wry", "common-controls-v6"]
 
 [workspace.dependencies.rand_core]
 # iroh is on 0.6 so we use the same to avoid building multiple crates
+# https://github.com/n0-computer/iroh/issues/3198
 version = "0.6"
 
 [workspace.dependencies.rand]
 # we are intentionally using an older version to be compatible with the rand
 # version used in the iroh crate
+# https://github.com/n0-computer/iroh/issues/3198
 version = "0.8.5"
