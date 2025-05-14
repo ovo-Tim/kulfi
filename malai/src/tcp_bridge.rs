@@ -22,6 +22,7 @@ pub async fn tcp_bridge(
                 break;
             }
             val = listener.accept() => {
+                tracing::info!("got connection");
                 let self_endpoint = malai::global_iroh_endpoint().await;
                 let graceful_for_handle_connection = graceful.clone();
                 let peer_connections = peer_connections.clone();
@@ -48,7 +49,7 @@ pub async fn handle_connection(
     peer_connections: kulfi_utils::PeerStreamSenders,
     remote_node_id52: String,
 ) {
-    println!("handling connection from {remote_node_id52}");
+    println!("forwarding tcp connection to {remote_node_id52}");
     if let Err(e) = kulfi_utils::tcp_to_peer(
         self_endpoint,
         stream,
@@ -58,6 +59,6 @@ pub async fn handle_connection(
     )
     .await
     {
-        tracing::error!("failed to proxy http: {e:?}");
+        tracing::error!("failed to proxy tcp: {e:?}");
     }
 }

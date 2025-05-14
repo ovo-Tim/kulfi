@@ -1,6 +1,6 @@
 # ChangeLog
 
-## Unreleased
+## 14 May 2025
 
 ### malai 0.2.4
 
