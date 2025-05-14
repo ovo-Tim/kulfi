@@ -21,23 +21,11 @@ pub async fn http_bridge(
 
     let peer_connections = kulfi_utils::PeerStreamSenders::default();
 
-    let graceful_for_listener = graceful.clone();
-    let listener_handle = graceful.spawn(async move {
-        listener_loop(
-            listener,
-            graceful_for_listener,
-            peer_connections,
-            proxy_target,
-        )
-        .await
-    });
-
     let mut graceful_mut = graceful.clone();
     loop {
         tokio::select! {
             () = graceful.cancelled() => {
                 tracing::info!("Stopping control server.");
-                listener_handle.abort();
                 break;
             }
             r = graceful_mut.show_info() => {
@@ -51,45 +39,35 @@ pub async fn http_bridge(
                     }
                 }
             }
+            r = listener.accept() => {
+                match r {
+                    Ok((stream, _addr)) => {
+                        tracing::info!("got connection");
+                        let graceful_for_handle_connection = graceful.clone();
+                        let peer_connections = peer_connections.clone();
+                        let proxy_target = proxy_target.clone();
+                        graceful.spawn(async move {
+                            let self_endpoint = malai::global_iroh_endpoint().await;
+                            handle_connection(
+                                self_endpoint,
+                                stream,
+                                graceful_for_handle_connection,
+                                peer_connections,
+                                proxy_target,
+                            )
+                            .await
+                        });
+                    }
+                    Err(e) => {
+                        tracing::error!("failed to accept: {e:?}");
+                        break;
+                    }
+                }
+            }
         }
     }
 
     Ok(())
-}
-
-async fn listener_loop(
-    listener: tokio::net::TcpListener,
-    graceful: kulfi_utils::Graceful,
-    peer_connections: kulfi_utils::PeerStreamSenders,
-    proxy_target: Option<String>,
-) {
-    loop {
-        tracing::trace!("waiting for connection");
-
-        match listener.accept().await {
-            Ok((stream, _addr)) => {
-                tracing::info!("got connection");
-                let graceful_for_handle_connection = graceful.clone();
-                let peer_connections = peer_connections.clone();
-                let proxy_target = proxy_target.clone();
-                graceful.spawn(async move {
-                    let self_endpoint = malai::global_iroh_endpoint().await;
-                    handle_connection(
-                        self_endpoint,
-                        stream,
-                        graceful_for_handle_connection,
-                        peer_connections,
-                        proxy_target,
-                    )
-                    .await
-                });
-            }
-            Err(e) => {
-                tracing::error!("failed to accept: {e:?}");
-                break;
-            }
-        }
-    }
 }
 
 pub async fn handle_connection(
