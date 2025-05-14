@@ -1,5 +1,16 @@
 # ChangeLog
 
+## Unreleased
+
+### malai 0.2.4
+
+- fixed: [`malai http-bridge` was giving intermittent `connection refused`
+  error][1]
+- fixed: `malai http-bridge` used to not cleanly exit because iroh connection
+  cleanup was buggy.
+
+[1]: https://github.com/kulfi-project/kulfi/issues/60
+
 ## 06 May 2025
 
 ### malai 0.2.3
