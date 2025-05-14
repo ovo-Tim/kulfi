@@ -44,8 +44,10 @@ pub async fn get_remote_id52(conn: &iroh::endpoint::Connection) -> eyre::Result<
 }
 
 async fn ack(send: &mut iroh::endpoint::SendStream) -> eyre::Result<()> {
+    tracing::trace!("sending ack");
     send.write_all(format!("{}\n", kulfi_utils::ACK).as_bytes())
         .await?;
+    tracing::trace!("sent ack");
     Ok(())
 }
 
@@ -54,21 +56,23 @@ pub async fn accept_bi(
     expected: kulfi_utils::Protocol,
 ) -> eyre::Result<(iroh::endpoint::SendStream, FrameReader)> {
     loop {
+        tracing::trace!("accepting bidirectional stream");
         match accept_bi_(conn).await? {
             (mut send, recv, kulfi_utils::Protocol::Ping) => {
-                tracing::info!("got ping");
+                tracing::trace!("got ping");
                 if !recv.read_buffer().is_empty() {
                     send.write_all(b"error: ping message should not have payload\n")
                         .await?;
                     return Err(eyre::anyhow!("ping got extra data"));
                 }
-                tracing::info!("sending PONG");
+                tracing::trace!("sending PONG");
                 send.write_all(kulfi_utils::PONG)
                     .await
                     .inspect_err(|e| tracing::error!("failed to write PONG: {e:?}"))?;
-                tracing::info!("sent PONG");
+                tracing::trace!("sent PONG");
             }
             (s, r, found) => {
+                tracing::trace!("got bidirectional stream: {found:?}");
                 if found != expected {
                     return Err(eyre::anyhow!("expected: {expected:?}, got {found:?}"));
                 }
@@ -87,8 +91,9 @@ async fn accept_bi_(
 )> {
     use tokio_stream::StreamExt;
 
+    tracing::trace!("accept_bi_ called");
     let (mut send, recv) = conn.accept_bi().await?;
-    tracing::trace!("got bidirectional stream");
+    tracing::trace!("accept_bi_ got send and recv");
     let mut recv = frame_reader(recv);
     let msg = match recv.next().await {
         Some(v) => {
