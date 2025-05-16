@@ -25,6 +25,7 @@ type StreamRequestReceiver = tokio::sync::mpsc::Receiver<StreamRequest>;
 ///
 /// for managing connection, we use a spawned task. this task listens for incoming stream requests
 /// and manages the connection as part of the task local data.
+#[tracing::instrument(skip_all)]
 pub async fn get_stream(
     self_endpoint: iroh::Endpoint,
     protocol: kulfi_utils::Protocol,
@@ -34,6 +35,7 @@ pub async fn get_stream(
 ) -> eyre::Result<(iroh::endpoint::SendStream, kulfi_utils::FrameReader)> {
     use eyre::WrapErr;
 
+    tracing::trace!("get_stream: {protocol:?}");
     let stream_request_sender = get_stream_request_sender(
         self_endpoint,
         remote_node_id52,
@@ -41,7 +43,7 @@ pub async fn get_stream(
         graceful,
     )
     .await;
-
+    tracing::trace!("got stream_request_sender");
     let (reply_channel, receiver) = tokio::sync::oneshot::channel();
 
     stream_request_sender
@@ -49,9 +51,15 @@ pub async fn get_stream(
         .await
         .wrap_err_with(|| "failed to send on stream_request_sender")?;
 
-    receiver.await?
+    tracing::trace!("sent stream request");
+
+    let r = receiver.await?;
+
+    tracing::trace!("got stream request reply");
+    r
 }
 
+#[tracing::instrument(skip_all)]
 async fn get_stream_request_sender(
     self_endpoint: iroh::Endpoint,
     remote_node_id52: RemoteID52,
@@ -73,8 +81,15 @@ async fn get_stream_request_sender(
     );
     drop(senders);
 
+    let graceful_for_connection_manager = graceful.clone();
     graceful.spawn(async move {
-        connection_manager(receiver, self_endpoint, remote_node_id52.clone()).await;
+        connection_manager(
+            receiver,
+            self_endpoint,
+            remote_node_id52.clone(),
+            graceful_for_connection_manager,
+        )
+        .await;
 
         // cleanup the peer_stream_senders map, so no future tasks will try to use this.
         let mut senders = peer_stream_senders.lock().await;
@@ -88,8 +103,15 @@ async fn connection_manager(
     mut receiver: StreamRequestReceiver,
     self_endpoint: iroh::Endpoint,
     remote_node_id52: RemoteID52,
+    graceful: kulfi_utils::Graceful,
 ) {
-    let e = match connection_manager_(&mut receiver, self_endpoint, remote_node_id52.clone()).await
+    let e = match connection_manager_(
+        &mut receiver,
+        self_endpoint,
+        remote_node_id52.clone(),
+        graceful,
+    )
+    .await
     {
         Ok(()) => {
             tracing::info!("connection manager closed");
@@ -129,10 +151,12 @@ async fn connection_manager(
     }
 }
 
+#[tracing::instrument(skip_all)]
 async fn connection_manager_(
     receiver: &mut StreamRequestReceiver,
     self_endpoint: iroh::Endpoint,
     remote_node_id52: RemoteID52,
+    graceful: kulfi_utils::Graceful,
 ) -> eyre::Result<()> {
     let conn = match self_endpoint
         .connect(
@@ -152,6 +176,8 @@ async fn connection_manager_(
     let mut idle_counter = 0;
 
     loop {
+        tracing::trace!("connection manager loop");
+
         if idle_counter > 4 {
             tracing::info!("connection idle timeout, returning");
             // this ensures we keep a connection open only for 12 * 5 seconds = 1 min
@@ -159,7 +185,12 @@ async fn connection_manager_(
         }
 
         tokio::select! {
+            _ = graceful.cancelled() => {
+                tracing::info!("graceful shutdown");
+                break;
+            },
             _ = tokio::time::sleep(timeout) => {
+                tracing::info!("woken up");
                 if let Err(e) = kulfi_utils::ping(&conn).await {
                     tracing::error!("pinging failed: {e:?}");
                     break;
@@ -167,7 +198,7 @@ async fn connection_manager_(
                 idle_counter += 1;
             },
             Some((protocol, reply_channel)) = receiver.recv() => {
-                tracing::info!("connection ping: {protocol:?}, idle counter: {idle_counter}");
+                tracing::info!("connection: {protocol:?}, idle counter: {idle_counter}");
                 idle_counter = 0;
                 // is this a good idea to serialize this part? if 10 concurrent requests come in, we will
                 // handle each one sequentially. the other alternative is to spawn a task for each request.
@@ -209,8 +240,12 @@ async fn connection_manager_(
                     // on its own, maybe it will work, maybe it will not.
                     return Err(e);
                 }
+                tracing::info!("handled connection");
             }
-            else => break,
+            else => {
+                tracing::error!("failed to read from receiver");
+                break
+            },
         }
     }
 
@@ -243,9 +278,13 @@ async fn handle_request(
             .wrap_err_with(|| format!("failed to serialize protocol: {protocol:?}"))?,
     )
     .await?;
+    tracing::trace!("wrote protocol");
+
     send.write(b"\n")
         .await
         .wrap_err_with(|| "failed to write newline")?;
+
+    tracing::trace!("wrote newline");
     let mut recv = kulfi_utils::frame_reader(recv);
 
     let msg = match recv.next().await {

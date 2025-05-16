@@ -45,12 +45,19 @@ pub async fn folder(
     let port = listener.local_addr()?.port();
     println!("Serving {path:?} on http://127.0.0.1:{port}");
 
-    let g = graceful.clone();
+    let graceful_for_expose_http = graceful.clone();
 
-    graceful
-        .spawn(async move { malai::expose_http("127.0.0.1".to_string(), port, bridge, g).await });
+    graceful.spawn(async move {
+        malai::expose_http(
+            "127.0.0.1".to_string(),
+            port,
+            bridge,
+            graceful_for_expose_http,
+        )
+        .await
+    });
 
-    let mut g = graceful.clone();
+    let mut graceful_mut = graceful.clone();
 
     loop {
         tokio::select! {
@@ -58,14 +65,14 @@ pub async fn folder(
                 tracing::info!("Stopping control server.");
                 break;
             }
-            _ = g.show_info() => {
+            _ = graceful_mut.show_info() => {
                 println!("Listening on http://127.0.0.1:{port}");
                 println!("Press ctrl+c again to exit.");
             }
             Ok((stream, _addr)) = listener.accept() => {
-                let g = graceful.clone();
+                let graceful_for_handle_connection = graceful.clone();
                 let path = path.clone();
-                graceful.spawn(async move { handle_connection(stream, path, g).await });
+                graceful.spawn(async move { handle_connection(stream, path, graceful_for_handle_connection).await });
             }
             Err(e) = listener.accept() => {
                 tracing::error!("failed to accept: {e:?}");

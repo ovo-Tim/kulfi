@@ -8,7 +8,7 @@ provided-via: malai.sh/ds
 
 -- fastn.dependency: site-banner.fifthtry.site
 
--- fastn.dependency: jetbrains-mono-typography.fifthtry.site
+-- fastn.dependency: fastn-typography.fifthtry.site
 
 -- fastn.auto-import: malai.sh/assets
 -- fastn.auto-import: design-system.fifthtry.site as ds
@@ -22,18 +22,24 @@ provided-via: malai.sh/ds
 -- fastn.sitemap:
 
 # Docs: /get-started/
-document: doc/get-started.ftd
+  document: doc/get-started.ftd
 
 - Get Started: /get-started/
-document: doc/get-started.ftd
+  document: doc/get-started.ftd
 
 - Share TCP server with Malai: /tcp/
-document: doc/tcp.ftd
+  document: doc/tcp.ftd
+
+# Dev: /dev/
+
+- Dev Home: /dev/
+- Enable Tracing: /tracing/
+  document: dev/tracing.ftd
 
 # Blog: /blog/
-description: Siddhant was here!
+  description: Siddhant was here!
 
 - Announcing Malai: /announcing-malai/
-document: blog/announcing-malai.ftd
+  document: blog/announcing-malai.ftd
 - Introducing Malai Tcp: /malai-tcp-announcement/
-document: blog/malai-tcp-announcement.ftd
+  document: blog/malai-tcp-announcement.ftd

@@ -6,9 +6,17 @@
 
 - `malai {http, tcp}-bridge`: `port` is now optional, if you don't provide a
   port, it will be assigned a random port.
-- breaking: `malai tcp-bridge` accepts port using `--port` or `-p` flag. Earlier
-  it used to accept the port as second positional parameter. This is breaking
-  change and is done to be consistent with `malai http-bridge` command.
+
+## 14 May 2025
+
+### malai 0.2.4
+
+- fixed: [`malai http-bridge` was giving intermittent `connection refused`
+  error][1]
+- fixed: `malai http-bridge` used to not cleanly exit because iroh connection
+  cleanup was buggy.
+
+[1]: https://github.com/kulfi-project/kulfi/issues/60
 
 ## 06 May 2025
 

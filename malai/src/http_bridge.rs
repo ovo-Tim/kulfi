@@ -21,28 +21,49 @@ pub async fn http_bridge(
 
     let peer_connections = kulfi_utils::PeerStreamSenders::default();
 
-    let mut g = graceful.clone();
-
+    let mut graceful_mut = graceful.clone();
     loop {
         tokio::select! {
-            _ = graceful.cancelled() => {
+            () = graceful.cancelled() => {
                 tracing::info!("Stopping control server.");
                 break;
             }
-            _ = g.show_info() => {
-                println!("Listening on http://127.0.0.1:{port}");
-                println!("Press ctrl+c again to exit.");
+            r = graceful_mut.show_info() => {
+                match r {
+                    Ok(_) => {
+                        println!("Listening on http://127.0.0.1:{port}");
+                        println!("Press ctrl+c again to exit.");
+                    }
+                    Err(e) => {
+                        tracing::error!("failed to show info: {e:?}");
+                    }
+                }
             }
-            Ok((stream, _addr)) = listener.accept() => {
-                let self_endpoint = malai::global_iroh_endpoint().await;
-                let g = graceful.clone();
-                let peer_connections = peer_connections.clone();
-                let proxy_target = proxy_target.clone();
-                graceful.spawn(async move { handle_connection(self_endpoint, stream, g, peer_connections, proxy_target).await });
+            r = listener.accept() => {
+                match r {
+                    Ok((stream, _addr)) => {
+                        tracing::info!("got connection");
+                        let graceful_for_handle_connection = graceful.clone();
+                        let peer_connections = peer_connections.clone();
+                        let proxy_target = proxy_target.clone();
+                        graceful.spawn(async move {
+                            let self_endpoint = malai::global_iroh_endpoint().await;
+                            handle_connection(
+                                self_endpoint,
+                                stream,
+                                graceful_for_handle_connection,
+                                peer_connections,
+                                proxy_target,
+                            )
+                            .await
+                        });
+                    }
+                    Err(e) => {
+                        tracing::error!("failed to accept: {e:?}");
+                        break;
+                    }
+                }
             }
-            Err(e) = listener.accept() => {
-                tracing::error!("failed to accept: {e:?}");
-            },
         }
     }
 
@@ -78,7 +99,7 @@ pub async fn handle_connection(
         }
         r = &mut conn => r,
     } {
-        tracing::error!("connection error1: {e:?}");
+        tracing::error!("connection error2: {e:?}");
     }
 }
 

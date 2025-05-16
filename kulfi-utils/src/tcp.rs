@@ -54,7 +54,7 @@ pub async fn tcp_to_peer(
     peer_connections: kulfi_utils::PeerStreamSenders,
     graceful: kulfi_utils::Graceful,
 ) -> eyre::Result<()> {
-    tracing::info!("peer_proxy: {remote_node_id52}");
+    tracing::info!("tcp_to_peer: {remote_node_id52}");
 
     let (mut send, recv) = kulfi_utils::get_stream(
         self_endpoint,
@@ -65,7 +65,7 @@ pub async fn tcp_to_peer(
     )
     .await?;
 
-    tracing::info!("wrote protocol");
+    tracing::info!("got stream");
 
     kulfi_utils::pipe_tcp_stream_over_iroh(stream, &mut send, recv).await
 }

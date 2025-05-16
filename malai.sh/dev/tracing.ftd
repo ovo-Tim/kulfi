@@ -1,0 +1,119 @@
+-- ds.site-page: Tracing In Malai
+
+-- ds.heading-large: Tracing In Malai
+
+We have built in tracing support, which can output more information to help
+debug issues. You can enabled it by setting RUST_LOG environment variable to
+`trace` before running the command. But this is too verbose, so we usually
+set it to `malai=trace,kulfi_util=trace` to only get the tracing information
+from the `malai` and `kulfi-util` crates.
+
+-- ds.code: Enable Tracing
+lang: sh
+
+RUST_LOG="malai=trace,kulfi_utils=trace" cargo run --bin malai -- tcp-bridge
+
+-- ds.copy-regular:
+
+Feel free to add more tracing information to the codebase. We are happy to
+accept them, keep things logged and easy to debug.
+
+-- ds.heading-medium: Tracing a Function
+
+If you are adding tracing statements, it is recommended to also add the tracing
+macro on the function. The trace output shows the function name, but this is
+the "nearest" function in the call stack that has the macro enabled.
+
+Consider this output:
+
+-- ds.code:
+lang: txt
+
+2025-05-13T07:23:47.767179Z  INFO kulfi_utils::tcp: wrote protocol
+handling connection from n98o6c7k0qr2dl83tmekr2hini37d5q4s0s96vkoqsmoakb4biu0
+2025-05-13T07:23:50.166805Z  INFO kulfi_utils::tcp: peer_proxy: n98o6c7k0qr2dl83tmekr2hini37d5q4s0s96vkoqsmoakb4biu0
+2025-05-13T07:23:50.166831Z TRACE kulfi_utils::get_stream: get_stream: Tcp
+2025-05-13T07:23:50.166872Z TRACE kulfi_utils::get_stream: got stream_request_sender
+2025-05-13T07:23:50.166890Z TRACE kulfi_utils::get_stream: sent stream request
+2025-05-13T07:23:50.166912Z  INFO kulfi_utils::get_stream: connection ping: Tcp, idle counter: 0
+2025-05-13T07:23:50.166920Z TRACE kulfi_utils::get_stream: handling request: Tcp
+2025-05-13T07:23:50.166937Z TRACE kulfi_utils::get_stream: opened bi-stream
+
+-- ds.copy-regular:
+
+As you see we have trace coming from `kulfi_utils::tcp` and
+`kulfi_utils::get_stream`. If you look at the code for `kulfi_utils::get_stream`
+you will see that "connection ping: Tcp, idle counter: 0" are not actually in
+`get_stream`, but `get_stream` calls `connection_manager_` function, which is
+where the "connection ping" trace is coming from.
+
+This is a bug in Rust / tracing et al. It should have printed right function
+name. This is the relevant code:
+
+-- ds.code:
+lang: rs
+
+pub async fn get_stream(
+  // .. arguments omitted ..
+) -> eyre::Result<(iroh::endpoint::SendStream, kulfi_utils::FrameReader)> {
+    // .. trimmed for brevity ..
+
+    tracing::trace!("get_stream: {protocol:?}");
+    let stream_request_sender = get_stream_request_sender(
+        self_endpoint,
+        remote_node_id52,
+        peer_stream_senders,
+        graceful,
+    )
+    .await;
+    tracing::trace!("got stream_request_sender");
+
+    // .. trimmed for brevity ..
+}
+
+-- ds.copy-regular:
+
+As you can see the `get_stream:` and `got stream_request_sender` are part of
+this function, but the "connection ping: Tcp, idle counter: 0" is not.
+
+We can improve things by adding `#[tracing::instrument]` to the function:
+
+-- ds.code:
+lang: rs
+
+#[tracing::instrument(skip_all)]
+async fn connection_manager_(
+    // .. arguments omitted ..
+) -> eyre::Result<()> {
+    // .. trimmed for brevity ..
+
+    tracing::info!("connection ping: {protocol:?}, idle counter: {idle_counter}");
+    tracing::trace!("handling request: {protocol:?}");
+
+    // .. trimmed for brevity ..
+}
+
+-- ds.copy-regular:
+
+And now the output looks like this:
+
+-- ds.code: with tracing enabled on function level
+lang: txt
+
+2025-05-13T08:56:35.791622Z  INFO kulfi_utils::tcp: peer_proxy: n98o6c7k0qr2dl83tmekr2hini37d5q4s0s96vkoqsmoakb4biu0
+2025-05-13T08:56:35.791802Z TRACE get_stream: kulfi_utils::get_stream: get_stream: Tcp
+2025-05-13T08:56:35.791886Z TRACE get_stream: kulfi_utils::get_stream: got stream_request_sender
+2025-05-13T08:56:35.791899Z TRACE get_stream: kulfi_utils::get_stream: sent stream request
+2025-05-13T08:56:35.899788Z  INFO connection_manager_: kulfi_utils::get_stream: connection ping: Tcp, idle counter: 0
+2025-05-13T08:56:35.899867Z TRACE connection_manager_: kulfi_utils::get_stream: handling request: Tcp
+2025-05-13T08:56:35.899921Z TRACE connection_manager_: kulfi_utils::get_stream: opened bi-stream
+2025-05-13T08:56:35.911400Z TRACE connection_manager_: kulfi_utils::get_stream: received ack
+2025-05-13T08:56:35.911434Z TRACE connection_manager_: kulfi_utils::get_stream: handle_request done
+2025-05-13T08:56:35.911462Z TRACE get_stream: kulfi_utils::get_stream: got stream request reply
+
+-- ds.copy-regular:
+
+You can see the `connection_manager_` function name in the trace output. This
+helps in debugging and understanding the flow of the code.
+
+-- end: ds.site-page
