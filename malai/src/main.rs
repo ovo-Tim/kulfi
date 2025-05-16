@@ -195,8 +195,6 @@ pub enum Command {
         #[arg(help = "The id52 to which this bridge will forward incoming TCP request.")]
         proxy_target: String,
         #[arg(
-            long,
-            short('p'),
             help = "The port on which this bridge will listen for incoming TCP requests. If you pass 0, it will bind to a random port.",
             default_value = "0"
         )]
