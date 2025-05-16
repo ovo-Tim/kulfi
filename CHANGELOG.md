@@ -1,5 +1,12 @@
 # ChangeLog
 
+## Unreleased
+
+### malai ??
+
+- `malai {http, tcp}-bridge`: `port` is now optional, if you don't provide a
+  port, it will be assigned a random port.
+
 ## 14 May 2025
 
 ### malai 0.2.4
