@@ -67,17 +67,16 @@ async fn handle_connection(
 
     tracing::info!("new client: {remote_id52}, waiting for bidirectional stream");
     loop {
-        let (mut send, recv) = kulfi_utils::accept_bi(&conn, kulfi_utils::Protocol::Tcp)
+        let (send, recv) = kulfi_utils::accept_bi(&conn, kulfi_utils::Protocol::Tcp)
             .await
             .inspect_err(|e| tracing::error!("failed to accept bidirectional stream: {e:?}"))?;
         tracing::info!("{remote_id52}");
         if let Err(e) =
-            kulfi_utils::peer_to_tcp(&remote_id52, &format!("{host}:{port}"), &mut send, recv).await
+            kulfi_utils::peer_to_tcp(&remote_id52, &format!("{host}:{port}"), send, recv).await
         {
             tracing::error!("failed to proxy tcp: {e:?}");
         }
         tracing::info!("closing send stream");
-        send.finish()?;
     }
 }
 

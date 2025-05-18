@@ -15,7 +15,7 @@
 pub async fn peer_to_tcp(
     _remote_id: &str,
     addr: &str,
-    send: &mut iroh::endpoint::SendStream,
+    send: iroh::endpoint::SendStream,
     recv: kulfi_utils::FrameReader,
 ) -> eyre::Result<()> {
     // todo: call identity server (fastn server running on behalf of identity
@@ -28,23 +28,39 @@ pub async fn peer_to_tcp(
 
 pub async fn pipe_tcp_stream_over_iroh(
     stream: tokio::net::TcpStream,
-    send: &mut iroh::endpoint::SendStream,
+    mut send: iroh::endpoint::SendStream,
     recv: kulfi_utils::FrameReader,
 ) -> eyre::Result<()> {
     use tokio::io::AsyncWriteExt;
+    tracing::trace!("pipe_tcp_stream_over_iroh");
 
     let (mut tcp_recv, tcp_send) = tokio::io::split(stream);
 
     let t = tokio::spawn(async move {
         let mut t = tcp_send;
+        tracing::trace!("piping tcp stream, got tcp_send");
         t.write_all(recv.read_buffer().as_ref()).await?;
+        tracing::trace!("piping tcp stream, wrote read_buffer");
         let mut recv = recv.into_inner();
-        tokio::io::copy(&mut recv, &mut t).await
+        let r = tokio::io::copy(&mut recv, &mut t).await;
+        tracing::trace!("piping tcp stream, copy done");
+        r.map(|_| ())
     });
 
-    tokio::io::copy(&mut tcp_recv, send).await?;
+    tracing::trace!("copying tcp stream to iroh stream");
 
-    Ok(t.await?.map(|_| ())?)
+    tokio::io::copy(&mut tcp_recv, &mut send).await?;
+
+    tracing::trace!("pipe_tcp_stream_over_iroh copy done");
+
+    send.finish()?;
+
+    tracing::trace!("closed send stream");
+    drop(send);
+
+    let r = Ok(t.await??);
+    tracing::trace!("pipe_tcp_stream_over_iroh done");
+    r
 }
 
 pub async fn tcp_to_peer(
@@ -56,7 +72,7 @@ pub async fn tcp_to_peer(
 ) -> eyre::Result<()> {
     tracing::info!("tcp_to_peer: {remote_node_id52}");
 
-    let (mut send, recv) = kulfi_utils::get_stream(
+    let (send, recv) = kulfi_utils::get_stream(
         self_endpoint,
         kulfi_utils::Protocol::Tcp,
         remote_node_id52.to_string(),
@@ -67,5 +83,5 @@ pub async fn tcp_to_peer(
 
     tracing::info!("got stream");
 
-    kulfi_utils::pipe_tcp_stream_over_iroh(stream, &mut send, recv).await
+    kulfi_utils::pipe_tcp_stream_over_iroh(stream, send, recv).await
 }
