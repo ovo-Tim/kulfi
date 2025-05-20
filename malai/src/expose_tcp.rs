@@ -16,6 +16,8 @@ pub async fn expose_tcp(
 
     let mut graceful_mut = graceful.clone();
     loop {
+        let graceful_for_handle_connection = graceful.clone();
+
         tokio::select! {
             _ = graceful_mut.show_info() => {
                 InfoMode::OnExit.print(port, &id52);
@@ -43,7 +45,7 @@ pub async fn expose_tcp(
                             return;
                         }
                     };
-                    if let Err(e) = handle_connection(conn, host, port).await {
+                    if let Err(e) = handle_connection(conn, host, port, graceful_for_handle_connection).await {
                         tracing::error!("connection error3: {:?}", e);
                     }
                     tracing::info!("connection handled in {:?}", start.elapsed());
@@ -60,6 +62,7 @@ async fn handle_connection(
     conn: iroh::endpoint::Connection,
     host: String,
     port: u16,
+    graceful: kulfi_utils::Graceful,
 ) -> eyre::Result<()> {
     let remote_id52 = kulfi_utils::get_remote_id52(&conn)
         .await
@@ -71,12 +74,14 @@ async fn handle_connection(
             .await
             .inspect_err(|e| tracing::error!("failed to accept bidirectional stream: {e:?}"))?;
         tracing::info!("{remote_id52}");
-        if let Err(e) =
-            kulfi_utils::peer_to_tcp(&remote_id52, &format!("{host}:{port}"), send, recv).await
-        {
-            tracing::error!("failed to proxy tcp: {e:?}");
-        }
-        tracing::info!("closing send stream");
+        let remote_id52 = remote_id52.clone();
+        let addr = format!("{host}:{port}");
+        graceful.spawn(async move {
+            if let Err(e) = kulfi_utils::peer_to_tcp(&remote_id52, &addr, send, recv).await {
+                tracing::error!("failed to proxy tcp: {e:?}");
+            }
+            tracing::info!("closing send stream");
+        });
     }
 }
 
