@@ -6,7 +6,8 @@
 
 - `malai {http, tcp}-bridge`: `port` is now optional, if you don't provide a
   port, it will be assigned a random port.
-- fix: malai tcp bridge was only handling one concurrent connection, now it can
+- fix: [malai tcp bridge was only handling one concurrent
+  connection](https://github.com/kulfi-project/kulfi/issues/61), now it can
   handle multiple connections.
 
 ## 14 May 2025
