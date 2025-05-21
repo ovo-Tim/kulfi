@@ -1,5 +1,6 @@
 extern crate self as kulfi_utils;
 
+pub mod dot_kulfi;
 pub mod get_endpoint;
 mod get_stream;
 mod graceful;
@@ -18,18 +19,19 @@ mod utils;
 pub use secret::KeyringSecretStore;
 
 pub use get_endpoint::get_endpoint;
-pub use get_stream::{PeerStreamSenders, get_stream};
+pub use get_stream::{get_stream, PeerStreamSenders};
 pub use graceful::Graceful;
 pub use http::ProxyResult;
 pub use http_connection_manager::{HttpConnectionManager, HttpConnectionPool, HttpConnectionPools};
 pub use http_to_peer::http_to_peer;
 pub use peer_to_http::peer_to_http;
-pub use ping::{PONG, ping};
-pub use protocol::{APNS_IDENTITY, Protocol};
-pub use secret::{SecretStore, read_or_create_key};
+pub use ping::{ping, PONG};
+pub use protocol::{Protocol, APNS_IDENTITY};
+pub use secret::{read_or_create_key, SecretStore};
 pub use tcp::{peer_to_tcp, pipe_tcp_stream_over_iroh, tcp_to_peer};
 pub use utils::{
-    FrameReader, accept_bi, frame_reader, get_remote_id52, id52_to_public_key, public_key_to_id52,
+    accept_bi, frame_reader, get_remote_id52, id52_to_public_key, mkdir, public_key_to_id52,
+    FrameReader,
 };
 
 /// IDMap stores the fastn port and the endpoint for every identity

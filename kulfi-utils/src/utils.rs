@@ -1,3 +1,12 @@
+pub fn mkdir(parent: &std::path::Path, name: &str) -> eyre::Result<std::path::PathBuf> {
+    use eyre::WrapErr;
+    let path = parent.join(name);
+
+    std::fs::create_dir_all(&path)
+        .wrap_err_with(|| format!("failed to create {name}: {path:?}"))?;
+    Ok(path)
+}
+
 pub fn id52_to_public_key(id: &str) -> eyre::Result<iroh::PublicKey> {
     use eyre::WrapErr;
 
