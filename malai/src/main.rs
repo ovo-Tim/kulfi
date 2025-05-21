@@ -85,6 +85,11 @@ async fn main() -> eyre::Result<()> {
             let graceful_for_folder = graceful.clone();
             graceful.spawn(async move { malai::folder(path, bridge, graceful_for_folder).await });
         }
+        Some(Command::Run { home }) => {
+            tracing::info!(verbose = ?cli.verbose, "Running all services.");
+            let graceful_for_run = graceful.clone();
+            graceful.spawn(async move { malai::run(home, graceful_for_run).await });
+        }
         #[cfg(feature = "ui")]
         None => {
             tracing::info!(verbose = ?cli.verbose, "Starting UI.");
@@ -219,5 +224,10 @@ pub enum Command {
         bridge: String,
         #[arg(long, help = "Make the folder public. Anyone will be able to access.")]
         public: bool,
+    },
+    #[clap(about = "Run all the services")]
+    Run {
+        #[arg(long, help = "Malai Home", env = "MALAI_HOME")]
+        home: Option<String>,
     },
 }
