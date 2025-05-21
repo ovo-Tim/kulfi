@@ -15,10 +15,8 @@
 //! that exists on this machine. The content of single `identity` folder is described
 //! in `identity/create.rs`.
 
-pub const LOCK_FILE: &str = "kulfi.lock";
-
 mod init_if_required;
 mod lock;
 
 pub use init_if_required::init_if_required;
-pub use lock::{exclusive, lock_file};
+pub use lock::{exclusive, kulfi_lock_file, malai_lock_file, KULFI_LOCK, MALAI_LOCK};

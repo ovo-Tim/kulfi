@@ -1,7 +1,17 @@
 use eyre::WrapErr;
 
-pub fn lock_file(dir: &std::path::Path) -> eyre::Result<std::fs::File> {
-    let path = dir.join(super::LOCK_FILE);
+pub const KULFI_LOCK: &str = "kulfi.lock";
+pub const MALAI_LOCK: &str = "malai.lock";
+
+pub fn kulfi_lock_file(dir: &std::path::Path) -> eyre::Result<std::fs::File> {
+    let path = dir.join(super::KULFI_LOCK);
+    let file = std::fs::File::create(&path)
+        .wrap_err_with(|| format!("failed to create lock file: {path:?}"))?;
+    Ok(file)
+}
+
+pub fn malai_lock_file(dir: &std::path::Path) -> eyre::Result<std::fs::File> {
+    let path = dir.join(super::MALAI_LOCK);
     let file = std::fs::File::create(&path)
         .wrap_err_with(|| format!("failed to create lock file: {path:?}"))?;
     Ok(file)

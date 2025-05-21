@@ -14,7 +14,7 @@ impl kulfi::Config {
         let dir = kulfi_utils::dot_kulfi::init_if_required(dir)
             .await
             .wrap_err_with(|| "Config: failed to get init directory")?;
-        let lock_file = kulfi_utils::dot_kulfi::lock_file(&dir)
+        let lock_file = kulfi_utils::dot_kulfi::kulfi_lock_file(&dir)
             .wrap_err_with(|| "failed to create lock file")?;
         Ok(Self { dir, lock_file })
     }
