@@ -19,4 +19,4 @@ mod init_if_required;
 mod lock;
 
 pub use init_if_required::init_if_required;
-pub use lock::{exclusive, kulfi_lock_file, malai_lock_file, KULFI_LOCK, MALAI_LOCK};
+pub use lock::{KULFI_LOCK, MALAI_LOCK, exclusive, kulfi_lock_file, malai_lock_file};
