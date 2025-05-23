@@ -1,5 +1,8 @@
 -- string title: Announcing Malai
--- string description: Introducing Malai, a new open-source tool to share your local HTTP server with the world.
+-- string description:
+
+Introducing Malai, a new open-source tool to share your local HTTP server with
+the world.
 
 -- ds.site-page: $title
 description: $description
@@ -117,10 +120,10 @@ at what’s coming:
   will let you remotely access your development machine or share a shell session
   without needing public IPs or VPNs.
 
-- Experimental support for sharing **local devices** like printers and storage over peer-to-peer  
-  We're exploring ways to let you securely share physical hardware — like
-  printers or external drives — directly from your machine over P2P, with
-  fine-grained access controls.
+- Experimental support for sharing **local devices** like printers and storage
+  over peer-to-peer. We're exploring ways to let you securely share physical
+  hardware — like printers or external drives — directly from your machine over
+  P2P, with fine-grained access controls.
 
 In parallel, we're building a companion GUI app called **Kulfi**. Kulfi will
 make it easy to browse and connect to shared services — no bridge required.

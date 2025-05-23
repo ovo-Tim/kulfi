@@ -1,0 +1,43 @@
+-- import: malai.sh/components/page as p
+
+-- p.doc-page: About Malai
+
+Introducing Malai, a new open-source tool to share your local HTTP server with
+the world. Read more in this blog.
+
+-- ds.heading-large: About Malai
+
+`malai` is a new open-source, swiss knife tool, for kulfi network. Kufli network
+is an open-source, peer-to-peer network, powered by iroh. It is designed to be
+agnostic of applications, and can be used to share existing applications over
+peer to peer network.
+
+Traditional TCP services need public or accessible IP:port, with kulfi network
+we do not need IP:port, and instead we use "id52" address for to connect to
+network services. The id52 is a unique identifier for the service, and can be
+accessed from anywhere on the network.
+
+`malai` lets you expose existing HTTP and TCP etc services over kulfi net.
+
+-- ds.heading-medium: Installing `malai`
+
+Follow the [Get Started](/get-started/) guide on how to install `malai` and to
+get started using it.
+
+-- ds.heading-medium: HTTP Services
+
+You can use [`malai http`](/http/) to expose any HTTP service over kulfi
+network. Kulfi team also runs kulfi.site, a public proxy for HTTP services
+exposed over kulfi net. You can also run your own proxy by using `malai
+http-bridge`.
+
+-- ds.heading-medium: TCP Services
+
+Use [`malai tcp`](/tcp/) and [`malai tcp-bridge`](/tcp-bridge/) to expose any
+TCP service from one machine to another.
+
+-- ds.heading-medium: Share Folder
+
+Use `malai folder` to share a folder over kulfi network.
+
+-- end: p.doc-page

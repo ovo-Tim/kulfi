@@ -1,7 +1,9 @@
 -- import: malai.sh/components/page as p
 
--- p.doc-page: Announcing Malai
-description: Introducing Malai, a new open-source tool to share your local HTTP server with the world. Read more in this blog.
+-- p.doc-page: Getting Started with Malai
+
+Getting Started with Malai, a new open-source tool to share your local HTTP
+server or any TCP service with the world.
 
 -- ds.heading-large: Getting Started
 

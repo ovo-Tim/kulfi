@@ -23,6 +23,9 @@ spacing: $ds.spaces.horizontal-gap.space-between
         -- ds.link: Blog
         link: /blog/
 
+        -- ds.link: Docs
+        link: /get-started/
+
         -- ds.primary-button: Get Started
         link: /get-started/
 

@@ -1,7 +1,12 @@
 -- import: malai.sh/assets
 
--- string title: Introducing Malai Tcp
--- string description: Malai TCP can be used to share your local TCP server with anyone. This can be your database server or ssh server. We also talk about how malai can be used to directly server a folder on your computer with everyone.
+-- string title: Introducing Malai Tcp & A Bonus!
+
+-- string description:
+
+Malai TCP can be used to share your local TCP server with anyone. This can be
+your database server or ssh server. We also talk about how malai can be used to
+directly server a folder on your computer with everyone.
 
 -- ds.site-page: $title
 description: $description
@@ -12,16 +17,17 @@ flush: narrow
 align-content: left
 inset if { ftd.device == "mobile" }: $ds.spaces.inset-square.small
 
--- ds.heading-large: Introducing Malai TCP
+-- ds.heading-large: Introducing Malai TCP & A Bonus!
 
 -- ds.copy-regular:
 
-[`malai-0.2.3`](https://github.com/kulfi-project/kulfi/releases/tag/malai-0.2.3)
-is out now! It brings a new feature to share your local TCP server with the world!
+[`malai-0.2.5`](https://github.com/kulfi-project/kulfi/releases/tag/malai-0.2.5)
+is out now! It brings a new feature to share your local TCP server with the
+world!
 
 Now you can share any TCP-based service running locally — including your
-Postgres database, Redis, or even a custom TCP protocol — using the same
-seamless workflow that you used with `malai http`.
+SSH service, Postgres database, Redis, or even a custom TCP protocol — using the
+same seamless workflow that you used with `malai http`.
 
 -- ds.copy-regular:
 
@@ -46,8 +52,8 @@ to connect to it from any machine.
 
 -- ds.copy-regular:
 
-This will share your local TCP server running on port 5432 with the world. You can
-connect to it from any machine using the command:
+This will share your local TCP server running on port 5432 with the world. You
+can connect to it from any machine using the command:
 
 -- ds.code:
 lang: bash
@@ -62,9 +68,11 @@ connect to the exposed service.
 
 -- ds.heading-medium: Use cases
 
+- Secure your SSH server behind a `malai` network.
 - Share a local Postgres or Redis instance with your team.
 - Demo a multiplayer game server or custom TCP service.
-- Students can share networked apps or environments with instructors for real-time help or grading.
+- Students can share networked apps or environments with instructors for
+  real-time help or grading.
 
 -- ds.copy-regular:
 

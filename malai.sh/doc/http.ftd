@@ -1,0 +1,38 @@
+-- import: malai.sh/components/page as p
+
+-- p.doc-page: malai http: Share HTTP Service with Malai
+
+It helps you share your local HTTP server with the world — instantly and
+securely. `malai lets you expose your local development environment without
+deploying it to a public server or configuring firewalls and DNS.
+
+
+-- ds.heading-large: `malai http`: Share a HTTP Server Using `malai`
+
+-- ds.copy-regular:
+
+It helps you share your local HTTP server with the world — instantly and
+securely. `malai lets you expose your local development environment without
+deploying it to a public server or configuring firewalls and DNS.
+
+Whether you're testing webhooks, giving someone a quick demo, or just want to
+show off your side project, `malai` makes it dead simple.
+
+Once you have [installed `malai`](/getting-started/), you can run:
+
+-- ds.code:
+lang: bash
+
+\$ malai http 3000 --public
+Malai: Sharing http://127.0.0.1:3000 at
+https://pubqaksutn9im0ncln2bki3i8diekh3sr4vp94o2cg1agjrb8dhg.kulfi.site
+To avoid the public proxy, run your own with: malai http-bridge
+
+Or use: malai browse kulfi://pubqaksutn9im0ncln2bki3i8diekh3sr4vp94o2cg1agjrb8dhg
+
+-- ds.copy-regular:
+
+This will share your local HTTP server running on `http://localhost:3000` with
+the world via a secure, shareable URL.
+
+-- end: p.doc-page

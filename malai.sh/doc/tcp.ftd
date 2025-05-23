@@ -1,9 +1,11 @@
 -- import: malai.sh/components/page as p
 
--- p.doc-page: Share TCP with Malai
-description: Malai can be used to share your local TCP server with the world. This can be your database server or ssh server. Learn more about "malai tcp" on this page.
+-- p.doc-page: `malai tcp`: Share TCP Service with Malai
 
--- ds.heading-large: Share a TCP Server Using `malai`
+Malai can be used to share your local TCP server with the world. This can be
+your database server or ssh server. Learn more about "malai tcp" on this page.
+
+-- ds.heading-large: `malai tcp`: Share a TCP Service Using `malai`
 
 -- ds.copy-regular: 
 
@@ -26,8 +28,8 @@ to connect to it from any machine.
 
 -- ds.copy-regular:
 
-Now anyone can connect to this exposed server from their machine using the
-jommand:
+Now anyone can connect to this exposed server from their machine using [`malai
+tcp-bridge`](/tcp-bridge/):
 
 -- ds.code: Connect to TCP Server
 max-width: fill-container

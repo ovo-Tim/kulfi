@@ -5,7 +5,7 @@ $processor$: pr.sitemap
 
 -- component doc-page:
 caption title:
-string description:
+body description:
 children content:
 
 -- ds.site-page: $doc-page.title
