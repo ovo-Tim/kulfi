@@ -106,3 +106,9 @@ pub enum Protocol {
 /// can only talk one APNS). So, we use a single APNS for all the protocols, and we use the first
 /// line of the input to determine the protocol.
 pub const APNS_IDENTITY: &[u8] = b"/kulfi/identity/0.1";
+
+#[derive(Debug)]
+pub struct ProtocolHeader {
+    pub protocol: Protocol,
+    pub extra: Option<String>,
+}

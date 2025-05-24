@@ -91,12 +91,23 @@ async fn main() -> eyre::Result<()> {
             graceful.spawn(async move { malai::run(home, graceful_for_run).await });
         }
         Some(Command::HttpProxyRemote { public }) => {
-            if !malai::public_check(public, "http-proxy", "malai http-proxy --public") {
+            if !malai::public_check(
+                public,
+                "http-proxy-remote",
+                "malai http-proxy-remote --public",
+            ) {
                 return Ok(());
             }
-            tracing::info!(verbose = ?cli.verbose, "Running HTTP Proxy.");
+            tracing::info!(verbose = ?cli.verbose, "Running HTTP Proxy Remote.");
             let graceful_for_run = graceful.clone();
             graceful.spawn(async move { malai::http_proxy_remote(graceful_for_run).await });
+        }
+        Some(Command::HttpProxy { remote, port }) => {
+            tracing::info!(port, remote, verbose = ?cli.verbose, "Starting HTTP Proxy.");
+            let graceful_for_tcp_bridge = graceful.clone();
+            graceful.spawn(async move {
+                malai::http_proxy(port, remote, graceful_for_tcp_bridge, |_| Ok(())).await
+            });
         }
         #[cfg(feature = "ui")]
         None => {
@@ -241,5 +252,15 @@ pub enum Command {
     HttpProxyRemote {
         #[arg(long, help = "Make the proxy public. Anyone will be able to access.")]
         public: bool,
+    },
+    #[clap(about = "Run a http proxy server that forwards incoming requests to http-proxy-remote.")]
+    HttpProxy {
+        #[arg(help = "The id52 of remote to which this http proxy will forward request to.")]
+        remote: String,
+        #[arg(
+            help = "The port on which this proxy will listen for incoming TCP requests. If you pass 0, it will bind to a random port.",
+            default_value = "0"
+        )]
+        port: u16,
     },
 }
