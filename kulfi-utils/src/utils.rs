@@ -95,19 +95,8 @@ pub async fn accept_bi_with<T: serde::de::DeserializeOwned>(
     conn: &iroh::endpoint::Connection,
     expected: kulfi_utils::Protocol,
 ) -> eyre::Result<(T, iroh::endpoint::SendStream, FrameReader)> {
-    use tokio_stream::StreamExt;
-
     let (send, mut recv) = accept_bi(conn, expected).await?;
-    let next = match recv.next().await {
-        Some(v) => {
-            tracing::trace!("got message: {v:?}");
-            v?
-        }
-        None => {
-            tracing::error!("failed to read from incoming connection");
-            return Err(eyre::anyhow!("failed to read from incoming connection"));
-        }
-    };
+    let next = next_msg(&mut recv).await?;
 
     Ok((
         serde_json::from_str::<T>(&next)
@@ -124,22 +113,11 @@ async fn accept_bi_(
     FrameReader,
     kulfi_utils::Protocol,
 )> {
-    use tokio_stream::StreamExt;
-
     tracing::trace!("accept_bi_ called");
     let (mut send, recv) = conn.accept_bi().await?;
     tracing::trace!("accept_bi_ got send and recv");
     let mut recv = frame_reader(recv);
-    let msg = match recv.next().await {
-        Some(v) => {
-            tracing::trace!("got message: {v:?}");
-            v?
-        }
-        None => {
-            tracing::error!("failed to read from incoming connection");
-            return Err(eyre::anyhow!("failed to read from incoming connection"));
-        }
-    };
+    let msg = next_msg(&mut recv).await?;
 
     let msg = serde_json::from_str::<kulfi_utils::Protocol>(&msg)
         .inspect_err(|e| tracing::error!("json error for {msg}: {e}"))?;
@@ -150,4 +128,22 @@ async fn accept_bi_(
 
     tracing::trace!("ack sent");
     Ok((send, recv, msg))
+}
+
+async fn next_msg(recv: &mut FrameReader) -> eyre::Result<String> {
+    use tokio_stream::StreamExt;
+
+    match recv.next().await {
+        Some(Ok(v)) => Ok(v),
+        Some(Err(e)) => {
+            tracing::error!("failed to read from incoming connection: {e}");
+            Err(eyre::anyhow!(
+                "failed to read from incoming connection: {e}"
+            ))
+        }
+        None => {
+            tracing::error!("failed to read from incoming connection");
+            Err(eyre::anyhow!("failed to read from incoming connection"))
+        }
+    }
 }

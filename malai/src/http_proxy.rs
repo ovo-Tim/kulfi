@@ -38,12 +38,12 @@ pub async fn http_proxy(graceful: kulfi_utils::Graceful) -> eyre::Result<()> {
                     let conn = match conn.await {
                         Ok(c) => c,
                         Err(e) => {
-                            tracing::error!("failed to convert incoming to connection: {:?}", e);
+                            tracing::error!("failed to convert incoming to connection: {e:?}");
                             return;
                         }
                     };
                     if let Err(e) = handle_connection(conn, http_connection_pools, graceful_for_handle_connection).await {
-                        tracing::error!("connection error3: {:?}", e);
+                        tracing::error!("connection error3: {e:?}");
                     }
                     tracing::info!("connection handled in {:?}", start.elapsed());
                 });
