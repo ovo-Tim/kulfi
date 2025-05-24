@@ -90,13 +90,13 @@ async fn main() -> eyre::Result<()> {
             let graceful_for_run = graceful.clone();
             graceful.spawn(async move { malai::run(home, graceful_for_run).await });
         }
-        Some(Command::HttpProxy { public }) => {
+        Some(Command::HttpProxyRemote { public }) => {
             if !malai::public_check(public, "http-proxy", "malai http-proxy --public") {
                 return Ok(());
             }
             tracing::info!(verbose = ?cli.verbose, "Running HTTP Proxy.");
             let graceful_for_run = graceful.clone();
-            graceful.spawn(async move { malai::http_proxy(graceful_for_run).await });
+            graceful.spawn(async move { malai::http_proxy_remote(graceful_for_run).await });
         }
         #[cfg(feature = "ui")]
         None => {
@@ -238,7 +238,7 @@ pub enum Command {
         #[arg(long, help = "Malai Home", env = "MALAI_HOME")]
         home: Option<String>,
     },
-    HttpProxy {
+    HttpProxyRemote {
         #[arg(long, help = "Make the proxy public. Anyone will be able to access.")]
         public: bool,
     },

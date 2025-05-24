@@ -1,4 +1,4 @@
-pub async fn http_proxy(graceful: kulfi_utils::Graceful) -> eyre::Result<()> {
+pub async fn http_proxy_remote(graceful: kulfi_utils::Graceful) -> eyre::Result<()> {
     use eyre::WrapErr;
     use kulfi_utils::SecretStore;
 

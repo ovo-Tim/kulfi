@@ -131,9 +131,7 @@ async fn accept_bi_(
 }
 
 async fn next_msg(recv: &mut FrameReader) -> eyre::Result<String> {
-    use tokio_stream::StreamExt;
-
-    match recv.next().await {
+    match tokio_stream::StreamExt::next(recv).await {
         Some(Ok(v)) => Ok(v),
         Some(Err(e)) => {
             tracing::error!("failed to read from incoming connection: {e}");
