@@ -112,3 +112,12 @@ pub struct ProtocolHeader {
     pub protocol: Protocol,
     pub extra: Option<String>,
 }
+
+impl From<Protocol> for ProtocolHeader {
+    fn from(protocol: Protocol) -> Self {
+        Self {
+            protocol,
+            extra: None,
+        }
+    }
+}

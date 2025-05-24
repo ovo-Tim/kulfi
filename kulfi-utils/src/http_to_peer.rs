@@ -1,4 +1,5 @@
 pub async fn http_to_peer(
+    header: kulfi_utils::ProtocolHeader,
     req: hyper::Request<hyper::body::Bytes>,
     self_endpoint: iroh::Endpoint,
     remote_node_id52: &str,
@@ -13,7 +14,7 @@ pub async fn http_to_peer(
 
     let (mut send, mut recv) = kulfi_utils::get_stream(
         self_endpoint,
-        kulfi_utils::Protocol::Http,
+        header,
         remote_node_id52.to_string(),
         peer_connections.clone(),
         graceful,

@@ -116,6 +116,10 @@ async fn handle_request(
     tracing::info!("got request for {remote}");
 
     kulfi_utils::http_to_peer(
+        kulfi_utils::ProtocolHeader {
+            protocol: kulfi_utils::Protocol::HttpProxy,
+            extra: None, // TODO: add extra
+        },
         kulfi_utils::http::incoming_to_bytes(r).await?,
         self_endpoint,
         &remote,

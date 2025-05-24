@@ -126,6 +126,7 @@ async fn handle_request(
     tracing::info!("got request for {peer_id}");
 
     kulfi_utils::http_to_peer(
+        kulfi_utils::Protocol::Http.into(),
         kulfi_utils::http::incoming_to_bytes(r).await?,
         self_endpoint,
         &peer_id,

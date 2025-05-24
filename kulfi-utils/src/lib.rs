@@ -12,7 +12,6 @@ mod ping;
 pub mod protocol;
 mod secret;
 mod tcp;
-mod tcp_to_peer;
 mod utils;
 
 #[cfg(feature = "keyring")]

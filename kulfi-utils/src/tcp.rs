@@ -64,6 +64,7 @@ pub async fn pipe_tcp_stream_over_iroh(
 }
 
 pub async fn tcp_to_peer(
+    header: kulfi_utils::ProtocolHeader,
     self_endpoint: iroh::Endpoint,
     stream: tokio::net::TcpStream,
     remote_node_id52: &str,
@@ -74,7 +75,7 @@ pub async fn tcp_to_peer(
 
     let (send, recv) = kulfi_utils::get_stream(
         self_endpoint,
-        kulfi_utils::Protocol::Tcp,
+        header,
         remote_node_id52.to_string(),
         peer_connections.clone(),
         graceful,

@@ -11,7 +11,7 @@ type ReplyChannel = tokio::sync::oneshot::Sender<StreamResult>;
 type RemoteID52 = String;
 type SelfID52 = String;
 
-type StreamRequest = (kulfi_utils::Protocol, ReplyChannel);
+type StreamRequest = (kulfi_utils::ProtocolHeader, ReplyChannel);
 
 type StreamRequestSender = tokio::sync::mpsc::Sender<StreamRequest>;
 type StreamRequestReceiver = tokio::sync::mpsc::Receiver<StreamRequest>;
@@ -28,14 +28,14 @@ type StreamRequestReceiver = tokio::sync::mpsc::Receiver<StreamRequest>;
 #[tracing::instrument(skip_all)]
 pub async fn get_stream(
     self_endpoint: iroh::Endpoint,
-    protocol: kulfi_utils::Protocol,
+    header: kulfi_utils::ProtocolHeader,
     remote_node_id52: RemoteID52,
     peer_stream_senders: PeerStreamSenders,
     graceful: kulfi_utils::Graceful,
 ) -> eyre::Result<(iroh::endpoint::SendStream, kulfi_utils::FrameReader)> {
     use eyre::WrapErr;
 
-    tracing::trace!("get_stream: {protocol:?}");
+    tracing::trace!("get_stream: {header:?}");
     let stream_request_sender = get_stream_request_sender(
         self_endpoint,
         remote_node_id52,
@@ -47,7 +47,7 @@ pub async fn get_stream(
     let (reply_channel, receiver) = tokio::sync::oneshot::channel();
 
     stream_request_sender
-        .send((protocol, reply_channel))
+        .send((header, reply_channel))
         .await
         .wrap_err_with(|| "failed to send on stream_request_sender")?;
 
@@ -197,8 +197,8 @@ async fn connection_manager_(
                 }
                 idle_counter += 1;
             },
-            Some((protocol, reply_channel)) = receiver.recv() => {
-                tracing::info!("connection: {protocol:?}, idle counter: {idle_counter}");
+            Some((header, reply_channel)) = receiver.recv() => {
+                tracing::info!("connection: {header:?}, idle counter: {idle_counter}");
                 idle_counter = 0;
                 // is this a good idea to serialize this part? if 10 concurrent requests come in, we will
                 // handle each one sequentially. the other alternative is to spawn a task for each request.
@@ -232,7 +232,7 @@ async fn connection_manager_(
                 // do note that this is not a clear winner problem, this is a tradeoff, we lose throughput,
                 // as in best case scenario, 10 concurrent tasks will be better. we will have to revisit
                 // this in future when we are performance optimising things.
-                if let Err(e) = handle_request(&conn, protocol, reply_channel).await {
+                if let Err(e) = handle_request(&conn, header, reply_channel).await {
                     tracing::error!("failed to handle request: {e:?}");
                     // note: we are intentionally not calling conn.close(). why? so that if some existing
                     // stream is still open, if we explicitly call close on the connection, that stream will
@@ -254,13 +254,13 @@ async fn connection_manager_(
 
 async fn handle_request(
     conn: &iroh::endpoint::Connection,
-    protocol: kulfi_utils::Protocol,
+    header: kulfi_utils::ProtocolHeader,
     reply_channel: ReplyChannel,
 ) -> eyre::Result<()> {
     use eyre::WrapErr;
     use tokio_stream::StreamExt;
 
-    tracing::trace!("handling request: {protocol:?}");
+    tracing::trace!("handling request: {header:?}");
 
     let (mut send, recv) = match conn.open_bi().await {
         Ok(v) => {
@@ -274,8 +274,8 @@ async fn handle_request(
     };
 
     send.write_all(
-        &serde_json::to_vec(&protocol)
-            .wrap_err_with(|| format!("failed to serialize protocol: {protocol:?}"))?,
+        &serde_json::to_vec(&header.protocol)
+            .wrap_err_with(|| format!("failed to serialize protocol: {:?}", header.protocol))?,
     )
     .await?;
     tracing::trace!("wrote protocol");
@@ -285,6 +285,16 @@ async fn handle_request(
         .wrap_err_with(|| "failed to write newline")?;
 
     tracing::trace!("wrote newline");
+
+    if let Some(extra) = header.extra {
+        send.write_all(extra.as_bytes()).await?;
+        tracing::trace!("wrote protocol");
+
+        send.write(b"\n")
+            .await
+            .wrap_err_with(|| "failed to write newline")?;
+    }
+
     let mut recv = kulfi_utils::frame_reader(recv);
 
     let msg = match recv.next().await {

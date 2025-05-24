@@ -51,6 +51,7 @@ pub async fn handle_connection(
 ) {
     println!("forwarding tcp connection to {remote_node_id52}");
     if let Err(e) = kulfi_utils::tcp_to_peer(
+        kulfi_utils::Protocol::Tcp.into(),
         self_endpoint,
         stream,
         &remote_node_id52,
