@@ -8,6 +8,7 @@ pub async fn http_proxy(graceful: kulfi_utils::Graceful) -> eyre::Result<()> {
         .await
         .wrap_err_with(|| "failed to bind to iroh network")?;
 
+    let http_connection_pools = kulfi_utils::HttpConnectionPools::default();
     InfoMode::Startup.print(&id52);
 
     let mut graceful_mut = graceful.clone();
@@ -31,6 +32,7 @@ pub async fn http_proxy(graceful: kulfi_utils::Graceful) -> eyre::Result<()> {
                 };
 
                 let graceful_for_handle_connection = graceful.clone();
+                let http_connection_pools = http_connection_pools.clone();
                 graceful.spawn(async move {
                     let start = std::time::Instant::now();
                     let conn = match conn.await {
@@ -40,7 +42,7 @@ pub async fn http_proxy(graceful: kulfi_utils::Graceful) -> eyre::Result<()> {
                             return;
                         }
                     };
-                    if let Err(e) = handle_connection(conn, graceful_for_handle_connection).await {
+                    if let Err(e) = handle_connection(conn, http_connection_pools, graceful_for_handle_connection).await {
                         tracing::error!("connection error3: {:?}", e);
                     }
                     tracing::info!("connection handled in {:?}", start.elapsed());
@@ -55,6 +57,7 @@ pub async fn http_proxy(graceful: kulfi_utils::Graceful) -> eyre::Result<()> {
 
 async fn handle_connection(
     conn: iroh::endpoint::Connection,
+    http_connection_pools: kulfi_utils::HttpConnectionPools,
     graceful: kulfi_utils::Graceful,
 ) -> eyre::Result<()> {
     let remote_id52 = kulfi_utils::get_remote_id52(&conn)
@@ -63,20 +66,21 @@ async fn handle_connection(
 
     tracing::info!("new client: {remote_id52}, waiting for bidirectional stream");
     loop {
-        let (extra, send, recv): (ProxyData, _, _) =
+        let (extra, mut send, recv): (ProxyData, _, _) =
             kulfi_utils::accept_bi_with(&conn, kulfi_utils::Protocol::HttpProxy)
                 .await
                 .inspect_err(|e| tracing::error!("failed to accept bidirectional stream: {e:?}"))?;
         tracing::info!("{remote_id52}");
 
         let remote_id52 = remote_id52.clone();
+        let http_connection_pools = http_connection_pools.clone();
         graceful.spawn(async move {
             if let Err(e) = match extra {
-                ProxyData::Connect(addr) => {
+                ProxyData::Connect { addr } => {
                     kulfi_utils::peer_to_tcp(&remote_id52, &addr, send, recv).await
                 }
-                ProxyData::Http => {
-                    todo!()
+                ProxyData::Http { addr } => {
+                    kulfi_utils::peer_to_http(&addr, http_connection_pools, &mut send, recv).await
                 }
             } {
                 tracing::error!("failed to proxy tcp: {e:?}");
@@ -88,8 +92,8 @@ async fn handle_connection(
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub enum ProxyData {
-    Connect(String),
-    Http,
+    Connect { addr: String },
+    Http { addr: String },
 }
 
 #[derive(PartialEq, Debug)]
