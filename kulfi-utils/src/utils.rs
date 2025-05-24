@@ -91,6 +91,32 @@ pub async fn accept_bi(
     }
 }
 
+pub async fn accept_bi_with<T: serde::de::DeserializeOwned>(
+    conn: &iroh::endpoint::Connection,
+    expected: kulfi_utils::Protocol,
+) -> eyre::Result<(T, iroh::endpoint::SendStream, FrameReader)> {
+    use tokio_stream::StreamExt;
+
+    let (send, mut recv) = accept_bi(conn, expected).await?;
+    let next = match recv.next().await {
+        Some(v) => {
+            tracing::trace!("got message: {v:?}");
+            v?
+        }
+        None => {
+            tracing::error!("failed to read from incoming connection");
+            return Err(eyre::anyhow!("failed to read from incoming connection"));
+        }
+    };
+
+    Ok((
+        serde_json::from_str::<T>(&next)
+            .inspect_err(|e| tracing::error!("json error for {next}: {e}"))?,
+        send,
+        recv,
+    ))
+}
+
 async fn accept_bi_(
     conn: &iroh::endpoint::Connection,
 ) -> eyre::Result<(

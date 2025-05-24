@@ -91,6 +91,7 @@ pub enum Protocol {
     /// ip:port is not known to peers, they only the "device id" for the service. server will figure
     /// out the ip:port from the device id.
     Http,
+    HttpProxy,
     /// if the client wants their traffic to route via this server, they can send this. for this to
     /// work, the person owning the device must have created a SOCKS5 device, and allowed this peer
     /// to access it.

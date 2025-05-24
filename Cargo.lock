@@ -3346,6 +3346,7 @@ dependencies = [
  "kulfi-utils",
  "libdbus-sys",
  "mime_guess",
+ "serde",
  "tauri",
  "tauri-build",
  "tauri-plugin-opener",
