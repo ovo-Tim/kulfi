@@ -22,18 +22,18 @@ pub async fn peer_to_tcp(
     //       to connect to.
 
     let stream = tokio::net::TcpStream::connect(addr).await?;
-    pipe_tcp_stream_over_iroh(stream, send, recv).await
+    let (tcp_recv, tcp_send) = tokio::io::split(stream);
+    pipe_tcp_stream_over_iroh(tcp_recv, tcp_send, send, recv).await
 }
 
 pub async fn pipe_tcp_stream_over_iroh(
-    stream: tokio::net::TcpStream,
+    mut tcp_recv: impl tokio::io::AsyncRead + Unpin + Send + 'static,
+    tcp_send: impl tokio::io::AsyncWrite + Unpin + Send + 'static,
     mut send: iroh::endpoint::SendStream,
     recv: kulfi_utils::FrameReader,
 ) -> eyre::Result<()> {
     use tokio::io::AsyncWriteExt;
     tracing::trace!("pipe_tcp_stream_over_iroh");
-
-    let (mut tcp_recv, tcp_send) = tokio::io::split(stream);
 
     let t = tokio::spawn(async move {
         let mut t = tcp_send;
@@ -83,5 +83,6 @@ pub async fn tcp_to_peer(
 
     tracing::info!("got stream");
 
-    kulfi_utils::pipe_tcp_stream_over_iroh(stream, send, recv).await
+    let (tcp_recv, tcp_send) = tokio::io::split(stream);
+    pipe_tcp_stream_over_iroh(tcp_recv, tcp_send, send, recv).await
 }
