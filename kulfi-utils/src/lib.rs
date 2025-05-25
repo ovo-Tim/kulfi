@@ -30,7 +30,7 @@ pub use secret::{SecretStore, read_or_create_key};
 pub use tcp::{peer_to_tcp, pipe_tcp_stream_over_iroh, tcp_to_peer};
 pub use utils::{
     FrameReader, accept_bi, accept_bi_with, frame_reader, get_remote_id52, id52_to_public_key,
-    mkdir, public_key_to_id52,
+    mkdir, next_json, public_key_to_id52,
 };
 
 /// IDMap stores the fastn port and the endpoint for every identity

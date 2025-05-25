@@ -145,3 +145,17 @@ async fn next_msg(recv: &mut FrameReader) -> eyre::Result<String> {
         }
     }
 }
+
+pub async fn next_json<T: serde::de::DeserializeOwned>(recv: &mut FrameReader) -> eyre::Result<T> {
+    match tokio_stream::StreamExt::next(recv).await {
+        Some(Ok(v)) => Ok(serde_json::from_str(&v)?),
+        Some(Err(e)) => {
+            tracing::error!("failed to get next message: {e:?}");
+            Err(eyre::anyhow!("failed to get new message: {e:?}"))
+        }
+        None => {
+            tracing::error!("failed to read from incoming connection");
+            Err(eyre::anyhow!("failed to read from incoming connection"))
+        }
+    }
+}

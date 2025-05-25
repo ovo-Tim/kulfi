@@ -115,17 +115,29 @@ async fn handle_request(
 ) -> kulfi_utils::http::ProxyResult {
     tracing::info!("got request for {remote}");
 
-    kulfi_utils::http_to_peer(
-        kulfi_utils::ProtocolHeader {
-            protocol: kulfi_utils::Protocol::HttpProxy,
-            extra: None, // TODO: add extra
-        },
-        kulfi_utils::http::incoming_to_bytes(r).await?,
-        self_endpoint,
-        &remote,
-        peer_connections,
-        Default::default(), /* RequestPatch */
-        graceful,
-    )
-    .await
+    if r.headers().contains_key(hyper::header::UPGRADE) {
+        // kulfi_utils::tcp_to_peer(
+        //     kulfi_utils::Protocol::HttpProxy.into(),
+        //     self_endpoint,
+        //     r,
+        //     &remote,
+        //     peer_connections,
+        //     graceful,
+        // )
+        todo!()
+    } else {
+        kulfi_utils::http_to_peer(
+            kulfi_utils::ProtocolHeader {
+                protocol: kulfi_utils::Protocol::HttpProxy,
+                extra: None, // TODO: add extra
+            },
+            kulfi_utils::http::incoming_to_bytes(r).await?,
+            self_endpoint,
+            &remote,
+            peer_connections,
+            Default::default(), /* RequestPatch */
+            graceful,
+        )
+        .await
+    }
 }

@@ -8,7 +8,6 @@ pub async fn http_to_peer(
     graceful: kulfi_utils::Graceful,
 ) -> kulfi_utils::http::ProxyResult {
     use http_body_util::BodyExt;
-    use tokio_stream::StreamExt;
 
     tracing::info!("peer_proxy: {remote_node_id52}");
 
@@ -34,17 +33,7 @@ pub async fn http_to_peer(
 
     tracing::info!("sent body");
 
-    let r: kulfi_utils::http::Response = match recv.next().await {
-        Some(Ok(v)) => serde_json::from_str(&v)?,
-        Some(Err(e)) => {
-            tracing::error!("failed to get bidirectional stream: {e:?}");
-            return Err(eyre::anyhow!("failed to get bidirectional stream: {e:?}"));
-        }
-        None => {
-            tracing::error!("failed to read from incoming connection");
-            return Err(eyre::anyhow!("failed to read from incoming connection"));
-        }
-    };
+    let r: kulfi_utils::http::Response = kulfi_utils::next_json(&mut recv).await?;
 
     tracing::info!("got response header: {r:?}");
 
