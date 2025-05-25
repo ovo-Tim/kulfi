@@ -249,11 +249,18 @@ pub enum Command {
         #[arg(long, help = "Malai Home", env = "MALAI_HOME")]
         home: Option<String>,
     },
+    #[clap(
+        about = "Run an iroh remote server that handles requests from http-proxy.",
+        hide = true
+    )]
     HttpProxyRemote {
         #[arg(long, help = "Make the proxy public. Anyone will be able to access.")]
         public: bool,
     },
-    #[clap(about = "Run a http proxy server that forwards incoming requests to http-proxy-remote.")]
+    #[clap(
+        about = "Run a http proxy server that forwards incoming requests to http-proxy-remote.",
+        hide = true
+    )]
     HttpProxy {
         #[arg(help = "The id52 of remote to which this http proxy will forward request to.")]
         remote: String,

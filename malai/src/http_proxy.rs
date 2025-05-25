@@ -122,12 +122,21 @@ async fn handle_request(
     tracing::info!("got request for {remote}");
 
     let graceful_for_upgrade = graceful.clone();
-    let host = r
-        .headers()
-        .get(hyper::header::HOST)
-        .ok_or_else(|| eyre::anyhow!("no host header found"))
-        .and_then(|h| h.to_str().map_err(|e| e.into()))?
-        .to_string();
+    let host = match r
+        .uri()
+        .host()
+        .map(|h| format!("{h}:{}", r.uri().port_u16().unwrap_or(80)))
+    {
+        Some(v) => v,
+        None => {
+            tracing::error!("got http request without Host header");
+            return Ok(kulfi_utils::bad_request!(
+                "got http request without Host header"
+            ));
+        }
+    };
+
+    tracing::trace!("host: {host}, method: {}, url: {}", r.method(), r.uri());
 
     if let Some(v) = r.headers_mut().remove(hyper::header::UPGRADE) {
         tracing::trace!("upgrading connection to: {v:?}");
