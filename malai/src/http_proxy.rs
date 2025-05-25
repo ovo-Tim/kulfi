@@ -138,8 +138,8 @@ async fn handle_request(
 
     tracing::trace!("host: {host}, method: {}, url: {}", r.method(), r.uri());
 
-    if let Some(v) = r.headers_mut().remove(hyper::header::UPGRADE) {
-        tracing::trace!("upgrading connection to: {v:?}");
+    if r.method() == hyper::Method::CONNECT {
+        tracing::trace!("upgrading connection");
         // set up a future that will eventually receive the upgraded
         // connection and talk a new protocol, and spawn the future
         // into the runtime.
@@ -163,8 +163,7 @@ async fn handle_request(
         });
 
         let mut res = hyper::Response::default();
-        *res.status_mut() = hyper::http::StatusCode::SWITCHING_PROTOCOLS;
-        res.headers_mut().insert(hyper::header::UPGRADE, v);
+        *res.status_mut() = hyper::http::StatusCode::OK;
         Ok(res)
     } else {
         tracing::trace!("regular (non upgrade) http request");
