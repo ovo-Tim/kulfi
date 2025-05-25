@@ -1,5 +1,12 @@
 # ChangeLog
 
+## Unreleased
+
+### malai ???
+
+- implemented `malai http-proxy` and `malai http-proxy-remote` pair to proxy
+  HTTP requests to a remote HTTP server over the kulfi network.
+
 ## 20 May 2025
 
 ### malai 0.2.5
