@@ -72,13 +72,10 @@ async fn handle_connection(
                 .inspect_err(|e| tracing::error!("failed to accept bidirectional stream: {e:?}"))?;
         tracing::info!("{remote_id52}");
 
-        let remote_id52 = remote_id52.clone();
         let http_connection_pools = http_connection_pools.clone();
         graceful.spawn(async move {
             if let Err(e) = match extra {
-                ProxyData::Connect { addr } => {
-                    kulfi_utils::peer_to_tcp(&remote_id52, &addr, send, recv).await
-                }
+                ProxyData::Connect { addr } => kulfi_utils::peer_to_tcp(&addr, send, recv).await,
                 ProxyData::Http { addr } => {
                     kulfi_utils::peer_to_http(&addr, http_connection_pools, &mut send, recv).await
                 }

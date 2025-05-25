@@ -13,7 +13,6 @@
 /// so we will make one tcp connection from this function, and connect the `send` and `recv` streams
 /// to tcp connection's `recv` and `send` side respectively.
 pub async fn peer_to_tcp(
-    _remote_id: &str,
     addr: &str,
     send: iroh::endpoint::SendStream,
     recv: kulfi_utils::FrameReader,

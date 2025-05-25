@@ -74,10 +74,9 @@ async fn handle_connection(
             .await
             .inspect_err(|e| tracing::error!("failed to accept bidirectional stream: {e:?}"))?;
         tracing::info!("{remote_id52}");
-        let remote_id52 = remote_id52.clone();
         let addr = format!("{host}:{port}");
         graceful.spawn(async move {
-            if let Err(e) = kulfi_utils::peer_to_tcp(&remote_id52, &addr, send, recv).await {
+            if let Err(e) = kulfi_utils::peer_to_tcp(&addr, send, recv).await {
                 tracing::error!("failed to proxy tcp: {e:?}");
             }
             tracing::info!("closing send stream");
