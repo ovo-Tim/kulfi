@@ -122,8 +122,15 @@ async fn handle_request(
     tracing::info!("got request for {remote}");
 
     let graceful_for_upgrade = graceful.clone();
+    let host = r
+        .headers()
+        .get(hyper::header::HOST)
+        .ok_or_else(|| eyre::anyhow!("no host header found"))
+        .and_then(|h| h.to_str().map_err(|e| e.into()))?
+        .to_string();
 
     if let Some(v) = r.headers_mut().remove(hyper::header::UPGRADE) {
+        tracing::trace!("upgrading connection to: {v:?}");
         // set up a future that will eventually receive the upgraded
         // connection and talk a new protocol, and spawn the future
         // into the runtime.
@@ -134,6 +141,7 @@ async fn handle_request(
         graceful.spawn(async move {
             if let Err(e) = handle_upgrade(
                 r,
+                host,
                 self_endpoint,
                 remote,
                 peer_connections,
@@ -150,11 +158,14 @@ async fn handle_request(
         res.headers_mut().insert(hyper::header::UPGRADE, v);
         Ok(res)
     } else {
+        tracing::trace!("regular (non upgrade) http request");
         r.headers_mut().remove(hyper::header::CONNECTION);
         kulfi_utils::http_to_peer(
             kulfi_utils::ProtocolHeader {
                 protocol: kulfi_utils::Protocol::HttpProxy,
-                extra: None, // TODO: add extra
+                extra: Some(serde_json::to_string(&ProxyData::Http {
+                    addr: host.to_string(),
+                })?),
             },
             kulfi_utils::http::incoming_to_bytes(r).await?,
             self_endpoint,
@@ -169,6 +180,7 @@ async fn handle_request(
 
 async fn handle_upgrade(
     mut r: hyper::Request<hyper::body::Incoming>,
+    host: String,
     self_endpoint: iroh::Endpoint,
     remote: String,
     peer_connections: kulfi_utils::PeerStreamSenders,
@@ -176,12 +188,7 @@ async fn handle_upgrade(
 ) -> eyre::Result<()> {
     // todo: what all can we upgrade to?
 
-    let host = r
-        .headers()
-        .get(hyper::header::HOST)
-        .ok_or_else(|| eyre::anyhow!("no host header found"))
-        .and_then(|h| h.to_str().map_err(|e| e.into()))?
-        .to_string();
+    tracing::info!("upgrading connection to {host} for {remote}");
 
     let upgraded = match hyper::upgrade::on(&mut r).await {
         Ok(upgraded) => upgraded,
@@ -189,6 +196,8 @@ async fn handle_upgrade(
             return Err(eyre::anyhow!("failed to upgrade connection: {e}"));
         }
     };
+
+    tracing::trace!("upgraded connection to {host}");
 
     let upgraded = hyper_util::rt::TokioIo::new(upgraded);
     let (tcp_recv, tcp_send) = tokio::io::split(upgraded);
@@ -207,7 +216,9 @@ async fn handle_upgrade(
     )
     .await?;
 
+    tracing::trace!("got stream for {remote}");
     kulfi_utils::pipe_tcp_stream_over_iroh(tcp_recv, tcp_send, send, recv).await?;
+    tracing::trace!("finished handling upgrade for {remote}");
 
     Ok(())
 }

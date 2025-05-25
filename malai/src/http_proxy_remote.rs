@@ -70,7 +70,7 @@ async fn handle_connection(
             kulfi_utils::accept_bi_with(&conn, kulfi_utils::Protocol::HttpProxy)
                 .await
                 .inspect_err(|e| tracing::error!("failed to accept bidirectional stream: {e:?}"))?;
-        tracing::info!("{remote_id52}");
+        tracing::info!("got connection from {remote_id52}, extra: {extra:?}");
 
         let http_connection_pools = http_connection_pools.clone();
         graceful.spawn(async move {
@@ -108,14 +108,14 @@ impl InfoMode {
         }
 
         println!(
-            "{cli}: Running Public HTTP PProxy at {id52}.",
+            "{cli}: Running Public HTTP Proxy at {id52}.",
             cli = "Malai".on_green().black(),
             id52 = id52.yellow(),
         );
 
         println!(
             "Run {cli} on any machine to access this proxy server.",
-            cli = format!("malai http-bridge {id52}").yellow(),
+            cli = format!("malai http-proxy {id52}").yellow(),
         );
     }
 }
