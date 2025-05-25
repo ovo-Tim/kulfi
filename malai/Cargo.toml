@@ -18,12 +18,14 @@ clap-verbosity-flag.workspace = true
 clap.workspace = true
 colored.workspace = true
 eyre.workspace = true
+http-body-util.workspace = true
 hyper-util.workspace = true
 hyper.workspace = true
 iroh.workspace = true
 kulfi-utils.workspace = true
 mime_guess.workspace = true
 serde.workspace = true
+serde_json.workspace = true
 tauri = { workspace = true, optional = true }
 tauri-plugin-opener = { workspace = true, optional = true }
 tokio.workspace = true

@@ -66,7 +66,7 @@ async fn handle_connection(
 
     tracing::info!("new client: {remote_id52}, waiting for bidirectional stream");
     loop {
-        let (extra, mut send, recv): (ProxyData, _, _) =
+        let (extra, mut send, recv): (malai::ProxyData, _, _) =
             kulfi_utils::accept_bi_with(&conn, kulfi_utils::Protocol::HttpProxy)
                 .await
                 .inspect_err(|e| tracing::error!("failed to accept bidirectional stream: {e:?}"))?;
@@ -75,8 +75,10 @@ async fn handle_connection(
         let http_connection_pools = http_connection_pools.clone();
         graceful.spawn(async move {
             if let Err(e) = match extra {
-                ProxyData::Connect { addr } => kulfi_utils::peer_to_tcp(&addr, send, recv).await,
-                ProxyData::Http { addr } => {
+                malai::ProxyData::Connect { addr } => {
+                    kulfi_utils::peer_to_tcp(&addr, send, recv).await
+                }
+                malai::ProxyData::Http { addr } => {
                     kulfi_utils::peer_to_http(&addr, http_connection_pools, &mut send, recv).await
                 }
             } {
@@ -85,12 +87,6 @@ async fn handle_connection(
             tracing::info!("closing send stream");
         });
     }
-}
-
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
-pub enum ProxyData {
-    Connect { addr: String },
-    Http { addr: String },
 }
 
 #[derive(PartialEq, Debug)]

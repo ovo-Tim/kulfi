@@ -70,6 +70,12 @@ pub async fn http_proxy(
     Ok(())
 }
 
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+pub enum ProxyData {
+    Connect { addr: String },
+    Http { addr: String },
+}
+
 pub async fn handle_connection(
     self_endpoint: iroh::Endpoint,
     stream: tokio::net::TcpStream,
@@ -107,7 +113,7 @@ pub async fn handle_connection(
 }
 
 async fn handle_request(
-    r: hyper::Request<hyper::body::Incoming>,
+    mut r: hyper::Request<hyper::body::Incoming>,
     self_endpoint: iroh::Endpoint,
     peer_connections: kulfi_utils::PeerStreamSenders,
     remote: String,
@@ -115,17 +121,36 @@ async fn handle_request(
 ) -> kulfi_utils::http::ProxyResult {
     tracing::info!("got request for {remote}");
 
-    if r.headers().contains_key(hyper::header::UPGRADE) {
-        // kulfi_utils::tcp_to_peer(
-        //     kulfi_utils::Protocol::HttpProxy.into(),
-        //     self_endpoint,
-        //     r,
-        //     &remote,
-        //     peer_connections,
-        //     graceful,
-        // )
-        todo!()
+    let graceful_for_upgrade = graceful.clone();
+
+    if let Some(v) = r.headers_mut().remove(hyper::header::UPGRADE) {
+        // set up a future that will eventually receive the upgraded
+        // connection and talk a new protocol, and spawn the future
+        // into the runtime.
+        //
+        // note: this can't possibly be fulfilled until the 101 response (SWITCHING_PROTOCOLS)
+        // is returned below, so it's better to spawn this future instead of
+        // waiting for it to complete to then return a response.
+        graceful.spawn(async move {
+            if let Err(e) = handle_upgrade(
+                r,
+                self_endpoint,
+                remote,
+                peer_connections,
+                graceful_for_upgrade,
+            )
+            .await
+            {
+                tracing::error!("failed to handle: {e}")
+            }
+        });
+
+        let mut res = hyper::Response::default();
+        *res.status_mut() = hyper::http::StatusCode::SWITCHING_PROTOCOLS;
+        res.headers_mut().insert(hyper::header::UPGRADE, v);
+        Ok(res)
     } else {
+        r.headers_mut().remove(hyper::header::CONNECTION);
         kulfi_utils::http_to_peer(
             kulfi_utils::ProtocolHeader {
                 protocol: kulfi_utils::Protocol::HttpProxy,
@@ -140,4 +165,49 @@ async fn handle_request(
         )
         .await
     }
+}
+
+async fn handle_upgrade(
+    mut r: hyper::Request<hyper::body::Incoming>,
+    self_endpoint: iroh::Endpoint,
+    remote: String,
+    peer_connections: kulfi_utils::PeerStreamSenders,
+    graceful: kulfi_utils::Graceful,
+) -> eyre::Result<()> {
+    // todo: what all can we upgrade to?
+
+    let host = r
+        .headers()
+        .get(hyper::header::HOST)
+        .ok_or_else(|| eyre::anyhow!("no host header found"))
+        .and_then(|h| h.to_str().map_err(|e| e.into()))?
+        .to_string();
+
+    let upgraded = match hyper::upgrade::on(&mut r).await {
+        Ok(upgraded) => upgraded,
+        Err(e) => {
+            return Err(eyre::anyhow!("failed to upgrade connection: {e}"));
+        }
+    };
+
+    let upgraded = hyper_util::rt::TokioIo::new(upgraded);
+    let (tcp_recv, tcp_send) = tokio::io::split(upgraded);
+
+    let (send, recv) = kulfi_utils::get_stream(
+        self_endpoint,
+        kulfi_utils::ProtocolHeader {
+            protocol: kulfi_utils::Protocol::HttpProxy,
+            extra: Some(serde_json::to_string(&ProxyData::Connect {
+                addr: host.to_string(),
+            })?),
+        },
+        remote.to_string(),
+        peer_connections.clone(),
+        graceful,
+    )
+    .await?;
+
+    kulfi_utils::pipe_tcp_stream_over_iroh(tcp_recv, tcp_send, send, recv).await?;
+
+    Ok(())
 }
