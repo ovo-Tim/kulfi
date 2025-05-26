@@ -20,6 +20,7 @@ margin: $ds.spaces.vertical-gap.zero
 if: { ftd.device != "mobile" }
 inset: $ds.spaces.inset-square.zero
 align-content: top-left
+min-width.fixed.percent: 20
 width: hug-content
 
 -- doc-link:
@@ -47,9 +48,20 @@ flush: narrow
 
 -- component doc-link:
 pr.toc-item item:
+private boolean $hover: false
+
+-- ds.row:
+align-content: left
+inset: $ds.spaces.inset-square.small
+background.solid if { doc-link.hover }: $inherited.colors.background.step-1
+background.solid: transparent
+$on-mouse-enter$: $ftd.set-bool($a = $doc-link.hover, v = true)
+$on-mouse-leave$: $ftd.set-bool($a = $doc-link.hover, v = false)
+link: $doc-link.item.url
 
 -- ds.copy-small: $doc-link.item.title
 color if { doc-link.item.is-active }: $ds.colors.accent.primary
-link: $doc-link.item.url
+
+-- end: ds.row
 
 -- end: doc-link

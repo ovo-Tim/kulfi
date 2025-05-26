@@ -43,8 +43,6 @@ provided-via: malai.sh/ds
   document: dev/tracing.ftd
 
 # Blog: /blog/
-  description: Siddhant was here!
-
 - Announcing Malai: /hello-world/
   document: blog/hello-world.ftd
 - Introducing Malai Tcp: /hello-tcp/

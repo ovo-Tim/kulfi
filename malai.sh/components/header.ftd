@@ -19,6 +19,7 @@ spacing: $ds.spaces.horizontal-gap.space-between
         align-content: right
         width: hug-content
         spacing: $ds.spaces.horizontal-gap.large
+        spacing if { ftd.device == "mobile" }: $ds.spaces.horizontal-gap.medium
 
         -- ds.link: Blog
         link: /blog/
