@@ -33,7 +33,7 @@ provided-via: malai.sh/ds
   document: doc/http.ftd
 - `malai tcp`: /tcp/
   document: doc/tcp.ftd
-- `malai tcp`: /tcp-bridge/
+- `malai tcp-bridge`: /tcp-bridge/
   document: doc/tcp-bridge.ftd
 
 # Dev: /dev/

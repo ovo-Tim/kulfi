@@ -22,6 +22,6 @@ Listening on 127.0.0.1:5432
 
 -- ds.copy-regular:
 
-You get the `<id52>`` from the output of `malai tcp` command.
+You get the `<id52>` from the output of `malai tcp` command.
 
 -- end: p.doc-page
