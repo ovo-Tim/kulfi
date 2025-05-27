@@ -5,8 +5,8 @@
 -- string description:
 
 Malai TCP can be used to share your local TCP server with anyone. This can be
-your database server or ssh server. We also talk about how malai can be used to
-directly server a folder on your computer with everyone.
+your database server or SSH server. We also talk about how malai can be used to
+directly serve a folder on your computer with everyone.
 
 -- ds.site-page: $title
 description: $description
@@ -21,9 +21,8 @@ inset if { ftd.device == "mobile" }: $ds.spaces.inset-square.small
 
 -- ds.copy-regular:
 
-[`malai-0.2.5`](https://github.com/kulfi-project/kulfi/releases/tag/malai-0.2.5)
-is out now! It brings a new feature to share your local TCP server with the
-world!
+[`malai-0.2.5`](https://github.com/kulfi-project/kulfi/releases/) is out now!
+It brings a new feature to share your local TCP server with the world!
 
 Now you can share any TCP-based service running locally — including your
 SSH service, Postgres database, Redis, or even a custom TCP protocol — using the
@@ -66,9 +65,57 @@ Listening on 127.0.0.1:9091
 Now you can connect to `localhost:9091` and it'll go through `malai` and
 connect to the exposed service.
 
+-- ds.heading-medium: Share your SSH server
+
+You can even use `malai tcp` to expose your local SSH server for remote access — without opening port 22 publicly.
+
+First, make sure the OpenSSH server is running:
+
+-- ds.code:
+lang: bash
+
+systemctl status sshd
+
+-- ds.copy-regular:
+
+Then, run the following on the machine where the SSH server is running:
+
+-- ds.code:
+lang: bash
+
+\$ malai tcp 22 --public
+Malai: Sharing port 5432
+Run malai tcp-bridge <id52> <some-port>
+to connect to it from any machine.
+
+-- ds.copy-regular:
+
+On another machine, use the bridge command:
+
+-- ds.code:
+lang: bash
+
+\$ malai tcp-bridge <id52> 9090
+
+-- ds.copy-regular:
+
+Replace `<id52>` with the ID printed by the `malai tcp` command. Once the
+bridge is running, SSH into your machine like this:
+
+-- ds.code:
+lang: bash
+
+ssh -p 9090 user@localhost
+
+-- ds.copy-regular:
+
+You're connecting to `localhost:9090`, which is where the `tcp-bridge` is
+listening. It forwards your SSH traffic to the original machine via the Kulfi
+network. Make sure to use the correct `user` that exists on the remote machine.
+
 -- ds.heading-medium: Use cases
 
-- Secure your SSH server behind a `malai` network.
+- Secure your SSH server behind the Kulfi network.
 - Share a local Postgres or Redis instance with your team.
 - Demo a multiplayer game server or custom TCP service.
 - Students can share networked apps or environments with instructors for
@@ -80,7 +127,7 @@ To learn more about `malai tcp`, check out the [documentation](/tcp/).
 
 -- ds.heading-medium: Wait, we have more!
 
-We've also added a new `malai folder` command to share a folder with everyone
+We've also added a new `malai folder` command to share a folder with everyone.
 This is similar to `malai http` but it serves your local files and folders.
 This is more like a call for testing than launching a new feature. Try it out
 and give us feedback!
@@ -98,7 +145,7 @@ Or use: malai browse kulfi://pubqaksutn9im0ncln2bki3i8diekh3sr4vp94o2cg1agjrb8dh
 
 -- ds.copy-regular:
 
-This spins up a basic http server behind the scenes to serve the provided folder:
+This spins up a basic HTTP server behind the scenes to serve the provided folder:
 
 -- ds.image: Browsing a folder served by `malai`
 src: $assets.files.assets.malai-folder-browser-view.png
