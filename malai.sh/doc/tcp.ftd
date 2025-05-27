@@ -14,6 +14,9 @@ Starting
 You can share your local TCP server with the world. This can be your database
 server or ssh server for example.
 
+-- ds.heading-large: Usage
+id: usage
+
 Assuming a tcp server is running on your local machine on port 5432, you can
 use the following command to share it:
 
@@ -54,5 +57,62 @@ psql 'postgresql://user:passwd@localhost:9091/db_name'
 -- ds.copy-regular:
 
 And it'll connect to your postgres server listening on port 5432 on your machine!
+
+
+-- ds.heading-large: Share SSH using `malai tcp`
+id: tcp-ssh
+
+First, ensure the OpenSSH server is running (it usually listens on port 22).
+You can check its status with:
+
+-- ds.code:
+lang: bash
+
+\$ systemctl status sshd
+
+-- ds.copy-regular:
+
+You don’t need to expose port 22 publicly — `malai` connects to it locally on
+this machine.
+
+To share the SSH port using `malai tcp`, run:
+
+-- ds.code:
+lang: bash
+
+\$ malai tcp 22 --public
+
+Malai: Sharing port 22
+Run malai tcp-bridge <id52> <some-port>
+to connect to it from any machine.
+
+-- ds.copy-regular:
+
+On another machine, run the following to connect:
+
+-- ds.code:
+lang: bash
+
+\$ malai tcp-bridge <id52> 9090
+
+Listening on 127.0.0.1:9090
+
+-- ds.copy-regular:
+
+Replace `<id52>` with the ID shown by the `malai tcp` command.
+
+Once the bridge is running, you can SSH into the machine like this:
+
+-- ds.code:
+lang: bash
+
+\$ ssh -p 9090 user@localhost
+
+-- ds.copy-regular:
+
+Use the appropriate `user` that exists on the remote machine. The SSH
+connection goes to `localhost:9090`, where `tcp-bridge` is listening. It then
+forwards the traffic to the remote machine via the Kulfi network using
+`<id52>`.
 
 -- end: p.doc-page
