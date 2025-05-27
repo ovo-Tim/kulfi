@@ -1,0 +1,35 @@
+-- import: malai.sh/components/page as p
+
+-- p.doc-page: malai http-proxy-remote: Handle requests from malai http-proxy command
+
+The `malai http-proxy-remote` runs a remote server that handles requests from
+`malai http-proxy`.
+
+-- ds.heading-large: `malai http-proxy-remote`: A remote server to support HTTP proxy over kulfi network.
+
+This command is used to create a server that responds to requests received from
+a [`http-proxy`](/http-proxy/).
+
+Running `malai http-proxy-remote` makes the machine act as a remote forwarder.
+The machine becomes ready to start taking requests from other machines running
+`malai http-proxy`.
+
+-- ds.heading-large: Usage
+
+-- ds.code:
+lang: bash
+
+\$ malai http-proxy-remote --public
+
+Malai: Running Public HTTP Proxy at <id52>.
+Run malai http-proxy <id52> on any machine to access this proxy server.
+
+-- ds.copy-regular:
+
+The `<id52>` is printed when you run the `malai http-proxy-remote` command.
+You’ll need to pass this ID to `malai http-proxy` so it knows where to forward
+HTTP requests. This connects the local proxy server to the remote machine
+running `malai http-proxy-remote`.
+
+
+-- end: p.doc-page
