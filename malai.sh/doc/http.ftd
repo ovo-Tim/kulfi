@@ -18,6 +18,8 @@ deploying it to a public server or configuring firewalls and DNS.
 Whether you're testing webhooks, giving someone a quick demo, or just want to
 show off your side project, `malai` makes it dead simple.
 
+-- ds.heading-large: Usage
+
 Once you have [installed `malai`](/getting-started/), you can run:
 
 -- ds.code:

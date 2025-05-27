@@ -13,6 +13,8 @@ access that port on another machine by running `malai tcp-bridge` on it. When
 you run this command it opens a TCP port, and any connection on that TCP port
 is forwarded to the TCP port exposed using `malai tcp`.
 
+-- ds.heading-large: Usage
+
 -- ds.code: Using `malai tcp-bridge`
 max-width: fill-container
 lang: bash
