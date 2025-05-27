@@ -1,0 +1,84 @@
+-- import: malai.sh/components/page as p
+
+-- p.doc-page: malai http-proxy: HTTP proxy for kulfi network.
+
+The `malai http-proxy` command is used to run a http proxy server that forwards
+incoming requests to a machine running `malai http-proxy-remote` (remote
+forwarder).
+
+-- ds.heading-large: `malai http-proxy`: HTTP proxy for kulfi network
+
+The `malai http-proxy` command is used to run a http proxy server that forwards
+incoming requests to machine running `malai http-proxy-remote` (remote
+forwarder).
+
+To setup a HTTP proxy with `malai`, you first need a server where you can run
+[`malai http-proxy-remote`](/http-proxy-remote/). Running that command will
+give you a id52 that you can use with `malai http-proxy`
+
+-- ds.heading-large: Usage
+
+-- ds.code:
+lang: bash
+
+\$ malai http-proxy <id52> 9090
+
+Listening on http://127.0.0.1:9090
+
+
+-- ds.copy-regular:
+
+Replace the `<id52>` with the id52 that you got from running `malai
+http-proxy-remote` on the remote forwarder machine.
+
+`9090` is the port on which the local http proxy server is running. Leave it
+out if you want a random port picked for you.
+
+You can test it by running the following `curl` command:
+
+-- ds.code:
+lang: bash
+
+\$ curl --proxy localhost:9090 https://example.com
+
+
+-- ds.heading-large: System wide proxy configuration
+
+To setup `localhost:9090` as a system wide proxy, follow your OS specific section below.
+
+-- ds.heading-medium: Mac
+
+Open `System Settings.app` > Network > Wi-Fi and click on the "Details..."
+button on the connected network.
+
+-- ds.image: Mac Network Settings
+src: $assets.files.assets.proxy-settings-network-view.png
+
+Go to "Proxies" section.
+
+-- ds.image: Network Proxy Settings
+src: $assets.files.assets.proxy-settings-window.png
+
+Enable both "Web proxy (HTTP)" and "Secure web proxy (HTTPS)" and put the following values:
+
+**Server**: `127.0.0.1`
+
+**Port**: `9090`
+
+**Proxy server requires password**: unchecked (false)
+
+-- ds.image: Network Proxy Settings
+src: $assets.files.assets.proxy-settings-mac.png
+
+HTTP request from your system should now go to `localhost:9090` which would
+send it to the remote forwarder running `malai http-proxy-remote`.
+
+-- ds.heading-medium: Windows
+
+TBD
+
+-- ds.heading-medium: Linux
+
+TBD
+
+-- end: p.doc-page
