@@ -1,4 +1,4 @@
-// Prevents additional console window on Windows in release, DO NOT REMOVE!!
+// prevents an additional console window on Windows in release, DO NOT REMOVE!
 #![cfg_attr(
     all(not(debug_assertions), feature = "ui"),
     windows_subsystem = "windows"
@@ -8,14 +8,13 @@
 async fn main() -> eyre::Result<()> {
     use clap::Parser;
 
-    // run with RUST_LOG="malai=info" to only see our logs when running with the --trace flag
+    // run with RUST_LOG="malai=trace,kulfi_utils=trace" to see logs
     tracing_subscriber::fmt::init();
 
     let cli = Cli::parse();
 
     let graceful = kulfi_utils::Graceful::default();
 
-    // TODO: each subcommand should handle their error and return ()
     match cli.command {
         Some(Command::Http {
             port,
