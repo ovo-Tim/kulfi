@@ -1,0 +1,6 @@
+-- import: design-system.fifthtry.site
+export: *
+
+-- ftd.image-src site-logo: $assets.files.assets.logo.png
+
+-- string copyright: © 2025 FifthTry, Inc
