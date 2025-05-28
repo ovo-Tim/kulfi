@@ -4,6 +4,14 @@ Open Source, General Purpose, Sovereign, Decentralized, Peer to Peer Internet.
 
 ---
 
+## Highlights
+
+- Share your local HTTP/TCP with anyone, without any central server.
+- Use public `*.kulfi.site` bridge to access exposed http service or host your own bridge using `malai http-bridge` subcmd.
+- Built on top of [iroh][iroh], a p2p networking library.
+
+This project is backed by [FifthTry](https://fifthtry.com/), the creators of [fastn][fastn].
+
 ## Malai
 
 Malai is a simple tool that can be used to expose any local service (HTTP, TCP
@@ -32,6 +40,7 @@ Journeys [here](https://kulfi.app/doc/journeys/).
 
 `kulfi` and `malai` are built on top of [iroh][iroh], and uses [BitTorrent's
 Mainline DHT][MainlineDHT] for peer discovery.
+
 
 [fastn]: https://fastn.com
 
