@@ -6,29 +6,7 @@ pub fn ui() -> eyre::Result<()> {
             tauri::async_runtime::spawn(async move {
                 let mut request = kulfi_utils::http::vec_u8_to_bytes(request);
 
-                // TODO: handle the following assert as error
-                assert!(request.uri().to_string().starts_with("kulfi://"));
-
-                let id52 = match request.uri().host() {
-                    Some(i) => i.to_string(),
-                    None => {
-                        tracing::error!("No host in request URI: {:?}", request.uri());
-                        // TODO: respond with err
-                        return;
-                    }
-                };
-
-                assert!(
-                    id52.len() == 52,
-                    "ID must be 52 characters long, got: {id52}"
-                );
-                // TODO: id52 must be alphanumeric only. should not have a dot (.)
-
-                let new_uri = request.uri().to_string();
-                let new_uri = new_uri
-                    .strip_prefix(format!("kulfi://{id52}").as_str())
-                    .expect("already assert for kulfi://");
-                let new_uri = if new_uri.is_empty() { "/" } else { new_uri };
+                let (new_uri, id52) = kulfi_uri_to_path_and_id52(&request.uri());
 
                 *request.uri_mut() = new_uri.parse().expect("failed to parse new URI");
 
@@ -85,4 +63,33 @@ pub async fn global_iroh_endpoint() -> iroh::Endpoint {
     static IROH_ENDPOINT: tokio::sync::OnceCell<iroh::Endpoint> =
         tokio::sync::OnceCell::const_new();
     IROH_ENDPOINT.get_or_init(new_iroh_endpoint).await.clone()
+}
+
+fn kulfi_uri_to_path_and_id52(uri: &hyper::Uri) -> (String, String) {
+    // TODO: handle the following assert as error
+    let uri_str = uri.to_string();
+    assert!(uri_str.starts_with("kulfi://"));
+
+    let id52 = uri.host().expect("URI must have a host");
+
+    assert!(
+        id52.len() == 52,
+        "ID must be 52 characters long, got: {id52}"
+    );
+
+    // TODO: id52 must be alphanumeric only. should not have a dot (.)
+
+    let new_uri = uri_str
+        .strip_prefix(format!("kulfi://{id52}").as_str())
+        .expect("already assert for kulfi://");
+
+    let new_uri = if new_uri.is_empty() {
+        "/".to_string()
+    } else if !new_uri.starts_with('/') {
+        format!("/{}", new_uri)
+    } else {
+        new_uri.to_string()
+    };
+
+    (new_uri, id52.to_string())
 }
