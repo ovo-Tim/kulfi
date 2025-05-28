@@ -18,7 +18,9 @@ Malai is a simple tool that can be used to expose any local service (HTTP, TCP
 and, SSH, etc.) to the world. It can be paired up with an ACL system (like
 Kulfi) to control access to the exposed services.
 
-Install `malai` on mac and linux using the following command:
+Learn more at https://malai.sh.
+
+### Install `malai`
 
 ```bash
 curl -fsSL https://malai.sh/install.sh | sh
