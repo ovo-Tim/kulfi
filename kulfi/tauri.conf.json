@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "identifier": "app.kulfi",
   "build": {
-    "frontendDist": "https://kulfi.app"
+    "frontendDist": "kulfi://pubqaksutn9im0ncln2bki3i8diekh3sr4vp94o2cg1agjrb8dhg"
   },
   "app": {
     "withGlobalTauri": true,

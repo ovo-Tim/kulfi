@@ -111,6 +111,16 @@ pub async fn incoming_to_bytes(
     Ok(hyper::Request::from_parts(head, body.freeze()))
 }
 
-pub fn response_to_static(_resp: ProxyResult) -> eyre::Result<hyper::Response<hyper::body::Bytes>> {
-    todo!()
+pub async fn response_to_static(
+    resp: ProxyResult,
+) -> eyre::Result<hyper::Response<std::borrow::Cow<'static, [u8]>>> {
+    use http_body_util::BodyExt;
+    let resp = resp?;
+
+    let (parts, body) = resp.into_parts();
+    let bytes = body.collect().await?.to_bytes();
+
+    let new_resp = hyper::Response::from_parts(parts, std::borrow::Cow::Owned(bytes.to_vec()));
+
+    Ok(new_resp)
 }
