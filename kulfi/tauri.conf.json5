@@ -3,21 +3,14 @@
   "productName": "Kulfi App",
   "version": "0.1.0",
   "identifier": "app.kulfi",
-  "build": {
-    "frontendDist": "kulfi://pubqaksutn9im0ncln2bki3i8diekh3sr4vp94o2cg1agjrb8dhg"
-  },
   "app": {
-    "withGlobalTauri": true,
-    "windows": [
-      {
-        "title": "Kulfi App",
-        "width": 800,
-        "height": 600
-      }
-    ],
+    "withGlobalTauri": true, // inject window.__TAURI__
     "security": {
-      "csp": null
+      "csp": null,
     }
+  },
+  build: {
+    frontendDist: "./static"
   },
   "bundle": {
     "active": true,
@@ -27,7 +20,7 @@
       "icons/128x128.png",
       "icons/128x128@2x.png",
       "icons/icon.icns",
-      "icons/icon.ico"
+      "icons/icon.ico",
     ]
   }
 }

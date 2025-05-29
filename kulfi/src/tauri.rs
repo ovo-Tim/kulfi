@@ -2,6 +2,33 @@
 pub fn ui() -> eyre::Result<()> {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .setup(|app| {
+            use tauri::{LogicalPosition, LogicalSize, WebviewUrl};
+
+            let width = 800.;
+            let height = 600.;
+
+            let window = tauri::window::WindowBuilder::new(app, "main")
+                .center()
+                .inner_size(width, height)
+                .build()?;
+
+            let _webview1 = window.add_child(
+                tauri::webview::WebviewBuilder::new("browser_view", tauri::WebviewUrl::App("init_view.html".into()))
+                    .auto_resize(),
+                LogicalPosition::new(0., 0.),
+                LogicalSize::new(width, 500.), // TODO:
+            )?;
+
+            let _webview2 = window.add_child(
+                tauri::webview::WebviewBuilder::new("navigation", WebviewUrl::App("navigation.html".into()))
+                    .auto_resize(),
+                LogicalPosition::new(0., 500.),
+                LogicalSize::new(width, 100.), // TODO:
+            )?;
+
+            Ok(())
+        })
         .register_asynchronous_uri_scheme_protocol("kulfi", |_ctx, request, responder| {
             tauri::async_runtime::spawn(async move {
                 let mut request = kulfi_utils::http::vec_u8_to_bytes(request);

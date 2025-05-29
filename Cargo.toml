@@ -54,7 +54,7 @@ mime_guess = "2"
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-tauri-build = { version = "2", features = [] }
+tauri-build = { version = "2", features = ["config-json5"] }
 tauri-plugin-opener = "2"
 tokio = { version = "1", features = ["full"] }
 tokio-stream = "0.1"
@@ -71,7 +71,7 @@ rev = "5f64c7b"
 [workspace.dependencies.tauri]
 version = "2"
 default-features = false
-features = ["custom-protocol", "wry", "common-controls-v6"]
+features = ["custom-protocol", "wry", "common-controls-v6", "unstable"]
 
 [workspace.dependencies.rand_core]
 # iroh is on 0.6 so we use the same to avoid building multiple crates
