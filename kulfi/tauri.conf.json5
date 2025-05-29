@@ -1,21 +1,21 @@
 {
-  "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Kulfi App",
-  "version": "0.1.0",
-  "identifier": "app.kulfi",
-  "app": {
-    "withGlobalTauri": true, // inject window.__TAURI__
-    "security": {
-      "csp": null,
+  $schema: "https://schema.tauri.app/config/2",
+  productName: "Kulfi App",
+  version: "0.1.0",
+  identifier: "app.kulfi",
+  app: {
+    withGlobalTauri: true, // inject window.__TAURI__
+    security: {
+      csp: null,
     }
   },
   build: {
-    frontendDist: "./static"
+    frontendDist: "./static",
   },
-  "bundle": {
-    "active": true,
-    "targets": "all",
-    "icon": [
+  bundle: {
+    active: true,
+    targets: "all",
+    icon: [
       "icons/32x32.png",
       "icons/128x128.png",
       "icons/128x128@2x.png",

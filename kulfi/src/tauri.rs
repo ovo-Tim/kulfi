@@ -9,6 +9,7 @@ pub fn ui() -> eyre::Result<()> {
             let height = 600.;
 
             let window = tauri::window::WindowBuilder::new(app, "main")
+                .title("Kulfi")
                 .center()
                 .inner_size(width, height)
                 .build()?;
