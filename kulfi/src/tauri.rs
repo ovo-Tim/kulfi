@@ -35,11 +35,51 @@ pub fn ui() -> eyre::Result<()> {
                 )
                 .await;
 
-                responder.respond(
-                    kulfi_utils::http::response_to_static(response)
-                        .await
-                        .expect("failed to convert response to static"),
-                );
+                let response = kulfi_utils::http::response_to_static(response)
+                    .await
+                    .expect("failed to convert response to static");
+
+                if response.status().is_redirection() {
+                    // NOTE: webview seems to be refusing to follow LOCATION of redirection if it's
+                    // the kulfi:// protocol. We handle it manually here.
+
+                    tracing::info!("Response is a redirection: {}", response.status());
+
+                    let location = response
+                        .headers()
+                        .get(hyper::header::LOCATION)
+                        .and_then(|v| v.to_str().ok())
+                        .map(|s| s.to_string());
+
+                    tracing::info!("Location header: {:?}", location);
+                    if let Some(location) = location {
+                        let new_location = format!("kulfi://{id52}{}", location);
+
+                        tracing::info!("Redirecting to new location: {}", new_location);
+
+                        let html = format!(
+                            r#"
+                                <html>
+                                <head>
+                                    <meta http-equiv="refresh" content="0;url=kulfi://another/path" />
+                                    <script>location.href = "{new_location}";</script>
+                                </head>
+                                <body>Redirecting...</body>
+                                </html>
+                            "#
+                        );
+
+                        responder.respond(
+                            hyper::Response::builder()
+                                .header("Content-Type", "text/html")
+                                .status(200)
+                                .body(html.as_bytes().to_vec())
+                                .unwrap(),
+                        );
+                    }
+                } else {
+                    responder.respond(response);
+                }
             });
         })
         .run(tauri::generate_context!())
