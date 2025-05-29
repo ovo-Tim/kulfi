@@ -7,5 +7,69 @@ main {
 </style>
 
 <main>
-<h1>Navigation UI</h1>
+<input id="url" type="text" placeholder="enter kulfi://... url and hit enter" />
+<span id="loading"></span>
 </main>
+
+<script>
+    const urlInput = document.querySelector("#url");
+    const loading = document.querySelector("#loading");
+
+    const invoke = window.__TAURI__.core.invoke;
+
+    urlInput.addEventListener("keydown", function(event) {
+        if (event.key === "Enter") {
+            console.log("Enter key pressed");
+            const url = urlInput.value.trim();
+
+            console.log("URL entered:", url);
+
+            if (!validate(url)) {
+                console.error("Invalid URL format:", url);
+                console.info("Please enter a valid URL in the format \"kulfi://<id52>/\".");
+                return;
+            }
+
+            loading.textContent = "Loading...";
+
+            invoke("open_url", { url: url })
+                .then(() => {
+                    console.log("URL opened successfully:", url);
+                })
+                .catch((error) => {
+                    console.error("Error opening URL:", error);
+                })
+                .finally(() => {
+                    loading.textContent = "";
+                });
+        }
+    });
+
+    /**
+    * @param {string} url - The URL to validate.
+    * @returns {boolean} True if the URL is valid, false otherwise.
+    */
+    function validate(url) {
+        if (!url) {
+            return false;
+        }
+
+        if (!url.startsWith("kulfi://")) {
+            return false;
+        }
+
+        const url_parts = url.split("/");
+
+        if (url_parts.length < 3) {
+            return false;
+        }
+
+        const id52 = url_parts[2];
+
+        if (id52.length !== 52) {
+            return false;
+        }
+
+        return true;
+    }
+</script>

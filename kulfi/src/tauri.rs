@@ -1,3 +1,6 @@
+const BROWSER_WEBVIEW: &'static str = "browser_view";
+const NAV_WEBVIEW: &'static str = "navigation";
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn ui() -> eyre::Result<()> {
     tauri::Builder::default()
@@ -15,14 +18,14 @@ pub fn ui() -> eyre::Result<()> {
                 .build()?;
 
             let _webview1 = window.add_child(
-                tauri::webview::WebviewBuilder::new("browser_view", tauri::WebviewUrl::App("init_view.html".into()))
+                tauri::webview::WebviewBuilder::new(BROWSER_WEBVIEW, tauri::WebviewUrl::App("init_view.html".into()))
                     .auto_resize(),
                 LogicalPosition::new(0., 0.),
                 LogicalSize::new(width, 500.), // TODO:
             )?;
 
             let _webview2 = window.add_child(
-                tauri::webview::WebviewBuilder::new("navigation", WebviewUrl::App("navigation.html".into()))
+                tauri::webview::WebviewBuilder::new(NAV_WEBVIEW, WebviewUrl::App("navigation.html".into()))
                     .auto_resize(),
                 LogicalPosition::new(0., 500.),
                 LogicalSize::new(width, 100.), // TODO:
@@ -110,10 +113,35 @@ pub fn ui() -> eyre::Result<()> {
                 }
             });
         })
+        .invoke_handler(tauri::generate_handler![open_url])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 
     Ok(())
+}
+
+/// Called from `navigation.html` frontend when the user enters a kulfi url and hits the enter key
+#[tauri::command]
+async fn open_url(app_handle: tauri::AppHandle, url: String) -> Result<(), OpenUrlError> {
+    use tauri::Manager;
+
+    tracing::info!("{:?}", app_handle.webviews().get("browser_view"));
+
+    Ok(app_handle
+        .get_webview(BROWSER_WEBVIEW)
+        .ok_or(OpenUrlError::NoWebview)?
+        .navigate(url.parse().map_err(|_| OpenUrlError::InvalidUrl)?)
+        .map_err(|_| OpenUrlError::Navigation)?)
+}
+
+#[derive(Debug, thiserror::Error, serde::Serialize)]
+enum OpenUrlError {
+    #[error("No webview found to open the URL")]
+    NoWebview,
+    #[error("Invalid URL provided")]
+    InvalidUrl,
+    #[error("Failed to navigate to the URL")]
+    Navigation,
 }
 
 pub async fn global_iroh_endpoint() -> iroh::Endpoint {
