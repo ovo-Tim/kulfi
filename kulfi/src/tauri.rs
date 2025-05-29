@@ -8,8 +8,10 @@ pub fn ui() -> eyre::Result<()> {
         .setup(|app| {
             use tauri::{LogicalPosition, LogicalSize, WebviewUrl};
 
-            let width = 800.;
-            let height = 600.;
+            let width = 800.0;
+            let height = 600.0;
+            let bottom_height = 40.0;
+            let top_height = height - bottom_height;
 
             let window = tauri::window::WindowBuilder::new(app, "main")
                 .title("Kulfi")
@@ -21,14 +23,14 @@ pub fn ui() -> eyre::Result<()> {
                 tauri::webview::WebviewBuilder::new(BROWSER_WEBVIEW, tauri::WebviewUrl::App("init_view.html".into()))
                     .auto_resize(),
                 LogicalPosition::new(0., 0.),
-                LogicalSize::new(width, 500.), // TODO:
+                LogicalSize::new(width, top_height), // TODO:
             )?;
 
             let _webview2 = window.add_child(
                 tauri::webview::WebviewBuilder::new(NAV_WEBVIEW, WebviewUrl::App("navigation.html".into()))
                     .auto_resize(),
-                LogicalPosition::new(0., 500.),
-                LogicalSize::new(width, 100.), // TODO:
+                LogicalPosition::new(0., top_height),
+                LogicalSize::new(width, bottom_height), // TODO:
             )?;
 
             Ok(())
