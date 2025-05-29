@@ -1,6 +1,7 @@
-const BROWSER_WEBVIEW: &'static str = "browser_view";
-const NAV_WEBVIEW: &'static str = "navigation";
+const BROWSER_WEBVIEW: &str = "browser_view";
+const NAV_WEBVIEW: &str = "navigation";
 
+#[allow(unexpected_cfgs)]
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn ui() -> eyre::Result<()> {
     tauri::Builder::default()
@@ -39,7 +40,7 @@ pub fn ui() -> eyre::Result<()> {
             tauri::async_runtime::spawn(async move {
                 let mut request = kulfi_utils::http::vec_u8_to_bytes(request);
 
-                let (new_uri, id52) = kulfi_uri_to_path_and_id52(&request.uri());
+                let (new_uri, id52) = kulfi_uri_to_path_and_id52(request.uri());
 
                 *request.uri_mut() = new_uri.parse().expect("failed to parse new URI");
 
@@ -60,7 +61,7 @@ pub fn ui() -> eyre::Result<()> {
                 let response = kulfi_utils::http_to_peer(
                     kulfi_utils::Protocol::Http.into(),
                     request,
-                    global_iroh_endpoint().await,
+                    kulfi_utils::global_iroh_endpoint().await,
                     &id52,
                     peer_connections,
                     Default::default(), /* RequestPatch */
@@ -129,11 +130,11 @@ async fn open_url(app_handle: tauri::AppHandle, url: String) -> Result<(), OpenU
 
     tracing::info!("{:?}", app_handle.webviews().get("browser_view"));
 
-    Ok(app_handle
+    app_handle
         .get_webview(BROWSER_WEBVIEW)
         .ok_or(OpenUrlError::NoWebview)?
         .navigate(url.parse().map_err(|_| OpenUrlError::InvalidUrl)?)
-        .map_err(|_| OpenUrlError::Navigation)?)
+        .map_err(|_| OpenUrlError::Navigation)
 }
 
 #[derive(Debug, thiserror::Error, serde::Serialize)]
@@ -144,23 +145,6 @@ enum OpenUrlError {
     InvalidUrl,
     #[error("Failed to navigate to the URL")]
     Navigation,
-}
-
-pub async fn global_iroh_endpoint() -> iroh::Endpoint {
-    async fn new_iroh_endpoint() -> iroh::Endpoint {
-        // TODO: read secret key from ENV VAR
-        iroh::Endpoint::builder()
-            .discovery_n0()
-            .discovery_local_network()
-            .alpns(vec![kulfi_utils::APNS_IDENTITY.into()])
-            .bind()
-            .await
-            .expect("failed to create iroh Endpoint")
-    }
-
-    static IROH_ENDPOINT: tokio::sync::OnceCell<iroh::Endpoint> =
-        tokio::sync::OnceCell::const_new();
-    IROH_ENDPOINT.get_or_init(new_iroh_endpoint).await.clone()
 }
 
 fn kulfi_uri_to_path_and_id52(uri: &hyper::Uri) -> (String, String) {

@@ -23,7 +23,7 @@ pub async fn tcp_bridge(
             }
             val = listener.accept() => {
                 tracing::info!("got connection");
-                let self_endpoint = malai::global_iroh_endpoint().await;
+                let self_endpoint = kulfi_utils::global_iroh_endpoint().await;
                 let graceful_for_handle_connection = graceful.clone();
                 let peer_connections = peer_connections.clone();
                 let proxy_target = proxy_target.clone();

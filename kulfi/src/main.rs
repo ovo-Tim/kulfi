@@ -34,21 +34,13 @@ async fn main() -> eyre::Result<()> {
 
             kulfi::start(foreground, data_dir, control_port, graceful.clone()).await
         }
-        #[cfg(feature = "ui")]
         Some(Command::Browse { url }) => {
             tracing::info!(url, verbose = ?cli.verbose, "Opening browser.");
             kulfi::browse(url, graceful.clone()).await
         }
-        #[cfg(feature = "ui")]
         None => {
             tracing::info!(verbose = ?cli.verbose, "Starting UI.");
             kulfi::ui()
-        }
-        #[cfg(not(feature = "ui"))]
-        None => {
-            use clap::CommandFactory;
-            // TODO: handle error here
-            Cli::command().print_help().map_err(Into::into)
         }
     } {
         tracing::error!("Error: {e:?}");
@@ -85,7 +77,6 @@ pub enum Command {
         #[arg(default_value_t = 80, long, short = 'p')]
         control_port: u16,
     },
-    #[cfg(feature = "ui")]
     #[clap(about = "Browse a kulfi site.")]
     Browse { url: String },
 }

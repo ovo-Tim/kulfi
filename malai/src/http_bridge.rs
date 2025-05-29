@@ -47,7 +47,7 @@ pub async fn http_bridge(
                         let peer_connections = peer_connections.clone();
                         let proxy_target = proxy_target.clone();
                         graceful.spawn(async move {
-                            let self_endpoint = malai::global_iroh_endpoint().await;
+                            let self_endpoint = kulfi_utils::global_iroh_endpoint().await;
                             handle_connection(
                                 self_endpoint,
                                 stream,
