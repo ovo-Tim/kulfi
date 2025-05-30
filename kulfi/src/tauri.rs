@@ -4,6 +4,25 @@ const NAV_WEBVIEW: &str = "navigation";
 #[allow(unexpected_cfgs)]
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn ui() -> eyre::Result<()> {
+    const BROWSER_INIT_SCRIPT: &'static str = r#"
+        console.log("Browser Init Script Loaded");
+
+        const emitTo = window.__TAURI__.event.emitTo;
+        const url = document.location.href;
+
+        console.log("Current URL:", url);
+
+        if (!url.startsWith("tauri://")) {
+            emitTo("navigation", "url-changed", url).
+              then(() => {
+                console.log("URL change emitted to navigation webview");
+              })
+              .catch(err => {
+                console.error("Failed to emit URL change:", err);
+              });
+        }
+    "#;
+
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
@@ -20,9 +39,10 @@ pub fn ui() -> eyre::Result<()> {
                 .inner_size(width, height)
                 .build()?;
 
-            let _webview1 = window.add_child(
+            let _browser_window = window.add_child(
                 tauri::webview::WebviewBuilder::new(BROWSER_WEBVIEW, tauri::WebviewUrl::App("init_view.html".into()))
-                    .auto_resize(),
+                    .auto_resize()
+                    .initialization_script(BROWSER_INIT_SCRIPT),
                 LogicalPosition::new(0., 0.),
                 LogicalSize::new(width, top_height), // TODO:
             )?;

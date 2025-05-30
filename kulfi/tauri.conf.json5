@@ -7,6 +7,7 @@
     withGlobalTauri: true, // inject window.__TAURI__
     security: {
       csp: null,
+      capabilities: ["main-capability"]
     }
   },
   build: {
@@ -22,5 +23,5 @@
       "icons/icon.icns",
       "icons/icon.ico",
     ]
-  }
+  },
 }

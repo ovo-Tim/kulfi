@@ -52,6 +52,11 @@
 
     document.querySelector("#submit").addEventListener("click", goToUrl);
 
+    window.__TAURI__.event.listen("url-changed", (e) => {
+        const url = e.payload;
+        console.log("URL changed to:", url);
+        urlInput.value = url;
+    });
 
     function goToUrl() {
         const url = urlInput.value.trim();
