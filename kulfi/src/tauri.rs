@@ -7,6 +7,7 @@ pub fn ui() -> eyre::Result<()> {
     const BROWSER_INIT_SCRIPT: &str = r#"
         console.log("Browser Init Script Loaded");
 
+        const listen = window.__TAURI__.event.listen;
         const emitTo = window.__TAURI__.event.emitTo;
         const url = document.location.href;
 
@@ -21,6 +22,16 @@ pub fn ui() -> eyre::Result<()> {
                 console.error("Failed to emit URL change:", err);
               });
         }
+
+        listen("nav-back", () => {
+            console.log("going back one page");
+            history.back();
+        });
+
+        listen("nav-forward", () => {
+            console.log("going forward one page");
+            history.forward();
+        });
     "#;
 
     tauri::Builder::default()

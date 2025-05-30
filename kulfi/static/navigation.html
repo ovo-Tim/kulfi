@@ -31,6 +31,8 @@
 </style>
 
 <main>
+    <button id="back"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="#000000" viewBox="0 0 256 256"><path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"></path></svg></button>
+    <button id="forward"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="#000000" viewBox="0 0 256 256"><path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"></path></svg></button>
     <input id="url" placeholder="enter kulfi://... url and hit enter" type="text" />
     <button id="submit" type="button">Go</button>
     <span id="loading"></span>
@@ -41,6 +43,8 @@
     const loading = document.querySelector("#loading");
 
     const invoke = window.__TAURI__.core.invoke;
+    const emitTo = window.__TAURI__.event.emitTo;
+    const listen = window.__TAURI__.event.listen;
 
     urlInput.addEventListener("keydown", function(event) {
         if (event.key !== "Enter") {
@@ -52,10 +56,30 @@
 
     document.querySelector("#submit").addEventListener("click", goToUrl);
 
-    window.__TAURI__.event.listen("url-changed", (e) => {
+    listen("url-changed", (e) => {
         const url = e.payload;
         console.log("URL changed to:", url);
         urlInput.value = url;
+    });
+
+    document.querySelector("#back").addEventListener("click", () => {
+        emitTo("browser_view", "nav-back")
+          .then(() => {
+            console.log("Request to go back one page emitted successfully.");
+          })
+          .catch(err => {
+            console.error("Failed to request nav back request:", err);
+          });
+    });
+
+    document.querySelector("#forward").addEventListener("click", () => {
+        emitTo("browser_view", "nav-forward")
+          .then(() => {
+            console.log("Request to go forward one page emitted successfully.");
+          })
+          .catch(err => {
+            console.error("Failed to request nav forward request:", err);
+          });
     });
 
     function goToUrl() {
