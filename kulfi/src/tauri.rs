@@ -4,7 +4,7 @@ const NAV_WEBVIEW: &str = "navigation";
 #[allow(unexpected_cfgs)]
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn ui() -> eyre::Result<()> {
-    const BROWSER_INIT_SCRIPT: &'static str = r#"
+    const BROWSER_INIT_SCRIPT: &str = r#"
         console.log("Browser Init Script Loaded");
 
         const emitTo = window.__TAURI__.event.emitTo;
