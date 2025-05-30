@@ -83,19 +83,22 @@
     });
 
     function goToUrl() {
-        const url = urlInput.value.trim();
+        let url = urlInput.value.trim();
 
         console.log("Button clicked, URL entered:", url);
 
-        if (!validate(url)) {
+        url = validate(url);
+
+        if (!url) {
             console.error("Invalid URL format:", url);
             console.info("Please enter a valid URL in the format \"kulfi://<id52>/\".");
+            console.info("URLs starting with id52 are also accepted, e.g, <id52>/some-path/");
             return;
         }
 
         loading.textContent = "Loading...";
 
-        invoke("open_url", { url: url })
+        invoke("open_url", { url })
             .then(() => {
                 console.log("URL opened successfully:", url);
             })
@@ -109,35 +112,40 @@
 
     /**
     * @param {string} url - The URL to validate.
-    * @returns {boolean} True if the URL is valid, false otherwise.
-     *
-     * // TODO: return validated url or null if invalid
+    * @returns {string | null} The rewritten URL if it's valid, null otherwise.
     */
     function validate(url) {
         if (!url) {
-            return false;
+            return null;
         }
 
-        // TODO: if protocol is not included and first part is 52 char long
-        //       then assume it is a kulfi url and add the protocol, if not
-        //       then assume it is https and add the protocol.
-
-        if (!url.toLowerCase().startsWith("kulfi://")) {
-            return false;
+        // if no protocol is specified, assume kulfi:// or https://
+        if (!/^([a-z][a-z0-9+\-.]*):\/\//i.test(url)) {
+            const firstPart = url.split("/")[0];
+            if (firstPart.length === 52) {
+                console.info("Detected id52 format, assuming kulfi:// url. Use https:// explicitly to override");
+                url = `kulfi://${url}`;
+            } else {
+                console.info("assuming https://");
+                url = `https://${url}`;
+            }
         }
 
-        const url_parts = url.split("/");
+        try {
+            const parsed = new URL(url);
 
-        if (url_parts.length < 3) {
-            return false;
+            console.info("using protocol: ", parsed.protocol);
+
+            if (parsed.protocol === "kulfi:" 
+                && parsed.hostname.length !== 52) {
+                console.error("kulfi:// protocol requires hostname to be id52");
+                return null;
+            }
+
+            return parsed.toString();
+        } catch (e) {
+            console.error("Invalid URL format:", e);
+            return null;
         }
-
-        const id52 = url_parts[2];
-
-        if (id52.length !== 52) {
-            return false;
-        }
-
-        return true;
     }
 </script>
