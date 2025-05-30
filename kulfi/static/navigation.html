@@ -98,7 +98,7 @@
         //       then assume it is a kulfi url and add the protocol, if not
         //       then assume it is https and add the protocol.
 
-        if (!url.startsWith("kulfi://")) {
+        if (!url.toLowerCase().startsWith("kulfi://")) {
             return false;
         }
 
