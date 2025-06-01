@@ -15,7 +15,8 @@ on:
       - 'Cargo.*'
       - '**/Cargo.toml'
       - '!.github/**'
-      - '!ftnet.in/**'
+      - '!malai.sh/**'
+      - '!kulfi.app/**'
       - '.github/workflows/tests-and-formatting.yml'
   pull_request:
     branches: [ main ]
@@ -30,7 +31,8 @@ on:
       - 'Cargo.*'
       - '**/Cargo.toml'
       - '!.github/**'
-      - '!ftnet.in/**'
+      - '!malai.sh/**'
+      - '!kulfi.app/**'
       - '.github/workflows/tests-and-formatting.yml'
 jobs:
   tests-and-formatting:
