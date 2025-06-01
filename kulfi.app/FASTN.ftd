@@ -1,6 +1,7 @@
 -- import: fastn
 
 -- fastn.package: kulfi.app
+zip: https://www.fifthtry.com/kulfi-app.zip
 
 -- fastn.dependency: design-system.fifthtry.site
 provided-via: kulfi.app/ds
