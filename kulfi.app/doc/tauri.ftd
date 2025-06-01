@@ -72,7 +72,7 @@ pub fn run() {
         .expect("error while running tauri application");
 }
 
--- ds.body-regular:
+-- ds.copy-regular:
 
 In above code we are using [`tauri::Builder.register_asynchronous_uri_scheme_protocol()`][1]
 to register an async handler that is called with http request etc. In our
@@ -81,4 +81,4 @@ server's http handler without listening on actual port.
 
 [1]: https://docs.rs/tauri/2.5.0/tauri/struct.Builder.html#method.register_asynchronous_uri_scheme_protocol
 
--- end: ds.page
+-- end: ds.site-page
