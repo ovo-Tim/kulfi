@@ -69,14 +69,18 @@ pub async fn folder(
                 println!("Listening on http://127.0.0.1:{port}");
                 println!("Press ctrl+c again to exit.");
             }
-            Ok((stream, _addr)) = listener.accept() => {
-                let graceful_for_handle_connection = graceful.clone();
-                let path = path.clone();
-                graceful.spawn(async move { handle_connection(stream, path, graceful_for_handle_connection).await });
+            conn = listener.accept() => {
+                match conn {
+                    Ok((stream, _)) => {
+                        let graceful_for_handle_connection = graceful.clone();
+                        let path = path.clone();
+                        graceful.spawn(async move { handle_connection(stream, path, graceful_for_handle_connection).await });
+                    }
+                    Err(e) => {
+                        tracing::error!("failed to accept: {e:?}");
+                    }
+                }
             }
-            Err(e) = listener.accept() => {
-                tracing::error!("failed to accept: {e:?}");
-            },
         }
     }
 
