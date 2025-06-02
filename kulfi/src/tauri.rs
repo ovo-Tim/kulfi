@@ -9,19 +9,12 @@ pub fn ui() -> eyre::Result<()> {
 
         const listen = window.__TAURI__.event.listen;
         const emitTo = window.__TAURI__.event.emitTo;
-        const url = document.location.href;
 
-        console.log("Current URL:", url);
-
-        if (!url.startsWith("tauri://")) {
-            emitTo("navigation", "url-changed", url).
-              then(() => {
-                console.log("URL change emitted to navigation webview");
-              })
-              .catch(err => {
-                console.error("Failed to emit URL change:", err);
-              });
-        }
+        // https://developer.mozilla.org/en-US/docs/Web/API/Window/pageshow_event
+        window.addEventListener("pageshow", () => {
+            console.info("Page show event triggered");
+            emitUrlChange(window.location.href);
+        });
 
         listen("nav-back", () => {
             console.log("going back one page");
@@ -32,6 +25,26 @@ pub fn ui() -> eyre::Result<()> {
             console.log("going forward one page");
             history.forward();
         });
+
+
+        /**
+         * @param {string} url
+         */
+        function emitUrlChange(url) {
+            console.log("Current URL:", url);
+            if (url.startsWith("tauri://")) {
+                console.info("URL starts with tauri://, ignoring emitUrlChange");
+                return;
+            }
+
+            emitTo("navigation", "url-changed", url).
+              then(() => {
+                console.log("URL change emitted to navigation webview");
+              })
+              .catch(err => {
+                console.error("Failed to emit URL change:", err);
+              });
+        }
     "#;
 
     tauri::Builder::default()
