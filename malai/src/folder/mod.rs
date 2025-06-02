@@ -125,14 +125,28 @@ async fn handle_request(
     base_path: std::sync::Arc<std::path::PathBuf>,
 ) -> kulfi_utils::http::ProxyResult {
     let path = r.uri().path().to_string();
+    let path = percent_encoding::percent_decode_str(&path)
+        .decode_utf8()
+        .map_err(|e| {
+            tracing::error!(?e, "failed to decode path");
+            eyre::anyhow!("invalid path")
+        })?;
+
+    tracing::info!(?path, "request path");
+    tracing::info!(?base_path, "base path");
+
     let path = join_path(&base_path, &path)?;
+    tracing::info!(?path, "joined path");
 
     if path.is_dir() {
+        tracing::info!("rendering folder");
         return Ok(kulfi_utils::http::bytes_to_resp(
             malai::folder::render_folder(&path, &base_path)?.into_bytes(),
             hyper::StatusCode::OK,
         ));
     }
+
+    tracing::info!("serving file");
 
     let mime = path
         .extension()
@@ -150,6 +164,7 @@ async fn handle_request(
     Ok(r)
 }
 
+#[tracing::instrument]
 fn join_path(base_path: &std::path::Path, o_path: &str) -> eyre::Result<std::path::PathBuf> {
     let path = base_path
         .join(o_path.strip_prefix('/').unwrap_or(o_path))

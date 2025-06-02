@@ -3208,6 +3208,7 @@ dependencies = [
  "kulfi-utils",
  "libdbus-sys",
  "mime_guess",
+ "percent-encoding",
  "serde",
  "serde_json",
  "tauri",
