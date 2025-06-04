@@ -248,21 +248,23 @@ fn validate_path(path: &str) -> eyre::Result<std::path::PathBuf> {
 /// range is inclusive (start..=end)
 /// https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Range
 fn parse_range(header_value: &str) -> Option<(u64, Option<u64>)> {
-    if header_value.starts_with("bytes=") {
-        let parts: Vec<_> = header_value[6..].split('-').collect();
-        if parts.len() == 2 {
-            match parts.as_slice() {
-                [start, end] if !start.is_empty() && !end.is_empty() => {
-                    let start = start.parse::<u64>().ok()?;
-                    let end = end.parse::<u64>().ok()?;
-                    return Some((start, Some(end)));
-                }
-                [start, ""] if !start.is_empty() => {
-                    let start = start.parse::<u64>().ok()?;
-                    return Some((start, None));
-                }
-                _ => return None,
+    if let Some(val) = header_value.strip_prefix("bytes=") {
+        let parts: Vec<_> = val.split('-').collect();
+        match parts.as_slice() {
+            [start, end] if !start.is_empty() && !end.is_empty() => {
+                let start = start.parse::<u64>().ok()?;
+                let end = end.parse::<u64>().ok()?;
+                return Some((start, Some(end)));
             }
+            [start, ""] if !start.is_empty() => {
+                let start = start.parse::<u64>().ok()?;
+                return Some((start, None));
+            }
+            [start] if !start.is_empty() => {
+                let start = start.parse::<u64>().ok()?;
+                return Some((start, None));
+            }
+            _ => return None,
         }
     }
     None
