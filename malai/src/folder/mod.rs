@@ -123,7 +123,13 @@ pub async fn handle_connection(
 async fn handle_request(
     r: hyper::Request<hyper::body::Incoming>,
     base_path: std::sync::Arc<std::path::PathBuf>,
-) -> kulfi_utils::http::ProxyResult {
+) -> eyre::Result<
+    hyper::Response<http_body_util::combinators::BoxBody<hyper::body::Bytes, std::io::Error>>,
+> {
+    use futures_util::TryStreamExt;
+    use http_body_util::BodyExt;
+    use tokio::io::AsyncSeekExt;
+
     let path = r.uri().path().to_string();
     let path = percent_encoding::percent_decode_str(&path)
         .decode_utf8()
@@ -140,7 +146,7 @@ async fn handle_request(
 
     if path.is_dir() {
         tracing::info!("rendering folder");
-        return Ok(kulfi_utils::http::bytes_to_resp(
+        return Ok(kulfi_utils::http::bytes_to_resp::<std::io::Error>(
             malai::folder::render_folder(&path, &base_path)?.into_bytes(),
             hyper::StatusCode::OK,
         ));
@@ -155,13 +161,57 @@ async fn handle_request(
         .and_then(|v| v.first())
         .unwrap_or(mime_guess::mime::APPLICATION_OCTET_STREAM);
 
-    let mut r = // TODO: streaming response
-        kulfi_utils::http::bytes_to_resp(tokio::fs::read(path).await?, hyper::StatusCode::OK);
+    let mut file = tokio::fs::File::open(path).await?;
+    let metadata = file.metadata().await?;
+    let total_size = metadata.len();
 
-    r.headers_mut()
-        .insert("content-type", mime.to_string().parse()?);
+    let range = r
+        .headers()
+        .get(hyper::header::RANGE)
+        .and_then(|v| v.to_str().ok())
+        .and_then(parse_range);
 
-    Ok(r)
+    let resp = if let Some((start, end)) = range {
+        let end = end.unwrap_or(total_size - 1);
+        let end = end.min(total_size - 1);
+        tracing::info!(start, end, "range request");
+        let length = end - start + 1;
+
+        file.seek(std::io::SeekFrom::Start(start)).await.unwrap();
+
+        let reader_stream = tokio_util::io::ReaderStream::new(file);
+
+        let stream_body =
+            http_body_util::StreamBody::new(reader_stream.map_ok(hyper::body::Frame::data));
+        let boxed_body = stream_body.boxed();
+
+        hyper::Response::builder()
+            .status(hyper::StatusCode::PARTIAL_CONTENT)
+            .header(hyper::header::ACCEPT_RANGES, "bytes")
+            .header(hyper::header::CONTENT_LENGTH, length.to_string())
+            .header(hyper::header::CONTENT_TYPE, mime.as_ref())
+            .header(
+                hyper::header::CONTENT_RANGE,
+                format!("bytes {}-{}/{}", start, end, total_size),
+            )
+            .body(boxed_body)?
+    } else {
+        tracing::info!("full file request");
+        let reader_stream = tokio_util::io::ReaderStream::new(file);
+
+        let stream_body =
+            http_body_util::StreamBody::new(reader_stream.map_ok(hyper::body::Frame::data));
+        let boxed_body = stream_body.boxed();
+
+        hyper::Response::builder()
+            .status(hyper::StatusCode::OK)
+            .header(hyper::header::CONTENT_TYPE, mime.as_ref())
+            .header(hyper::header::ACCEPT_RANGES, "bytes")
+            .header(hyper::header::CONTENT_LENGTH, total_size.to_string())
+            .body(boxed_body)?
+    };
+
+    Ok(resp)
 }
 
 #[tracing::instrument]
@@ -190,4 +240,46 @@ fn validate_path(path: &str) -> eyre::Result<std::path::PathBuf> {
     }
 
     Ok(path.canonicalize()?)
+}
+
+/// Parse HTTP Range header value
+/// "bytes=1000-2000" to Some((start, Some(end)))
+/// "bytes=1000-" to Some((start, None))
+/// range is inclusive (start..=end)
+/// https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Range
+fn parse_range(header_value: &str) -> Option<(u64, Option<u64>)> {
+    if header_value.starts_with("bytes=") {
+        let parts: Vec<_> = header_value[6..].split('-').collect();
+        if parts.len() == 2 {
+            match parts.as_slice() {
+                [start, end] if !start.is_empty() && !end.is_empty() => {
+                    let start = start.parse::<u64>().ok()?;
+                    let end = end.parse::<u64>().ok()?;
+                    return Some((start, Some(end)));
+                }
+                [start, ""] if !start.is_empty() => {
+                    let start = start.parse::<u64>().ok()?;
+                    return Some((start, None));
+                }
+                _ => return None,
+            }
+        }
+    }
+    None
+}
+
+#[cfg(test)]
+mod test {
+    use super::parse_range;
+
+    #[test]
+    fn test_parse_range() {
+        assert_eq!(parse_range("bytes=1000-2000"), Some((1000, Some(2000))));
+        assert_eq!(parse_range("bytes=1000-"), Some((1000, None)));
+        assert_eq!(parse_range("bytes=-2000"), None);
+        assert_eq!(parse_range("bytes=1000-1000"), Some((1000, Some(1000))));
+        assert_eq!(parse_range("bytes=abc-def"), None);
+        assert_eq!(parse_range("bytes="), None);
+        assert_eq!(parse_range("bytes=1000-2000,3000-4000"), None);
+    }
 }

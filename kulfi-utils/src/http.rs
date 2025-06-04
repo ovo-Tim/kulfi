@@ -30,8 +30,8 @@ pub struct Response {
     pub headers: Vec<(String, Vec<u8>)>,
 }
 
-pub type ProxyResponse =
-    hyper::Response<http_body_util::combinators::BoxBody<hyper::body::Bytes, hyper::Error>>;
+pub type ProxyResponse<E = hyper::Error> =
+    hyper::Response<http_body_util::combinators::BoxBody<hyper::body::Bytes, E>>;
 pub type ProxyResult = eyre::Result<ProxyResponse>;
 
 #[allow(dead_code)]
@@ -76,7 +76,7 @@ pub fn redirect<S: AsRef<str>>(url: S) -> ProxyResponse {
     r
 }
 
-pub fn bytes_to_resp(bytes: Vec<u8>, status: hyper::StatusCode) -> ProxyResponse {
+pub fn bytes_to_resp<E>(bytes: Vec<u8>, status: hyper::StatusCode) -> ProxyResponse<E> {
     use http_body_util::BodyExt;
 
     let mut r = hyper::Response::new(
