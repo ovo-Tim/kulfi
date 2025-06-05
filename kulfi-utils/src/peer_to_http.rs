@@ -57,7 +57,7 @@ pub async fn peer_to_http(
 
     let boxed_body = http_body_util::BodyExt::boxed(stream_body);
 
-    let (resp, body) = client
+    let (resp, mut body) = client
         .send_request(r.body(boxed_body)?)
         .await
         .wrap_err_with(|| "failed to send request")?
@@ -79,9 +79,26 @@ pub async fn peer_to_http(
     )
     .await?;
     send.write_all(b"\n").await?;
-    let bytes = body.collect().await?.to_bytes();
-    tracing::debug!("got response body: {} bytes", bytes.len());
-    send.write_all(&bytes).await?;
+    tracing::debug!(
+        "got response body of size: {:?} bytes",
+        hyper::body::Body::size_hint(&body)
+    );
+
+    while let Some(chunk) = body.frame().await {
+        match chunk {
+            Ok(v) => {
+                let data = v
+                    .data_ref()
+                    .ok_or_else(|| eyre::anyhow!("chunk data is None"))?;
+                tracing::info!("sending chunk of size: {}", data.len());
+                send.write_all(data).await?;
+            }
+            Err(e) => {
+                tracing::error!("error reading chunk: {e:?}");
+                return Err(eyre::anyhow!("read_chunk error: {e:?}"));
+            }
+        }
+    }
 
     tracing::info!("handled http request in {:?}", start.elapsed());
 
