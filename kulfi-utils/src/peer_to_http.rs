@@ -26,23 +26,6 @@ pub async fn peer_to_http(
 
     tracing::info!("got request: {req:?}");
 
-    let mut body = recv.read_buffer().to_vec();
-    let mut recv = recv.into_inner();
-
-    let mut buf = Vec::with_capacity(1024 * 64);
-
-    tracing::trace!("reading body");
-    while let Some(v) = recv.read(&mut buf).await? {
-        if v == 0 {
-            tracing::trace!("finished reading");
-            break;
-        }
-        tracing::trace!("reading body, partial: {v}");
-        body.extend_from_slice(&buf);
-        buf.truncate(0);
-    }
-    tracing::debug!("read {} bytes of body", body.len());
-
     let mut r = hyper::Request::builder()
         .method(req.method.as_str())
         .uri(&req.uri);
@@ -63,14 +46,19 @@ pub async fn peer_to_http(
     };
     // tracing::info!("got client");
 
+    use futures_util::TryStreamExt;
+    let stream_body = http_body_util::StreamBody::new(
+        recv.map_ok(|line| hyper::body::Frame::data(bytes::Bytes::from(line)))
+            .map_err(|e| {
+                tracing::error!("error reading chunk: {e:?}");
+                eyre::anyhow!("read_chunk error: {e:?}")
+            }),
+    );
+
+    let boxed_body = http_body_util::BodyExt::boxed(stream_body);
+
     let (resp, body) = client
-        .send_request(
-            r.body(
-                http_body_util::Full::new(hyper::body::Bytes::from(body))
-                    .map_err(|e| match e {})
-                    .boxed(),
-            )?,
-        )
+        .send_request(r.body(boxed_body)?)
         .await
         .wrap_err_with(|| "failed to send request")?
         .into_parts();

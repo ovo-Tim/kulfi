@@ -3051,6 +3051,7 @@ dependencies = [
  "eyre",
  "file-guard",
  "ftnet-sdk",
+ "futures-util",
  "http-body-util",
  "hyper",
  "hyper-util",

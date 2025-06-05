@@ -15,7 +15,7 @@ impl HttpConnectionManager {
         &self,
     ) -> eyre::Result<
         hyper::client::conn::http1::SendRequest<
-            http_body_util::combinators::BoxBody<hyper::body::Bytes, hyper::Error>,
+            http_body_util::combinators::BoxBody<hyper::body::Bytes, eyre::Error>,
         >,
     > {
         use eyre::WrapErr;
@@ -40,7 +40,7 @@ impl HttpConnectionManager {
 
 impl bb8::ManageConnection for HttpConnectionManager {
     type Connection = hyper::client::conn::http1::SendRequest<
-        http_body_util::combinators::BoxBody<hyper::body::Bytes, hyper::Error>,
+        http_body_util::combinators::BoxBody<hyper::body::Bytes, eyre::Error>,
     >;
     type Error = eyre::Error;
 
