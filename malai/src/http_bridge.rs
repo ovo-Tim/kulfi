@@ -109,7 +109,7 @@ async fn handle_request(
     peer_connections: kulfi_utils::PeerStreamSenders,
     proxy_target: Option<String>,
     graceful: kulfi_utils::Graceful,
-) -> kulfi_utils::http::ProxyResult {
+) -> kulfi_utils::http::ProxyResult<eyre::Error> {
     let peer_id = match get_peer_id52_from_host(
         r.headers().get("Host").and_then(|h| h.to_str().ok()),
         proxy_target,
@@ -127,7 +127,7 @@ async fn handle_request(
 
     kulfi_utils::http_to_peer(
         kulfi_utils::Protocol::Http.into(),
-        kulfi_utils::http::incoming_to_bytes(r).await?,
+        r,
         self_endpoint,
         &peer_id,
         peer_connections,

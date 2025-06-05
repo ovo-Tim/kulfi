@@ -1,12 +1,12 @@
 pub async fn http_to_peer(
     header: kulfi_utils::ProtocolHeader,
-    req: hyper::Request<hyper::body::Bytes>,
+    req: hyper::Request<hyper::body::Incoming>,
     self_endpoint: iroh::Endpoint,
     remote_node_id52: &str,
     peer_connections: kulfi_utils::PeerStreamSenders,
     _patch: ftnet_sdk::RequestPatch,
     graceful: kulfi_utils::Graceful,
-) -> kulfi_utils::http::ProxyResult {
+) -> kulfi_utils::http::ProxyResult<eyre::Error> {
     use http_body_util::BodyExt;
 
     tracing::info!("peer_proxy: {remote_node_id52}");
@@ -22,14 +22,28 @@ pub async fn http_to_peer(
 
     tracing::info!("wrote protocol");
 
-    let (head, body) = req.into_parts();
+    let (head, mut body) = req.into_parts();
     send.write_all(&serde_json::to_vec(&crate::http::Request::from(head))?)
         .await?;
     send.write_all(b"\n").await?;
 
     tracing::info!("sent request header");
 
-    send.write_all(&body).await?;
+    while let Some(chunk) = body.frame().await {
+        match chunk {
+            Ok(v) => {
+                let data = v
+                    .data_ref()
+                    .ok_or_else(|| eyre::anyhow!("chunk data is None"))?;
+                tracing::info!("sending chunk of size: {}", data.len());
+                send.write_all(data).await?;
+            }
+            Err(e) => {
+                tracing::error!("error reading chunk: {e:?}");
+                return Err(eyre::anyhow!("read_chunk error: {e:?}"));
+            }
+        }
+    }
 
     tracing::info!("sent body");
 
@@ -37,41 +51,27 @@ pub async fn http_to_peer(
 
     tracing::info!("got response header: {r:?}");
 
-    let mut body = recv.read_buffer().to_owned();
-    let mut recv = recv.into_inner();
-
-    tracing::trace!("reading body");
-
-    while let Some(v) = match recv.read_chunk(1024 * 64, true).await {
-        Ok(v) => Ok(v),
-        Err(e) => {
-            tracing::error!("error reading chunk: {e:?}");
-            Err(eyre::anyhow!("read_chunk error: {e:?}"))
-        }
-    }? {
-        body.extend_from_slice(&v.bytes);
-        tracing::trace!(
-            "reading body, partial: {}, new body size: {} bytes",
-            v.bytes.len(),
-            body.len()
-        );
-    }
-
-    let body = body.freeze();
-    tracing::debug!("got {} bytes of body", body.len());
-
-    let mut res = hyper::Response::new(
-        http_body_util::Full::new(body)
-            .map_err(|e| match e {})
-            .boxed(),
+    use futures_util::TryStreamExt;
+    let stream_body = http_body_util::StreamBody::new(
+        recv.map_ok(|line| hyper::body::Frame::data(bytes::Bytes::from(line)))
+            .map_err(|e| {
+                tracing::info!("error reading chunk: {e:?}");
+                eyre::anyhow!("read_chunk error: {e:?}")
+            }),
     );
-    *res.status_mut() = hyper::http::StatusCode::from_u16(r.status)?;
+
+    let boxed_body = http_body_util::BodyExt::boxed(stream_body);
+
+    let mut res = hyper::Response::builder().status(hyper::http::StatusCode::from_u16(r.status)?);
+
     for (k, v) in r.headers {
-        res.headers_mut().insert(
+        res = res.header(
             hyper::http::header::HeaderName::from_bytes(k.as_bytes())?,
             hyper::http::header::HeaderValue::from_bytes(&v)?,
         );
     }
+
+    let res = res.body(boxed_body)?;
 
     tracing::info!("all done");
     Ok(res)

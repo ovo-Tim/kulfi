@@ -118,7 +118,7 @@ async fn handle_request(
     peer_connections: kulfi_utils::PeerStreamSenders,
     remote: String,
     graceful: kulfi_utils::Graceful,
-) -> kulfi_utils::http::ProxyResult {
+) -> kulfi_utils::http::ProxyResult<eyre::Error> {
     tracing::info!("got request for {remote}");
 
     let graceful_for_upgrade = graceful.clone();
@@ -175,7 +175,7 @@ async fn handle_request(
                     addr: host.to_string(),
                 })?),
             },
-            kulfi_utils::http::incoming_to_bytes(r).await?,
+            r,
             self_endpoint,
             &remote,
             peer_connections,

@@ -6,6 +6,7 @@ pub async fn peer_to_http(
 ) -> eyre::Result<()> {
     use eyre::WrapErr;
     use http_body_util::BodyExt;
+    use tokio::io::AsyncWriteExt;
     use tokio_stream::StreamExt;
 
     tracing::info!("http request with {addr}");
@@ -79,6 +80,9 @@ pub async fn peer_to_http(
     )
     .await?;
     send.write_all(b"\n").await?;
+
+    send.flush().await?;
+
     tracing::debug!(
         "got response body of size: {:?} bytes",
         hyper::body::Body::size_hint(&body)
@@ -99,6 +103,8 @@ pub async fn peer_to_http(
             }
         }
     }
+
+    send.flush().await?;
 
     tracing::info!("handled http request in {:?}", start.elapsed());
 

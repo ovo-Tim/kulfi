@@ -32,7 +32,7 @@ pub struct Response {
 
 pub type ProxyResponse<E = hyper::Error> =
     hyper::Response<http_body_util::combinators::BoxBody<hyper::body::Bytes, E>>;
-pub type ProxyResult = eyre::Result<ProxyResponse>;
+pub type ProxyResult<E = hyper::Error> = eyre::Result<ProxyResponse<E>>;
 
 #[allow(dead_code)]
 pub fn server_error_(s: String) -> ProxyResponse {
@@ -44,7 +44,7 @@ pub fn not_found_(m: String) -> ProxyResponse {
     bytes_to_resp(m.into_bytes(), hyper::StatusCode::NOT_FOUND)
 }
 
-pub fn bad_request_(m: String) -> ProxyResponse {
+pub fn bad_request_<E>(m: String) -> ProxyResponse<E> {
     bytes_to_resp(m.into_bytes(), hyper::StatusCode::BAD_REQUEST)
 }
 
