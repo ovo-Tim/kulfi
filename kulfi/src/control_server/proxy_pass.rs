@@ -25,7 +25,10 @@ pub async fn proxy_pass(
 
     *req.uri_mut() = hyper::Uri::try_from(uri)?;
 
-    let req = req.map(|b| b.boxed());
+    let req = req.map(|b| {
+        b.map_err(|e| eyre::anyhow!("error reading request body: {e:?}"))
+            .boxed()
+    });
 
     let resp = client
         .send_request(req)
