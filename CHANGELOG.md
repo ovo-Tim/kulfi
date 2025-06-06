@@ -1,9 +1,11 @@
 # ChangeLog
 
-## Unreleased
+## 06 June 2025
 
-### malai ???
+### malai 0.2.6
 
+- Add HTTP streaming support. This helps in handling large HTTP responses (like
+  media files for `malai folder`) without running into high memory usage.
 - implemented `malai http-proxy` and `malai http-proxy-remote` pair to proxy
   HTTP requests to a remote HTTP server over the kulfi network.
 
