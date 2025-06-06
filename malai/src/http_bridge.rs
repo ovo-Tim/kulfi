@@ -1,3 +1,4 @@
+#[tracing::instrument(skip_all)]
 pub async fn http_bridge(
     port: u16,
     proxy_target: Option<String>,
@@ -70,6 +71,7 @@ pub async fn http_bridge(
     Ok(())
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn handle_connection(
     self_endpoint: iroh::Endpoint,
     stream: tokio::net::TcpStream,
@@ -103,6 +105,7 @@ pub async fn handle_connection(
     }
 }
 
+#[tracing::instrument(skip_all)]
 async fn handle_request(
     r: hyper::Request<hyper::body::Incoming>,
     self_endpoint: iroh::Endpoint,

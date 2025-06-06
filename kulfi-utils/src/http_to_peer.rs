@@ -1,3 +1,4 @@
+#[tracing::instrument(skip_all)]
 pub async fn http_to_peer(
     header: kulfi_utils::ProtocolHeader,
     req: hyper::Request<hyper::body::Incoming>,
@@ -11,7 +12,7 @@ pub async fn http_to_peer(
 
     tracing::info!("peer_proxy: {remote_node_id52}");
 
-    let (mut send, mut recv) = kulfi_utils::get_stream(
+    let (mut send, recv) = kulfi_utils::get_stream(
         self_endpoint,
         header,
         remote_node_id52.to_string(),
@@ -35,7 +36,7 @@ pub async fn http_to_peer(
                 let data = v
                     .data_ref()
                     .ok_or_else(|| eyre::anyhow!("chunk data is None"))?;
-                tracing::info!("sending chunk of size: {}", data.len());
+                tracing::trace!("sending chunk of size: {}", data.len());
                 send.write_all(data).await?;
             }
             Err(e) => {
@@ -47,13 +48,40 @@ pub async fn http_to_peer(
 
     tracing::info!("sent body");
 
-    let r: kulfi_utils::http::Response = kulfi_utils::next_json(&mut recv).await?;
+    let mut recv = recv.into_inner();
 
-    tracing::info!("got response header: {r:?}");
+    let mut buffer = Vec::new();
+
+    loop {
+        let mut byte = [0u8];
+        let n = recv.read(&mut byte).await?;
+
+        if n == Some(0) || n == None {
+            return Err(eyre::anyhow!(
+                "connection closed while reading response header"
+            ));
+        }
+
+        if byte[0] == b'\n' {
+            break;
+        } else {
+            buffer.push(byte[0]);
+        }
+    }
+    let r: kulfi_utils::http::Response = serde_json::from_slice(&buffer)?;
+
+    tracing::info!("got response header: {:?}", r);
+
+    let stream = tokio_util::io::ReaderStream::new(recv);
 
     use futures_util::TryStreamExt;
+
     let stream_body = http_body_util::StreamBody::new(
-        recv.map_ok(|line| hyper::body::Frame::data(bytes::Bytes::from(line)))
+        stream
+            .map_ok(|b| {
+                tracing::trace!("got chunk of size: {}", b.len());
+                hyper::body::Frame::data(b)
+            })
             .map_err(|e| {
                 tracing::info!("error reading chunk: {e:?}");
                 eyre::anyhow!("read_chunk error: {e:?}")
