@@ -5,7 +5,7 @@ pub type PeerStreamSenders = std::sync::Arc<
     tokio::sync::Mutex<std::collections::HashMap<(SelfID52, RemoteID52), StreamRequestSender>>,
 >;
 
-type Stream = (iroh::endpoint::SendStream, kulfi_utils::FrameReader);
+type Stream = (iroh::endpoint::SendStream, iroh::endpoint::RecvStream);
 type StreamResult = eyre::Result<Stream>;
 type ReplyChannel = tokio::sync::oneshot::Sender<StreamResult>;
 type RemoteID52 = String;
@@ -32,7 +32,7 @@ pub async fn get_stream(
     remote_node_id52: RemoteID52,
     peer_stream_senders: PeerStreamSenders,
     graceful: kulfi_utils::Graceful,
-) -> eyre::Result<(iroh::endpoint::SendStream, kulfi_utils::FrameReader)> {
+) -> eyre::Result<(iroh::endpoint::SendStream, iroh::endpoint::RecvStream)> {
     use eyre::WrapErr;
 
     tracing::trace!("get_stream: {header:?}");
@@ -258,11 +258,10 @@ async fn handle_request(
     reply_channel: ReplyChannel,
 ) -> eyre::Result<()> {
     use eyre::WrapErr;
-    use tokio_stream::StreamExt;
 
     tracing::trace!("handling request: {header:?}");
 
-    let (mut send, recv) = match conn.open_bi().await {
+    let (mut send, mut recv) = match conn.open_bi().await {
         Ok(v) => {
             tracing::trace!("opened bi-stream");
             v
@@ -295,15 +294,7 @@ async fn handle_request(
             .wrap_err_with(|| "failed to write newline")?;
     }
 
-    let mut recv = kulfi_utils::frame_reader(recv);
-
-    let msg = match recv.next().await {
-        Some(v) => v.wrap_err_with(|| "failed to receive response for protocol")?,
-        None => {
-            tracing::error!("failed to read from incoming connection");
-            return Err(eyre::anyhow!("failed to read from incoming connection"));
-        }
-    };
+    let msg = kulfi_utils::next_string(&mut recv).await?;
 
     if msg != kulfi_utils::ACK {
         tracing::error!("failed to read ack: {msg:?}");

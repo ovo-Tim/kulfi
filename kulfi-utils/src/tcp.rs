@@ -15,7 +15,7 @@
 pub async fn peer_to_tcp(
     addr: &str,
     send: iroh::endpoint::SendStream,
-    recv: kulfi_utils::FrameReader,
+    recv: iroh::endpoint::RecvStream,
 ) -> eyre::Result<()> {
     // todo: call identity server (fastn server running on behalf of identity
     //       /api/v1/identity/{id}/tcp/ with remote_id and id and get the ip:port
@@ -30,17 +30,12 @@ pub async fn pipe_tcp_stream_over_iroh(
     mut tcp_recv: impl tokio::io::AsyncRead + Unpin + Send + 'static,
     tcp_send: impl tokio::io::AsyncWrite + Unpin + Send + 'static,
     mut send: iroh::endpoint::SendStream,
-    recv: kulfi_utils::FrameReader,
+    mut recv: iroh::endpoint::RecvStream,
 ) -> eyre::Result<()> {
-    use tokio::io::AsyncWriteExt;
     tracing::trace!("pipe_tcp_stream_over_iroh");
 
     let t = tokio::spawn(async move {
         let mut t = tcp_send;
-        tracing::trace!("piping tcp stream, got tcp_send");
-        t.write_all(recv.read_buffer().as_ref()).await?;
-        tracing::trace!("piping tcp stream, wrote read_buffer");
-        let mut recv = recv.into_inner();
         let r = tokio::io::copy(&mut recv, &mut t).await;
         tracing::trace!("piping tcp stream, copy done");
         r.map(|_| ())

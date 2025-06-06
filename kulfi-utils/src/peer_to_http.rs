@@ -2,27 +2,15 @@ pub async fn peer_to_http(
     addr: &str,
     client_pools: kulfi_utils::HttpConnectionPools,
     send: &mut iroh::endpoint::SendStream,
-    mut recv: kulfi_utils::FrameReader,
+    mut recv: iroh::endpoint::RecvStream,
 ) -> eyre::Result<()> {
     use eyre::WrapErr;
     use http_body_util::BodyExt;
-    use tokio_stream::StreamExt;
 
     tracing::info!("http request with {addr}");
     let start = std::time::Instant::now();
 
-    let req: kulfi_utils::http::Request = match recv.next().await {
-        Some(Ok(v)) => serde_json::from_str(&v)
-            .wrap_err_with(|| "failed to serialize json while reading http request")?,
-        Some(Err(e)) => {
-            tracing::error!("failed to read request: {e}");
-            return Err(eyre::anyhow!("failed to read request: {e}"));
-        }
-        None => {
-            tracing::error!("no request");
-            return Err(eyre::anyhow!("no request"));
-        }
-    };
+    let req: kulfi_utils::http::Request = kulfi_utils::next_json(&mut recv).await?;
 
     tracing::info!("got request: {req:?}");
 
@@ -47,10 +35,15 @@ pub async fn peer_to_http(
     // tracing::info!("got client");
 
     use futures_util::TryStreamExt;
+    let stream = tokio_util::io::ReaderStream::new(recv);
     let stream_body = http_body_util::StreamBody::new(
-        recv.map_ok(|line| hyper::body::Frame::data(bytes::Bytes::from(line)))
+        stream
+            .map_ok(|b| {
+                tracing::trace!("got chunk of size: {}", b.len());
+                hyper::body::Frame::data(b)
+            })
             .map_err(|e| {
-                tracing::error!("error reading chunk: {e:?}");
+                tracing::info!("error reading chunk: {e:?}");
                 eyre::anyhow!("read_chunk error: {e:?}")
             }),
     );
@@ -91,7 +84,7 @@ pub async fn peer_to_http(
                 let data = v
                     .data_ref()
                     .ok_or_else(|| eyre::anyhow!("chunk data is None"))?;
-                tracing::info!("sending chunk of size: {}", data.len());
+                tracing::trace!("sending chunk of size: {}", data.len());
                 send.write_all(data).await?;
             }
             Err(e) => {

@@ -27,13 +27,6 @@ pub fn public_key_to_id52(key: &iroh::PublicKey) -> String {
     data_encoding::BASE32_DNSSEC.encode(key.as_bytes())
 }
 
-pub type FrameReader =
-    tokio_util::codec::FramedRead<iroh::endpoint::RecvStream, tokio_util::codec::LinesCodec>;
-
-pub fn frame_reader(recv: iroh::endpoint::RecvStream) -> FrameReader {
-    FrameReader::new(recv, tokio_util::codec::LinesCodec::new())
-}
-
 pub async fn get_remote_id52(conn: &iroh::endpoint::Connection) -> eyre::Result<String> {
     let remote_node_id = match conn.remote_node_id() {
         Ok(id) => id,
@@ -63,17 +56,12 @@ async fn ack(send: &mut iroh::endpoint::SendStream) -> eyre::Result<()> {
 pub async fn accept_bi(
     conn: &iroh::endpoint::Connection,
     expected: kulfi_utils::Protocol,
-) -> eyre::Result<(iroh::endpoint::SendStream, FrameReader)> {
+) -> eyre::Result<(iroh::endpoint::SendStream, iroh::endpoint::RecvStream)> {
     loop {
         tracing::trace!("accepting bidirectional stream");
         match accept_bi_(conn).await? {
-            (mut send, recv, kulfi_utils::Protocol::Ping) => {
+            (mut send, _recv, kulfi_utils::Protocol::Ping) => {
                 tracing::trace!("got ping");
-                if !recv.read_buffer().is_empty() {
-                    send.write_all(b"error: ping message should not have payload\n")
-                        .await?;
-                    return Err(eyre::anyhow!("ping got extra data"));
-                }
                 tracing::trace!("sending PONG");
                 send.write_all(kulfi_utils::PONG)
                     .await
@@ -94,33 +82,29 @@ pub async fn accept_bi(
 pub async fn accept_bi_with<T: serde::de::DeserializeOwned>(
     conn: &iroh::endpoint::Connection,
     expected: kulfi_utils::Protocol,
-) -> eyre::Result<(T, iroh::endpoint::SendStream, FrameReader)> {
+) -> eyre::Result<(T, iroh::endpoint::SendStream, iroh::endpoint::RecvStream)> {
     let (send, mut recv) = accept_bi(conn, expected).await?;
-    let next = next_msg(&mut recv).await?;
+    let next = next_json(&mut recv)
+        .await
+        .inspect_err(|e| tracing::error!("failed to read next message: {e}"))?;
 
-    Ok((
-        serde_json::from_str::<T>(&next)
-            .inspect_err(|e| tracing::error!("json error for {next}: {e}"))?,
-        send,
-        recv,
-    ))
+    Ok((next, send, recv))
 }
 
 async fn accept_bi_(
     conn: &iroh::endpoint::Connection,
 ) -> eyre::Result<(
     iroh::endpoint::SendStream,
-    FrameReader,
+    iroh::endpoint::RecvStream,
     kulfi_utils::Protocol,
 )> {
     tracing::trace!("accept_bi_ called");
-    let (mut send, recv) = conn.accept_bi().await?;
+    let (mut send, mut recv) = conn.accept_bi().await?;
     tracing::trace!("accept_bi_ got send and recv");
-    let mut recv = frame_reader(recv);
-    let msg = next_msg(&mut recv).await?;
 
-    let msg = serde_json::from_str::<kulfi_utils::Protocol>(&msg)
-        .inspect_err(|e| tracing::error!("json error for {msg}: {e}"))?;
+    let msg: kulfi_utils::Protocol = next_json(&mut recv)
+        .await
+        .inspect_err(|e| tracing::error!("failed to read next message: {e}"))?;
 
     tracing::trace!("msg: {msg:?}");
 
@@ -128,22 +112,6 @@ async fn accept_bi_(
 
     tracing::trace!("ack sent");
     Ok((send, recv, msg))
-}
-
-async fn next_msg(recv: &mut FrameReader) -> eyre::Result<String> {
-    match tokio_stream::StreamExt::next(recv).await {
-        Some(Ok(v)) => Ok(v),
-        Some(Err(e)) => {
-            tracing::error!("failed to read from incoming connection: {e}");
-            Err(eyre::anyhow!(
-                "failed to read from incoming connection: {e}"
-            ))
-        }
-        None => {
-            tracing::error!("failed to read from incoming connection");
-            Err(eyre::anyhow!("failed to read from incoming connection"))
-        }
-    }
 }
 
 /// Read until a newline character is encountered, then deserialize the buffer as JSON
@@ -171,6 +139,32 @@ pub async fn next_json<T: serde::de::DeserializeOwned>(
     }
 
     Ok(serde_json::from_slice(&buffer)?)
+}
+
+/// Read until a newline character is encountered, then deserialize the buffer as JSON
+pub async fn next_string(recv: &mut iroh::endpoint::RecvStream) -> eyre::Result<String> {
+    // NOTE: the capacity is just a guess to avoid reallocations
+    let mut buffer = Vec::with_capacity(1024);
+
+    loop {
+        let mut byte = [0u8];
+        let n = recv.read(&mut byte).await?;
+
+        if n == Some(0) || n == None {
+            return Err(eyre::anyhow!(
+                "connection closed while reading response header"
+            ));
+        }
+
+        if byte[0] == b'\n' {
+            break;
+        } else {
+            buffer.push(byte[0]);
+        }
+    }
+
+    Ok(String::from_utf8(buffer)
+        .map_err(|e| eyre::anyhow!("failed to convert bytes to string: {e}"))?)
 }
 
 pub async fn global_iroh_endpoint() -> iroh::Endpoint {

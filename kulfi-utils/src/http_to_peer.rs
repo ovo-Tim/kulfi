@@ -12,7 +12,7 @@ pub async fn http_to_peer(
 
     tracing::info!("peer_proxy: {remote_node_id52}");
 
-    let (mut send, recv) = kulfi_utils::get_stream(
+    let (mut send, mut recv) = kulfi_utils::get_stream(
         self_endpoint,
         header,
         remote_node_id52.to_string(),
@@ -48,7 +48,6 @@ pub async fn http_to_peer(
 
     tracing::info!("sent body");
 
-    let mut recv = recv.into_inner();
     let r: kulfi_utils::http::Response = kulfi_utils::next_json(&mut recv).await?;
 
     tracing::info!("got response header: {:?}", r);
