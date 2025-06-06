@@ -54,7 +54,7 @@ async fn handle_request(
     client_pools: kulfi_utils::HttpConnectionPools,
     peer_connections: kulfi_utils::PeerStreamSenders,
     graceful: kulfi_utils::Graceful,
-) -> kulfi_utils::http::ProxyResult {
+) -> kulfi_utils::http::ProxyResult<eyre::Error> {
     kulfi::CONTROL_REQUEST_COUNT.incr();
     kulfi::IN_FLIGHT_REQUESTS.incr();
     let r = handle_request_(r, id_map, client_pools, peer_connections, graceful).await;
@@ -68,7 +68,7 @@ async fn handle_request_(
     client_pools: kulfi_utils::HttpConnectionPools,
     peer_connections: kulfi_utils::PeerStreamSenders,
     graceful: kulfi_utils::Graceful,
-) -> kulfi_utils::http::ProxyResult {
+) -> kulfi_utils::http::ProxyResult<eyre::Error> {
     let id = match r
         .headers()
         .get("Host")
@@ -106,7 +106,7 @@ async fn handle_request_(
             let self_endpoint = get_endpoint(default_id.as_str(), id_map).await?;
             kulfi_utils::http_to_peer(
                 kulfi_utils::Protocol::Http.into(),
-                kulfi_utils::http::incoming_to_bytes(r).await?,
+                r,
                 self_endpoint,
                 peer_id.as_str(),
                 peer_connections,

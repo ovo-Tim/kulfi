@@ -3,7 +3,7 @@ pub async fn proxy_pass(
     pool: kulfi_utils::HttpConnectionPool,
     addr: &str,
     _patch: ftnet_sdk::RequestPatch,
-) -> kulfi_utils::ProxyResult {
+) -> kulfi_utils::ProxyResult<eyre::Error> {
     use eyre::WrapErr;
     use http_body_util::BodyExt;
 
@@ -26,7 +26,7 @@ pub async fn proxy_pass(
     *req.uri_mut() = hyper::Uri::try_from(uri)?;
 
     let req = req.map(|b| {
-        b.map_err(|e| eyre::anyhow!("error reading request body: {e:?}"))
+        b.map_err(|e| eyre::anyhow!("failed to read request body: {e}"))
             .boxed()
     });
 
@@ -34,6 +34,11 @@ pub async fn proxy_pass(
         .send_request(req)
         .await
         .wrap_err_with(|| "failed to send request")?;
+
+    let resp = resp.map(|b| {
+        b.map_err(|e| eyre::anyhow!("failed to read request body: {e}"))
+            .boxed()
+    });
 
     let (meta, body) = resp.into_parts();
 

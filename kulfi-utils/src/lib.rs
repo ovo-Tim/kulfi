@@ -22,7 +22,7 @@ pub use get_stream::{PeerStreamSenders, get_stream};
 pub use graceful::Graceful;
 pub use http::ProxyResult;
 pub use http_connection_manager::{HttpConnectionManager, HttpConnectionPool, HttpConnectionPools};
-pub use http_to_peer::http_to_peer;
+pub use http_to_peer::{http_to_peer, http_to_peer_non_streaming};
 pub use peer_to_http::peer_to_http;
 pub use ping::{PONG, ping};
 pub use protocol::{APNS_IDENTITY, Protocol, ProtocolHeader};

@@ -125,7 +125,7 @@ pub async fn next_json<T: serde::de::DeserializeOwned>(
         let mut byte = [0u8];
         let n = recv.read(&mut byte).await?;
 
-        if n == Some(0) || n == None {
+        if n == Some(0) || n.is_none() {
             return Err(eyre::anyhow!(
                 "connection closed while reading response header"
             ));
@@ -150,7 +150,7 @@ pub async fn next_string(recv: &mut iroh::endpoint::RecvStream) -> eyre::Result<
         let mut byte = [0u8];
         let n = recv.read(&mut byte).await?;
 
-        if n == Some(0) || n == None {
+        if n == Some(0) || n.is_none() {
             return Err(eyre::anyhow!(
                 "connection closed while reading response header"
             ));
@@ -163,8 +163,7 @@ pub async fn next_string(recv: &mut iroh::endpoint::RecvStream) -> eyre::Result<
         }
     }
 
-    Ok(String::from_utf8(buffer)
-        .map_err(|e| eyre::anyhow!("failed to convert bytes to string: {e}"))?)
+    String::from_utf8(buffer).map_err(|e| eyre::anyhow!("failed to convert bytes to string: {e}"))
 }
 
 pub async fn global_iroh_endpoint() -> iroh::Endpoint {

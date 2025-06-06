@@ -102,7 +102,7 @@ pub fn ui() -> eyre::Result<()> {
 
                 let graceful = kulfi_utils::Graceful::default();
                 let peer_connections = kulfi_utils::PeerStreamSenders::default();
-                let response = kulfi_utils::http_to_peer(
+                let response = kulfi_utils::http_to_peer_non_streaming(
                     kulfi_utils::Protocol::Http.into(),
                     request,
                     kulfi_utils::global_iroh_endpoint().await,

@@ -35,7 +35,7 @@ pub type ProxyResponse<E = hyper::Error> =
 pub type ProxyResult<E = hyper::Error> = eyre::Result<ProxyResponse<E>>;
 
 #[allow(dead_code)]
-pub fn server_error_(s: String) -> ProxyResponse {
+pub fn server_error_<E>(s: String) -> ProxyResponse<E> {
     bytes_to_resp(s.into_bytes(), hyper::StatusCode::INTERNAL_SERVER_ERROR)
 }
 
