@@ -101,7 +101,6 @@ pub async fn peer_to_http(
         }
     }
 
-
     tracing::info!("handled http request in {:?}", start.elapsed());
 
     {

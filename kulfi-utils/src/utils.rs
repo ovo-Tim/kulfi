@@ -147,7 +147,9 @@ async fn next_msg(recv: &mut FrameReader) -> eyre::Result<String> {
 }
 
 /// Read until a newline character is encountered, then deserialize the buffer as JSON
-pub async fn next_json<T: serde::de::DeserializeOwned>(recv: &mut iroh::endpoint::RecvStream) -> eyre::Result<T> {
+pub async fn next_json<T: serde::de::DeserializeOwned>(
+    recv: &mut iroh::endpoint::RecvStream,
+) -> eyre::Result<T> {
     // NOTE: the capacity is just a guess to avoid reallocations
     let mut buffer = Vec::with_capacity(1024);
 
