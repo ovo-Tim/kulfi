@@ -146,18 +146,29 @@ async fn next_msg(recv: &mut FrameReader) -> eyre::Result<String> {
     }
 }
 
-pub async fn next_json<T: serde::de::DeserializeOwned>(recv: &mut FrameReader) -> eyre::Result<T> {
-    match tokio_stream::StreamExt::next(recv).await {
-        Some(Ok(v)) => Ok(serde_json::from_str(&v)?),
-        Some(Err(e)) => {
-            tracing::error!("failed to get next message: {e:?}");
-            Err(eyre::anyhow!("failed to get new message: {e:?}"))
+/// Read until a newline character is encountered, then deserialize the buffer as JSON
+pub async fn next_json<T: serde::de::DeserializeOwned>(recv: &mut iroh::endpoint::RecvStream) -> eyre::Result<T> {
+    // NOTE: the capacity is just a guess to avoid reallocations
+    let mut buffer = Vec::with_capacity(1024);
+
+    loop {
+        let mut byte = [0u8];
+        let n = recv.read(&mut byte).await?;
+
+        if n == Some(0) || n == None {
+            return Err(eyre::anyhow!(
+                "connection closed while reading response header"
+            ));
         }
-        None => {
-            tracing::error!("failed to read from incoming connection");
-            Err(eyre::anyhow!("failed to read from incoming connection"))
+
+        if byte[0] == b'\n' {
+            break;
+        } else {
+            buffer.push(byte[0]);
         }
     }
+
+    Ok(serde_json::from_slice(&buffer)?)
 }
 
 pub async fn global_iroh_endpoint() -> iroh::Endpoint {

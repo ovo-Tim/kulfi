@@ -49,26 +49,7 @@ pub async fn http_to_peer(
     tracing::info!("sent body");
 
     let mut recv = recv.into_inner();
-
-    let mut buffer = Vec::new();
-
-    loop {
-        let mut byte = [0u8];
-        let n = recv.read(&mut byte).await?;
-
-        if n == Some(0) || n == None {
-            return Err(eyre::anyhow!(
-                "connection closed while reading response header"
-            ));
-        }
-
-        if byte[0] == b'\n' {
-            break;
-        } else {
-            buffer.push(byte[0]);
-        }
-    }
-    let r: kulfi_utils::http::Response = serde_json::from_slice(&buffer)?;
+    let r: kulfi_utils::http::Response = kulfi_utils::next_json(&mut recv).await?;
 
     tracing::info!("got response header: {:?}", r);
 
