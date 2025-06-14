@@ -54,7 +54,7 @@ pub fn ui() -> eyre::Result<()> {
 
             let width = 800.0;
             let height = 600.0;
-            let bottom_height = 40.0;
+            let bottom_height = 45.0;
             let top_height = height - bottom_height;
 
             let window = tauri::window::WindowBuilder::new(app, "main")

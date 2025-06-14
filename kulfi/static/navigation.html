@@ -1,5 +1,4 @@
 <style>
-
     body, html {
         margin: 0;
     }
@@ -14,15 +13,15 @@
 
     #url {
         width: 100%;
-        height: 40px;
+        height: 45px;
         font-size: 16px;
         padding: 10px;
         box-sizing: border-box;
         background-color: #f0f0f0;
     }
 
-    #submit {
-        height: 40px;
+    button {
+        height: 45px;
         font-size: 16px;
         padding: 10px;
         box-sizing: border-box;
@@ -31,8 +30,8 @@
 </style>
 
 <main>
-    <button id="back"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="#000000" viewBox="0 0 256 256"><path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"></path></svg></button>
-    <button id="forward"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="#000000" viewBox="0 0 256 256"><path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"></path></svg></button>
+    <button id="back"><svg fill="#000000" height="32" viewBox="0 0 256 256" width="32" xmlns="http://www.w3.org/2000/svg"><path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"></path></svg></button>
+    <button id="forward"><svg fill="#000000" height="32" viewBox="0 0 256 256" width="32" xmlns="http://www.w3.org/2000/svg"><path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"></path></svg></button>
     <input id="url" placeholder="enter kulfi://... url and hit enter" type="text" />
     <button id="submit" type="button">Go</button>
     <span id="loading"></span>
