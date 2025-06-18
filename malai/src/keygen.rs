@@ -9,7 +9,7 @@ pub fn keygen(filename: Option<String>) {
         }
     };
 
-    println!("Generated Public Key (ID52): {id52}");
+    eprintln!("Generated Public Key (ID52): {id52}");
 
     match filename {
         Some(ref filename) => {
@@ -33,7 +33,7 @@ pub fn keygen(filename: Option<String>) {
                 }
             }
 
-            println!("Private key saved to `{filename}`.");
+            eprintln!("Private key saved to `{filename}`.");
         }
         None => {
             println!("{secret_key}");
