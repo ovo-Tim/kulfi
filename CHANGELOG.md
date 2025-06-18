@@ -1,5 +1,12 @@
 # ChangeLog
 
+## 18 June 2025
+
+### malai 0.2.7
+
+- Implemented `malai keygen` to generate a new kulfi identity. This is useful
+  if you don't want to store your kulfi identity in keychain.
+
 ## 06 June 2025
 
 ### malai 0.2.6

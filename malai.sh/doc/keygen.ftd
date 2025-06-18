@@ -21,10 +21,10 @@ You can use the `--file` option to save the private key to a file. If no value
 is passed to the `--file` argument, it uses `.malai.secret-key` as the default
 file name.
 
-The public key is printed to the console.
+The `id52` of the generated key is printed to the stderr.
 
-If the `--file` arg is not supplied then the private key is also printed to
-stdout.
+If the `--file` arg is not supplied then the private key is printed to stdout.
+Since the `id52` is printed to stderr, you can redirect the output to a file.
 
 Other `malai` commands like `malai http` or `malai tcp` will try to read from
 the following sources in order:

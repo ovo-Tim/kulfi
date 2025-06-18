@@ -275,7 +275,7 @@ pub enum Command {
             short,
             num_args=0..=1,
             default_missing_value=kulfi_utils::SECRET_KEY_FILE,
-            help = "The file where the generated key will be stored. If not provided, the identity will be printed to stdout"
+            help = "The file where the private key of the identity will be stored. If not provided, the private key will be printed to stdout."
         )]
         file: Option<String>,
     },
