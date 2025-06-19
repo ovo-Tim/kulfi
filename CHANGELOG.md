@@ -1,11 +1,14 @@
 # ChangeLog
 
-## 18 June 2025
+## 19 June 2025
 
 ### malai 0.2.7
 
 - Implemented `malai keygen` to generate a new kulfi identity. This is useful
   if you don't want to store your kulfi identity in keychain.
+- All subcmds (`malai http`, `malai tcp`, etc) that interact with the system
+  keyring alternatively read from `KULFI_SECRET_KEY` env variable first for
+  secret value or the `.malai.secret-key` file if it's in CWD.
 
 ## 06 June 2025
 
