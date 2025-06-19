@@ -50,7 +50,8 @@ pub async fn read_or_create_key() -> eyre::Result<(String, iroh::SecretKey)> {
         match tokio::fs::read_to_string(SECRET_KEY_FILE).await {
             Ok(secret) => {
                 tracing::info!("Using secret key from file {SECRET_KEY_FILE}");
-                return handle_secret(&secret);
+                let secret = secret.trim_end();
+                return handle_secret(secret);
             }
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
             Err(e) => {

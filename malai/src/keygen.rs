@@ -25,7 +25,7 @@ pub fn keygen(filename: Option<String>) {
                 }
             };
 
-            match write!(file, "{secret_key}") {
+            match writeln!(file, "{secret_key}") {
                 Ok(_) => {}
                 Err(e) => {
                     eprintln!("Failed to write secret key to file `{filename}`: {e}");
