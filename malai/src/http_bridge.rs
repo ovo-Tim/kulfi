@@ -143,7 +143,6 @@ async fn handle_request(
         self_endpoint,
         &peer_id,
         peer_connections,
-        Default::default(), /* RequestPatch */
         graceful,
     )
     .await

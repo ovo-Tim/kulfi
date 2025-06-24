@@ -5,7 +5,6 @@ pub async fn http_to_peer(
     self_endpoint: iroh::Endpoint,
     remote_node_id52: &str,
     peer_connections: kulfi_utils::PeerStreamSenders,
-    _patch: ftnet_sdk::RequestPatch,
     graceful: kulfi_utils::Graceful,
 ) -> kulfi_utils::http::ProxyResult<eyre::Error> {
     use http_body_util::BodyExt;
@@ -92,7 +91,6 @@ pub async fn http_to_peer_non_streaming(
     self_endpoint: iroh::Endpoint,
     remote_node_id52: &str,
     peer_connections: kulfi_utils::PeerStreamSenders,
-    _patch: ftnet_sdk::RequestPatch,
     graceful: kulfi_utils::Graceful,
 ) -> kulfi_utils::http::ProxyResult {
     use http_body_util::BodyExt;

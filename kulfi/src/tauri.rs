@@ -108,7 +108,6 @@ pub fn ui() -> eyre::Result<()> {
                     kulfi_utils::global_iroh_endpoint().await,
                     &id52,
                     peer_connections,
-                    Default::default(), /* RequestPatch */
                     graceful,
                 )
                 .await;

@@ -1,5 +1,5 @@
 [workspace]
-members = ["malai", "sdk", "kulfi", "kulfi-utils"]
+members = ["malai", "kulfi", "kulfi-utils"]
 resolver = "2"
 
 [workspace.package]
@@ -41,7 +41,6 @@ directories = "6.0.0"
 eyre = "0.6"
 file-guard = "0.2.0"
 ft-sdk = { version = "0.6.3", features = ["sqlite-default", "auth-provider", "field-extractors"] }
-ftnet-sdk = { path = "sdk", version = "0.1.0" }
 futures-util = "0.3"
 http = "1"
 http-body-util = "0.1"

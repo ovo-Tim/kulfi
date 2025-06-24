@@ -93,7 +93,6 @@ async fn handle_request_(
             r,
             find_pool(client_pools, &addr).await?,
             &addr,
-            Default::default(),
         )
         .await;
     }
@@ -102,7 +101,7 @@ async fn handle_request_(
     let (default_id, default_port) = default_identity(id_map.clone()).await?;
     match what_to_do(default_port, id).await {
         // if the id belongs to a friend of an identity, send the request to the friend over iroh
-        Ok(WhatToDo::ForwardToPeer { peer_id, patch }) => {
+        Ok(WhatToDo::ForwardToPeer { peer_id }) => {
             let self_endpoint = get_endpoint(default_id.as_str(), id_map).await?;
             kulfi_utils::http_to_peer(
                 kulfi_utils::Protocol::Http.into(),
@@ -110,7 +109,6 @@ async fn handle_request_(
                 self_endpoint,
                 peer_id.as_str(),
                 peer_connections,
-                patch,
                 graceful,
             )
             .await
@@ -119,14 +117,12 @@ async fn handle_request_(
         // request to that device
         Ok(WhatToDo::ProxyPass {
             port,
-            extra_headers,
         }) => {
             let addr = format!("127.0.0.1:{port}");
             kulfi::control_server::proxy_pass(
                 r,
                 find_pool(client_pools, &addr).await?,
                 &addr,
-                extra_headers,
             )
             .await
         }
@@ -172,11 +168,9 @@ pub async fn find_pool(
 pub enum WhatToDo {
     ForwardToPeer {
         peer_id: String,
-        patch: ftnet_sdk::RequestPatch,
     },
     ProxyPass {
         port: u16,
-        extra_headers: ftnet_sdk::RequestPatch,
     },
     UnknownPeer,
 }
@@ -185,7 +179,6 @@ async fn what_to_do(_port: u16, id: &str) -> eyre::Result<WhatToDo> {
     // request to fastn server at /-/kulfi/v1/control/what-to-do/<id>/
     Ok(WhatToDo::ForwardToPeer {
         peer_id: id.to_string(),
-        patch: Default::default(),
     })
 }
 

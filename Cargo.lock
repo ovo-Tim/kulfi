@@ -1648,13 +1648,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ftnet-sdk"
-version = "0.1.0"
-dependencies = [
- "serde",
-]
-
-[[package]]
 name = "futf"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3026,7 +3019,6 @@ dependencies = [
  "directories",
  "eyre",
  "file-guard",
- "ftnet-sdk",
  "http-body-util",
  "hyper",
  "hyper-util",
@@ -3055,7 +3047,6 @@ dependencies = [
  "data-encoding",
  "eyre",
  "file-guard",
- "ftnet-sdk",
  "futures-util",
  "http-body-util",
  "hyper",
