@@ -89,12 +89,8 @@ async fn handle_request_(
     // if this is an identity, if so forward the request to fastn corresponding to that identity
     if let Some(fastn_port) = find_identity(id, id_map.clone()).await? {
         let addr = format!("127.0.0.1:{fastn_port}");
-        return kulfi::control_server::proxy_pass(
-            r,
-            find_pool(client_pools, &addr).await?,
-            &addr,
-        )
-        .await;
+        return kulfi::control_server::proxy_pass(r, find_pool(client_pools, &addr).await?, &addr)
+            .await;
     }
 
     // TODO: maybe we should try all the identities not just default
@@ -115,16 +111,9 @@ async fn handle_request_(
         }
         // if not identity, find if the id is an http device owned by identity, if so proxy-pass the
         // request to that device
-        Ok(WhatToDo::ProxyPass {
-            port,
-        }) => {
+        Ok(WhatToDo::ProxyPass { port }) => {
             let addr = format!("127.0.0.1:{port}");
-            kulfi::control_server::proxy_pass(
-                r,
-                find_pool(client_pools, &addr).await?,
-                &addr,
-            )
-            .await
+            kulfi::control_server::proxy_pass(r, find_pool(client_pools, &addr).await?, &addr).await
         }
         Ok(WhatToDo::UnknownPeer) => {
             tracing::error!("unknown peer: {id}");
@@ -166,12 +155,8 @@ pub async fn find_pool(
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub enum WhatToDo {
-    ForwardToPeer {
-        peer_id: String,
-    },
-    ProxyPass {
-        port: u16,
-    },
+    ForwardToPeer { peer_id: String },
+    ProxyPass { port: u16 },
     UnknownPeer,
 }
 
