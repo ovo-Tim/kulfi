@@ -1,5 +1,11 @@
 # ChangeLog
 
+## 22 July 2025
+
+### malai 0.2.8
+
+- backport the `keyring` crate to version 3.
+
 ## 19 June 2025
 
 ### malai 0.2.7
