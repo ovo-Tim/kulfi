@@ -4,7 +4,7 @@
 
 ### malai 0.2.8
 
-- backport the `keyring` crate to version 3.
+- Downgraded the `keyring` crate to version 3 because version 4 was yanked.
 
 ## 19 June 2025
 
