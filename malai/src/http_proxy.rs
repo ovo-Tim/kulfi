@@ -32,7 +32,7 @@ pub async fn http_proxy(
 
     println!("Listening on http://127.0.0.1:{port}");
 
-    let peer_connections = kulfi_utils::PeerStreamSenders::default();
+    let peer_connections = kulfi_iroh_utils::PeerStreamSenders::default();
 
     let mut graceful_mut = graceful.clone();
     loop {
@@ -60,7 +60,7 @@ pub async fn http_proxy(
                         let peer_connections = peer_connections.clone();
                         let remote = remote.clone();
                         graceful.spawn(async move {
-                            let self_endpoint = kulfi_utils::global_iroh_endpoint().await;
+                            let self_endpoint = kulfi_iroh_utils::global_iroh_endpoint().await;
                             handle_connection(
                                 self_endpoint,
                                 stream,
@@ -91,7 +91,7 @@ pub async fn handle_connection(
     self_endpoint: iroh::Endpoint,
     stream: tokio::net::TcpStream,
     graceful: kulfi_utils::Graceful,
-    peer_connections: kulfi_utils::PeerStreamSenders,
+    peer_connections: kulfi_iroh_utils::PeerStreamSenders,
     remote: String,
 ) {
     let io = hyper_util::rt::TokioIo::new(stream);
@@ -126,7 +126,7 @@ pub async fn handle_connection(
 async fn handle_request(
     mut r: hyper::Request<hyper::body::Incoming>,
     self_endpoint: iroh::Endpoint,
-    peer_connections: kulfi_utils::PeerStreamSenders,
+    peer_connections: kulfi_iroh_utils::PeerStreamSenders,
     remote: String,
     graceful: kulfi_utils::Graceful,
 ) -> kulfi_utils::http::ProxyResult<eyre::Error> {
@@ -179,7 +179,7 @@ async fn handle_request(
     } else {
         tracing::trace!("regular (non upgrade) http request");
         r.headers_mut().remove(hyper::header::CONNECTION);
-        kulfi_utils::http_to_peer(
+        kulfi_iroh_utils::http_to_peer(
             kulfi_utils::ProtocolHeader {
                 protocol: kulfi_utils::Protocol::HttpProxy,
                 extra: Some(serde_json::to_string(&ProxyData::Http {
@@ -201,7 +201,7 @@ async fn handle_upgrade(
     host: String,
     self_endpoint: iroh::Endpoint,
     remote: String,
-    peer_connections: kulfi_utils::PeerStreamSenders,
+    peer_connections: kulfi_iroh_utils::PeerStreamSenders,
     graceful: kulfi_utils::Graceful,
 ) -> eyre::Result<()> {
     // todo: what all can we upgrade to?
@@ -220,7 +220,7 @@ async fn handle_upgrade(
     let upgraded = hyper_util::rt::TokioIo::new(upgraded);
     let (tcp_recv, tcp_send) = tokio::io::split(upgraded);
 
-    let (send, recv) = kulfi_utils::get_stream(
+    let (send, recv) = kulfi_iroh_utils::get_stream(
         self_endpoint,
         kulfi_utils::ProtocolHeader {
             protocol: kulfi_utils::Protocol::HttpProxy,
@@ -235,7 +235,7 @@ async fn handle_upgrade(
     .await?;
 
     tracing::trace!("got stream for {remote}");
-    kulfi_utils::pipe_tcp_stream_over_iroh(tcp_recv, tcp_send, send, recv).await?;
+    kulfi_iroh_utils::pipe_tcp_stream_over_iroh(tcp_recv, tcp_send, send, recv).await?;
     tracing::trace!("finished handling upgrade for {remote}");
 
     Ok(())

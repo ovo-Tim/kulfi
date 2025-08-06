@@ -10,7 +10,7 @@ pub async fn peer_to_http(
     tracing::info!("http request with {addr}");
     let start = std::time::Instant::now();
 
-    let req: kulfi_utils::http::Request = kulfi_utils::next_json(&mut recv).await?;
+    let req: kulfi_utils::http::Request = kulfi_iroh_utils::next_json(&mut recv).await?;
 
     tracing::info!("got request: {req:?}");
 

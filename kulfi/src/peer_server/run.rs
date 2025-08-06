@@ -61,18 +61,18 @@ pub async fn handle_connection(
     fastn_port: u16,
 ) -> eyre::Result<()> {
     tracing::info!("got connection from: {:?}", conn.remote_node_id());
-    let remote_id52 = kulfi_utils::get_remote_id52(&conn)
+    let remote_id52 = kulfi_iroh_utils::get_remote_id52(&conn)
         .await
         .inspect_err(|e| tracing::error!("failed to get remote id: {e:?}"))?;
     tracing::info!("new client: {remote_id52}, waiting for bidirectional stream");
     loop {
         let client_pools = client_pools.clone();
         // TODO: graceful shutdown
-        let (mut send, recv) = kulfi_utils::accept_bi(&conn, kulfi_utils::Protocol::Http)
+        let (mut send, recv) = kulfi_iroh_utils::accept_bi(&conn, kulfi_utils::Protocol::Http)
             .await
             .inspect_err(|e| tracing::error!("failed to accept bidirectional stream: {e:?}"))?;
         tracing::info!("{remote_id52}");
-        if let Err(e) = kulfi_utils::peer_to_http(
+        if let Err(e) = kulfi_iroh_utils::peer_to_http(
             &format!("127.0.0.1:{fastn_port}"),
             client_pools,
             &mut send,

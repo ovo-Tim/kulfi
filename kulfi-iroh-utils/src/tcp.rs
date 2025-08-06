@@ -62,12 +62,12 @@ pub async fn tcp_to_peer(
     self_endpoint: iroh::Endpoint,
     stream: tokio::net::TcpStream,
     remote_node_id52: &str,
-    peer_connections: kulfi_utils::PeerStreamSenders,
+    peer_connections: kulfi_iroh_utils::PeerStreamSenders,
     graceful: kulfi_utils::Graceful,
 ) -> eyre::Result<()> {
     tracing::info!("tcp_to_peer: {remote_node_id52}");
 
-    let (send, recv) = kulfi_utils::get_stream(
+    let (send, recv) = kulfi_iroh_utils::get_stream(
         self_endpoint,
         header,
         remote_node_id52.to_string(),

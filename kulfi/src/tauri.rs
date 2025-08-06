@@ -101,11 +101,11 @@ pub fn ui() -> eyre::Result<()> {
                 tracing::info!(?request, "Sending Request");
 
                 let graceful = kulfi_utils::Graceful::default();
-                let peer_connections = kulfi_utils::PeerStreamSenders::default();
-                let response = kulfi_utils::http_to_peer_non_streaming(
+                let peer_connections = kulfi_iroh_utils::PeerStreamSenders::default();
+                let response = kulfi_iroh_utils::http_to_peer_non_streaming(
                     kulfi_utils::Protocol::Http.into(),
                     request,
-                    kulfi_utils::global_iroh_endpoint().await,
+                    kulfi_iroh_utils::global_iroh_endpoint().await,
                     &id52,
                     peer_connections,
                     graceful,

@@ -66,7 +66,7 @@ async fn get_stream_request_sender(
     peer_stream_senders: PeerStreamSenders,
     graceful: kulfi_utils::Graceful,
 ) -> StreamRequestSender {
-    let self_id52 = kulfi_utils::public_key_to_id52(&self_endpoint.node_id());
+    let self_id52 = kulfi_utils::PublicKey::from_iroh(self_endpoint.node_id()).to_id52();
     let mut senders = peer_stream_senders.lock().await;
 
     if let Some(sender) = senders.get(&(self_id52.clone(), remote_node_id52.clone())) {
@@ -160,7 +160,7 @@ async fn connection_manager_(
 ) -> eyre::Result<()> {
     let conn = match self_endpoint
         .connect(
-            kulfi_utils::id52_to_public_key(&remote_node_id52)?,
+            kulfi_utils::id52_to_public_key(&remote_node_id52)?.into_inner(),
             kulfi_utils::APNS_IDENTITY,
         )
         .await
@@ -191,7 +191,7 @@ async fn connection_manager_(
             },
             _ = tokio::time::sleep(timeout) => {
                 tracing::info!("woken up");
-                if let Err(e) = kulfi_utils::ping(&conn).await {
+                if let Err(e) = kulfi_iroh_utils::ping(&conn).await {
                     tracing::error!("pinging failed: {e:?}");
                     break;
                 }
@@ -294,9 +294,9 @@ async fn handle_request(
             .wrap_err_with(|| "failed to write newline")?;
     }
 
-    let msg = kulfi_utils::next_string(&mut recv).await?;
+    let msg = kulfi_iroh_utils::next_string(&mut recv).await?;
 
-    if msg != kulfi_utils::ACK {
+    if msg != kulfi_iroh_utils::ACK {
         tracing::error!("failed to read ack: {msg:?}");
         return Err(eyre::anyhow!("failed to read ack: {msg:?}"));
     }

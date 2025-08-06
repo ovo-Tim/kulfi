@@ -8,7 +8,7 @@ mod run;
 #[derive(Debug)]
 pub struct Identity {
     pub id52: String,
-    pub public_key: iroh::PublicKey,
+    pub public_key: kulfi_utils::PublicKey,
     pub client_pools: kulfi_utils::HttpConnectionPools,
 }
 

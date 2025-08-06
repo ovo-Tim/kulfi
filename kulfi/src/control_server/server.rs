@@ -1,9 +1,9 @@
 pub async fn handle_connection(
     stream: tokio::net::TcpStream,
     graceful: kulfi_utils::Graceful,
-    id_map: kulfi_utils::IDMap,
+    id_map: kulfi_iroh_utils::IDMap,
     client_pools: kulfi_utils::HttpConnectionPools,
-    peer_connections: kulfi_utils::PeerStreamSenders,
+    peer_connections: kulfi_iroh_utils::PeerStreamSenders,
 ) {
     kulfi::OPEN_CONTROL_CONNECTION_COUNT.incr();
     kulfi::CONTROL_CONNECTION_COUNT.incr();
@@ -50,9 +50,9 @@ pub async fn handle_connection(
 
 async fn handle_request(
     r: hyper::Request<hyper::body::Incoming>,
-    id_map: kulfi_utils::IDMap,
+    id_map: kulfi_iroh_utils::IDMap,
     client_pools: kulfi_utils::HttpConnectionPools,
-    peer_connections: kulfi_utils::PeerStreamSenders,
+    peer_connections: kulfi_iroh_utils::PeerStreamSenders,
     graceful: kulfi_utils::Graceful,
 ) -> kulfi_utils::http::ProxyResult<eyre::Error> {
     kulfi::CONTROL_REQUEST_COUNT.incr();
@@ -64,9 +64,9 @@ async fn handle_request(
 
 async fn handle_request_(
     r: hyper::Request<hyper::body::Incoming>,
-    id_map: kulfi_utils::IDMap,
+    id_map: kulfi_iroh_utils::IDMap,
     client_pools: kulfi_utils::HttpConnectionPools,
-    peer_connections: kulfi_utils::PeerStreamSenders,
+    peer_connections: kulfi_iroh_utils::PeerStreamSenders,
     graceful: kulfi_utils::Graceful,
 ) -> kulfi_utils::http::ProxyResult<eyre::Error> {
     let id = match r
@@ -99,7 +99,7 @@ async fn handle_request_(
         // if the id belongs to a friend of an identity, send the request to the friend over iroh
         Ok(WhatToDo::ForwardToPeer { peer_id }) => {
             let self_endpoint = get_endpoint(default_id.as_str(), id_map).await?;
-            kulfi_utils::http_to_peer(
+            kulfi_iroh_utils::http_to_peer(
                 kulfi_utils::Protocol::Http.into(),
                 r,
                 self_endpoint,
@@ -167,7 +167,7 @@ async fn what_to_do(_port: u16, id: &str) -> eyre::Result<WhatToDo> {
     })
 }
 
-async fn find_identity(id: &str, id_map: kulfi_utils::IDMap) -> eyre::Result<Option<u16>> {
+async fn find_identity(id: &str, id_map: kulfi_iroh_utils::IDMap) -> eyre::Result<Option<u16>> {
     for (i, (port, _ep)) in id_map.lock().await.iter() {
         // if i.starts_with(id) {
         if i == id {
@@ -178,7 +178,7 @@ async fn find_identity(id: &str, id_map: kulfi_utils::IDMap) -> eyre::Result<Opt
     Ok(None)
 }
 
-async fn default_identity(id_map: kulfi_utils::IDMap) -> eyre::Result<(String, u16)> {
+async fn default_identity(id_map: kulfi_iroh_utils::IDMap) -> eyre::Result<(String, u16)> {
     Ok(id_map
         .lock()
         .await
@@ -189,7 +189,7 @@ async fn default_identity(id_map: kulfi_utils::IDMap) -> eyre::Result<(String, u
 
 async fn get_endpoint(
     self_id52: &str,
-    id_map: kulfi_utils::IDMap,
+    id_map: kulfi_iroh_utils::IDMap,
 ) -> eyre::Result<iroh::endpoint::Endpoint> {
     let map = id_map.lock().await;
 

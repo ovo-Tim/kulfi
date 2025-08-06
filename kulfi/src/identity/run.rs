@@ -5,7 +5,7 @@ impl kulfi::Identity {
     pub async fn run(
         self,
         graceful: kulfi_utils::Graceful,
-        id_map: kulfi_utils::IDMap,
+        id_map: kulfi_iroh_utils::IDMap,
         data_dir: &std::path::Path,
     ) -> eyre::Result<()> {
         let port = start_fastn(
@@ -24,7 +24,7 @@ impl kulfi::Identity {
 
         let secret_key = kulfi_utils::get_secret_key(self.id52.as_str(), "todo")
             .wrap_err_with(|| "failed to read or secret key")?;
-        let ep = kulfi_utils::get_endpoint(secret_key)
+        let ep = kulfi_iroh_utils::get_endpoint(secret_key)
             .await
             .wrap_err_with(|| "failed to bind to iroh network")?;
 
@@ -39,7 +39,7 @@ impl kulfi::Identity {
 /// launch fastn from the package directory and return the port
 #[tracing::instrument(skip_all)]
 async fn start_fastn(
-    _id_map: kulfi_utils::IDMap,
+    _id_map: kulfi_iroh_utils::IDMap,
     _graceful: kulfi_utils::Graceful,
     id52: &str,
     data_dir: &std::path::Path,
