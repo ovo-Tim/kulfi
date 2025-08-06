@@ -24,7 +24,9 @@ type InnerSecretKey = ed25519_dalek::SigningKey;
 #[cfg(feature = "iroh")]
 type InnerSecretKey = iroh::SecretKey;
 
-// Both iroh and our code use ed25519_dalek::Signature
+// Both iroh and our code use ed25519_dalek::Signature for signatures.
+// This is guaranteed by the current design: iroh::PublicKey and our code both expect ed25519_dalek::Signature,
+// so conditional compilation is not needed here. If this ever changes in the future, revisit this alias.
 type InnerSignature = ed25519_dalek::Signature;
 
 // ============== PublicKey Implementation ==============
@@ -198,6 +200,13 @@ impl fmt::Display for SecretKey {
 impl FromStr for SecretKey {
     type Err = eyre::Error;
     
+    /// Parse a secret key from a string.
+    ///
+    /// Accepts either:
+    /// - Hex encoding (64 lowercase hex characters, e.g. as produced by `Display`)
+    /// - Base32 encoding (52 uppercase base32 characters, no padding; for backward compatibility)
+    ///
+    /// Returns an error if the input is not valid hex or base32 encoding of a 32-byte secret key.
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let bytes = if s.len() == 64 {
             // Hex encoding (our Display format and iroh's Display format)
