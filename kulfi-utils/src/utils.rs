@@ -12,7 +12,7 @@ pub fn id52_to_public_key(id: &str) -> eyre::Result<crate::PublicKey> {
     crate::PublicKey::from_id52(id)
 }
 
-// Deprecated: Use PublicKey::to_id52 instead  
+// Deprecated: Use PublicKey::to_id52 instead
 pub fn public_key_to_id52(key: &crate::PublicKey) -> String {
     key.to_id52()
 }

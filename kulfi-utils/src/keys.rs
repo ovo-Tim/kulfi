@@ -41,13 +41,13 @@ impl PublicKey {
                 .map(PublicKey)
                 .map_err(|e| eyre::anyhow!("invalid public key: {}", e))
         }
-        
+
         #[cfg(feature = "iroh")]
         {
             Ok(PublicKey(iroh::PublicKey::from_bytes(bytes)?))
         }
     }
-    
+
     /// Create from id52 string (BASE32_DNSSEC encoding)
     pub fn from_id52(id52: &str) -> eyre::Result<Self> {
         let bytes = data_encoding::BASE32_DNSSEC
@@ -59,41 +59,43 @@ impl PublicKey {
         let bytes: [u8; 32] = bytes.try_into().unwrap();
         Self::from_bytes(&bytes)
     }
-    
+
     /// Export as raw bytes
     pub fn to_bytes(&self) -> [u8; 32] {
         *self.0.as_bytes()
     }
-    
+
     /// Export as id52 string (BASE32_DNSSEC encoding)
     pub fn to_id52(&self) -> String {
         data_encoding::BASE32_DNSSEC.encode(self.0.as_bytes())
     }
-    
+
     /// Convert to inner type (consumes self)
     pub fn into_inner(self) -> InnerPublicKey {
         self.0
     }
-    
+
     /// Create from the inner iroh type (only available with iroh feature)
     #[cfg(feature = "iroh")]
     pub fn from_iroh(key: iroh::PublicKey) -> Self {
         PublicKey(key)
     }
-    
+
     /// Verify a signature
     pub fn verify(&self, message: &[u8], signature: &Signature) -> Result<(), eyre::Error> {
         #[cfg(not(feature = "iroh"))]
         {
             use ed25519_dalek::Verifier;
-            self.0.verify(message, &signature.0)
+            self.0
+                .verify(message, &signature.0)
                 .map_err(|e| eyre::anyhow!("signature verification failed: {}", e))
         }
-        
+
         #[cfg(feature = "iroh")]
         {
-            // iroh::PublicKey has a verify method 
-            self.0.verify(message, &signature.0)
+            // iroh::PublicKey has a verify method
+            self.0
+                .verify(message, &signature.0)
                 .map_err(|e| eyre::anyhow!("signature verification failed: {}", e))
         }
     }
@@ -109,7 +111,7 @@ impl fmt::Display for PublicKey {
 // FromStr implementation - accepts id52 format
 impl FromStr for PublicKey {
     type Err = eyre::Error;
-    
+
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Self::from_id52(s)
     }
@@ -125,55 +127,55 @@ impl SecretKey {
             let mut rng = rand::rngs::OsRng;
             SecretKey(ed25519_dalek::SigningKey::generate(&mut rng))
         }
-        
+
         #[cfg(feature = "iroh")]
         {
             let mut rng = rand::rngs::OsRng;
             SecretKey(iroh::SecretKey::generate(&mut rng))
         }
     }
-    
+
     /// Create from raw bytes
     pub fn from_bytes(bytes: &[u8; 32]) -> Self {
         #[cfg(not(feature = "iroh"))]
         {
             SecretKey(ed25519_dalek::SigningKey::from_bytes(bytes))
         }
-        
+
         #[cfg(feature = "iroh")]
         {
             SecretKey(iroh::SecretKey::from_bytes(bytes))
         }
     }
-    
+
     /// Export as raw bytes
     pub fn to_bytes(&self) -> [u8; 32] {
         self.0.to_bytes()
     }
-    
+
     /// Get the public key
     pub fn public_key(&self) -> PublicKey {
         #[cfg(not(feature = "iroh"))]
         {
             PublicKey(self.0.verifying_key())
         }
-        
+
         #[cfg(feature = "iroh")]
         {
             PublicKey(self.0.public())
         }
     }
-    
+
     /// Get the id52 (base32 encoded public key)
     pub fn id52(&self) -> String {
         self.public_key().to_id52()
     }
-    
+
     /// Convert to inner type (consumes self)
     pub fn into_inner(self) -> InnerSecretKey {
         self.0
     }
-    
+
     /// Sign a message
     pub fn sign(&self, message: &[u8]) -> Signature {
         #[cfg(not(feature = "iroh"))]
@@ -181,7 +183,7 @@ impl SecretKey {
             use ed25519_dalek::Signer;
             Signature(self.0.sign(message))
         }
-        
+
         #[cfg(feature = "iroh")]
         {
             Signature(self.0.sign(message))
@@ -199,7 +201,7 @@ impl fmt::Display for SecretKey {
 // FromStr implementation - accepts both hex and base32
 impl FromStr for SecretKey {
     type Err = eyre::Error;
-    
+
     /// Parse a secret key from a string.
     ///
     /// Accepts either:
@@ -224,7 +226,82 @@ impl FromStr for SecretKey {
                 .map_err(|e| eyre::anyhow!("failed to decode base32 secret key: {:?}", e))?;
             result
         };
-        
+
         Ok(SecretKey::from_bytes(&bytes))
+    }
+}
+
+// ============== Signature Implementation ==============
+
+impl Signature {
+    /// Create from raw bytes
+    pub fn from_bytes(bytes: &[u8; 64]) -> eyre::Result<Self> {
+        Ok(Signature(InnerSignature::from_bytes(bytes)))
+    }
+
+    /// Export as raw bytes
+    pub fn to_bytes(&self) -> [u8; 64] {
+        self.0.to_bytes()
+    }
+
+    /// Convert to Vec<u8>
+    pub fn to_vec(&self) -> Vec<u8> {
+        self.to_bytes().to_vec()
+    }
+}
+
+// Implement From for Vec<u8> conversion
+impl From<Signature> for Vec<u8> {
+    fn from(sig: Signature) -> Vec<u8> {
+        sig.to_bytes().to_vec()
+    }
+}
+
+// Implement From for [u8; 64] conversion
+impl From<Signature> for [u8; 64] {
+    fn from(sig: Signature) -> [u8; 64] {
+        sig.to_bytes()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_signature_bytes_conversion() {
+        // Generate a key and sign a message
+        let secret_key = SecretKey::generate();
+        let message = b"test message";
+        let signature = secret_key.sign(message);
+
+        // Test to_bytes
+        let bytes: [u8; 64] = signature.to_bytes();
+        assert_eq!(bytes.len(), 64);
+
+        // Test to_vec
+        let vec: Vec<u8> = signature.to_vec();
+        assert_eq!(vec.len(), 64);
+        assert_eq!(&vec[..], &bytes[..]);
+
+        // Test From trait for Vec<u8>
+        let signature2 = secret_key.sign(message);
+        let vec2: Vec<u8> = signature2.into();
+        assert_eq!(vec2.len(), 64);
+
+        // Test From trait for [u8; 64]
+        let signature3 = secret_key.sign(message);
+        let bytes3: [u8; 64] = signature3.into();
+        assert_eq!(bytes3.len(), 64);
+
+        // Test from_bytes roundtrip
+        let signature4 = Signature::from_bytes(&bytes).unwrap();
+        assert_eq!(signature4.to_bytes(), bytes);
+
+        // Verify the signature works
+        let public_key = secret_key.public_key();
+        public_key
+            .verify(message, &signature4)
+            .expect("Signature should verify");
     }
 }

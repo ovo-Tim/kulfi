@@ -20,7 +20,7 @@ pub use secret::{
 pub use utils::mkdir;
 
 // Re-export key types from the keys module
-pub use keys::{PublicKey, SecretKey};
+pub use keys::{PublicKey, SecretKey, Signature};
 
 // Deprecated: These functions are kept for backward compatibility
 // Use PublicKey::from_id52 and PublicKey::to_id52 instead
