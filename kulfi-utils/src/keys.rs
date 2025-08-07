@@ -2,13 +2,130 @@ use std::fmt;
 use std::str::FromStr;
 
 /// Newtype wrapper for public keys that handles encoding/decoding consistently
+///
+/// # Examples
+///
+/// ## Creating from ID52 string
+///
+/// ```
+/// use kulfi_utils::PublicKey;
+///
+/// let id52 = "i66fo538lfl5ombdf6tcdbrabp4hmp9asv7nrffuc2im13ct4q60";
+/// let public_key = PublicKey::from_id52(id52).unwrap();
+///
+/// // Convert back to ID52
+/// assert_eq!(public_key.to_id52(), id52);
+/// ```
+///
+/// ## Verifying signatures
+///
+/// ```
+/// use kulfi_utils::{SecretKey, PublicKey};
+///
+/// let secret_key = SecretKey::generate();
+/// let public_key = secret_key.public_key();
+///
+/// let message = b"Hello, world!";
+/// let signature = secret_key.sign(message);
+///
+/// // Verify with the public key
+/// public_key.verify(message, &signature).expect("Valid signature");
+/// ```
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct PublicKey(InnerPublicKey);
 
 /// Newtype wrapper for secret keys that handles encoding/decoding consistently
+///
+/// # Examples
+///
+/// ## Generating and using a secret key
+///
+/// ```
+/// use kulfi_utils::SecretKey;
+///
+/// // Generate a new random key
+/// let secret_key = SecretKey::generate();
+///
+/// // Get the public key and ID52
+/// let public_key = secret_key.public_key();
+/// let id52 = secret_key.id52();
+///
+/// // Sign a message
+/// let message = b"Hello, world!";
+/// let signature = secret_key.sign(message);
+/// ```
+///
+/// ## Parsing from string (hex or base32)
+///
+/// ```
+/// use kulfi_utils::SecretKey;
+/// use std::str::FromStr;
+///
+/// // Parse from hex string (64 characters)
+/// let hex = "100d7e23f222267ba0be43855a262461b8a7718572edf58c56db912156d2bc25";
+/// let secret_key = SecretKey::from_str(hex).unwrap();
+///
+/// // Display as hex
+/// assert_eq!(format!("{}", secret_key), hex);
+/// ```
+///
+/// ## Converting to/from bytes
+///
+/// ```
+/// use kulfi_utils::SecretKey;
+///
+/// let secret_key = SecretKey::generate();
+///
+/// // Export as bytes
+/// let bytes: [u8; 32] = secret_key.to_bytes();
+///
+/// // Import from bytes
+/// let secret_key2 = SecretKey::from_bytes(&bytes);
+/// assert_eq!(secret_key.id52(), secret_key2.id52());
+/// ```
 pub struct SecretKey(InnerSecretKey);
 
 /// Newtype wrapper for signatures
+///
+/// # Examples
+///
+/// ## Creating and verifying a signature
+///
+/// ```
+/// use kulfi_utils::{SecretKey, Signature};
+///
+/// // Generate a key pair
+/// let secret_key = SecretKey::generate();
+/// let public_key = secret_key.public_key();
+///
+/// // Sign a message
+/// let message = b"Hello, world!";
+/// let signature = secret_key.sign(message);
+///
+/// // Verify the signature
+/// public_key.verify(message, &signature)
+///     .expect("Signature should be valid");
+/// ```
+///
+/// ## Converting signatures to/from bytes
+///
+/// ```
+/// use kulfi_utils::{SecretKey, Signature};
+///
+/// let secret_key = SecretKey::generate();
+/// let signature = secret_key.sign(b"test message");
+///
+/// // Convert to bytes for storage/transmission
+/// let bytes: [u8; 64] = signature.to_bytes();
+/// let vec: Vec<u8> = signature.to_vec();
+///
+/// // Or use From trait (consumes the signature)
+/// let signature2 = secret_key.sign(b"test message");
+/// let bytes2: [u8; 64] = signature2.into();
+///
+/// // Reconstruct from bytes
+/// let signature3 = Signature::from_bytes(&bytes).unwrap();
+/// ```
 pub struct Signature(InnerSignature);
 
 // Internal type aliases for the actual key types
