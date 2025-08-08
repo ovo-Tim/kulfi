@@ -10,38 +10,54 @@ on:
         type: boolean
         description: Mark release as production ready
 jobs:
-  build-ubuntu:
-    name: Build for Linux
-    # using the oldest available ubuntu on github CI to provide maximum compatibility with glibc versions
-    # update MALAI_RELEASE_TEMPLATE with the glibc version
-    # on ubuntu-22.04, glibc version is 2.35
+  build-linux:
+    name: Build Linux (${{ matrix.target }})
     runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            name: linux_x86_64
+          - target: aarch64-unknown-linux-gnu
+            name: linux_aarch64
     env:
       CARGO_TERM_COLOR: always
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
       - uses: actions/cache@v4
         with:
           path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}
+
       - name: print rustc version
         run: rustc --version
-      - name: cargo build (linux)
-        run: cargo build --release --bin malai
-      - name: print malai version
-        run: ./target/release/malai --version
-      - name: print file info
+
+      - name: Cargo build for ${{ matrix.target }}
+        run: cargo build --release --bin malai --target ${{ matrix.target }}
+
+      - name: Show build artifacts
         run: |
-          file ./target/release/malai
-          ldd ./target/release/malai
+          file target/${{ matrix.target }}/release/malai
+          # LDD will only work for the native architecture (x86_64).
+          # On other architectures, this command will likely fail, so we allow it to.
+          ldd target/${{ matrix.target }}/release/malai || echo "ldd not available for this architecture."
       - uses: actions/upload-artifact@v4
         with:
-          name: linux_x86_64
-          path: target/release/malai
+          name: ${{ matrix.name }}
+          path: target/${{ matrix.target }}/release/malai
   build-macos:
     name: Build for MacOS
     runs-on: macos-latest
