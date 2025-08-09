@@ -66,7 +66,7 @@ fn test_public_key_from_baseline() {
         .expect("Failed to parse baseline secret");
 
     let public_key = secret.public_key();
-    let id52 = public_key.to_id52();
+    let id52 = public_key.to_string();
 
     assert_eq!(
         id52, expected_id52,
@@ -74,8 +74,9 @@ fn test_public_key_from_baseline() {
     );
 
     // Test parsing the ID52
-    let parsed_public = kulfi_utils::PublicKey::from_id52(&id52).expect("Failed to parse ID52");
-    let id52_roundtrip = parsed_public.to_id52();
+    use std::str::FromStr;
+    let parsed_public = kulfi_utils::PublicKey::from_str(&id52).expect("Failed to parse ID52");
+    let id52_roundtrip = parsed_public.to_string();
 
     assert_eq!(id52, id52_roundtrip, "ID52 roundtrip failed");
 }

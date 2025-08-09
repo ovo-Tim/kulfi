@@ -13,7 +13,7 @@ pub async fn get_remote_id52(conn: &iroh::endpoint::Connection) -> eyre::Result<
         }
     };
 
-    Ok(kulfi_utils::PublicKey::from_iroh(remote_node_id).to_id52())
+    Ok(kulfi_utils::PublicKey::from_iroh(remote_node_id).to_string())
 }
 
 async fn ack(send: &mut iroh::endpoint::SendStream) -> eyre::Result<()> {

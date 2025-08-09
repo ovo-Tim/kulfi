@@ -10,12 +10,13 @@ use std::str::FromStr;
 ///
 /// ```
 /// use kulfi_utils::PublicKey;
+/// use std::str::FromStr;
 ///
 /// let id52 = "i66fo538lfl5ombdf6tcdbrabp4hmp9asv7nrffuc2im13ct4q60";
-/// let public_key = PublicKey::from_id52(id52).unwrap();
+/// let public_key = PublicKey::from_str(id52).unwrap();
 ///
 /// // Convert back to ID52
-/// assert_eq!(public_key.to_id52(), id52);
+/// assert_eq!(public_key.to_string(), id52);
 /// ```
 ///
 /// ## Verifying signatures
@@ -37,9 +38,10 @@ use std::str::FromStr;
 /// 
 /// ```
 /// use kulfi_utils::PublicKey;
+/// use std::str::FromStr;
 /// 
 /// let id52 = "i66fo538lfl5ombdf6tcdbrabp4hmp9asv7nrffuc2im13ct4q60";
-/// let public_key = PublicKey::from_id52(id52).unwrap();
+/// let public_key = PublicKey::from_str(id52).unwrap();
 /// 
 /// // Serialize to JSON (uses ID52 format)
 /// let json = serde_json::to_string(&public_key).unwrap();
@@ -198,26 +200,9 @@ impl PublicKey {
         }
     }
 
-    /// Create from id52 string (BASE32_DNSSEC encoding)
-    pub fn from_id52(id52: &str) -> eyre::Result<Self> {
-        let bytes = data_encoding::BASE32_DNSSEC
-            .decode(id52.as_bytes())
-            .map_err(|e| eyre::anyhow!("failed to decode id52: {:?}", e))?;
-        if bytes.len() != 32 {
-            return Err(eyre::anyhow!("id52 has invalid length: {}", bytes.len()));
-        }
-        let bytes: [u8; 32] = bytes.try_into().unwrap();
-        Self::from_bytes(&bytes)
-    }
-
     /// Export as raw bytes
     pub fn to_bytes(&self) -> [u8; 32] {
         *self.0.as_bytes()
-    }
-
-    /// Export as id52 string (BASE32_DNSSEC encoding)
-    pub fn to_id52(&self) -> String {
-        data_encoding::BASE32_DNSSEC.encode(self.0.as_bytes())
     }
 
     /// Convert to inner type (consumes self)
@@ -254,16 +239,23 @@ impl PublicKey {
 // Display implementation - uses id52 (BASE32_DNSSEC) encoding
 impl fmt::Display for PublicKey {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.to_id52())
+        write!(f, "{}", data_encoding::BASE32_DNSSEC.encode(self.0.as_bytes()))
     }
 }
 
-// FromStr implementation - accepts id52 format
+// FromStr implementation - accepts id52 format (BASE32_DNSSEC)
 impl FromStr for PublicKey {
     type Err = eyre::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Self::from_id52(s)
+        let bytes = data_encoding::BASE32_DNSSEC
+            .decode(s.as_bytes())
+            .map_err(|e| eyre::anyhow!("failed to decode id52: {:?}", e))?;
+        if bytes.len() != 32 {
+            return Err(eyre::anyhow!("id52 has invalid length: {}", bytes.len()));
+        }
+        let bytes: [u8; 32] = bytes.try_into().unwrap();
+        Self::from_bytes(&bytes)
     }
 }
 
@@ -273,7 +265,7 @@ impl Serialize for PublicKey {
     where
         S: serde::Serializer,
     {
-        serializer.serialize_str(&self.to_id52())
+        serializer.serialize_str(&self.to_string())
     }
 }
 
@@ -284,7 +276,7 @@ impl<'de> Deserialize<'de> for PublicKey {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        PublicKey::from_id52(&s).map_err(serde::de::Error::custom)
+        PublicKey::from_str(&s).map_err(serde::de::Error::custom)
     }
 }
 
@@ -337,9 +329,11 @@ impl SecretKey {
         }
     }
 
-    /// Get the id52 (base32 encoded public key)
+    /// Get the ID52 string of the public key
+    /// 
+    /// This is a convenience method equivalent to `self.public_key().to_string()`
     pub fn id52(&self) -> String {
-        self.public_key().to_id52()
+        self.public_key().to_string()
     }
 
     /// Convert to inner type (consumes self)
@@ -465,7 +459,7 @@ mod tests {
         // Test PublicKey serialization/deserialization
         let secret_key = SecretKey::generate();
         let public_key = secret_key.public_key();
-        let id52 = public_key.to_id52();
+        let id52 = public_key.to_string();
         
         // Serialize to JSON
         let json = serde_json::to_string(&public_key).unwrap();

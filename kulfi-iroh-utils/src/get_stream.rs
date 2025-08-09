@@ -66,7 +66,7 @@ async fn get_stream_request_sender(
     peer_stream_senders: PeerStreamSenders,
     graceful: kulfi_utils::Graceful,
 ) -> StreamRequestSender {
-    let self_id52 = kulfi_utils::PublicKey::from_iroh(self_endpoint.node_id()).to_id52();
+    let self_id52 = kulfi_utils::PublicKey::from_iroh(self_endpoint.node_id()).to_string();
     let mut senders = peer_stream_senders.lock().await;
 
     if let Some(sender) = senders.get(&(self_id52.clone(), remote_node_id52.clone())) {

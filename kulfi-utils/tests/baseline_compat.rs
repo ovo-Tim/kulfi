@@ -114,12 +114,13 @@ fn test_public_key_derivation() {
     let pub1 = secret1.public_key();
     let pub2 = secret2.public_key();
 
-    assert_eq!(pub1.to_id52(), pub2.to_id52());
-    assert_eq!(pub1.to_id52(), expected_id52);
+    assert_eq!(pub1.to_string(), pub2.to_string());
+    assert_eq!(pub1.to_string(), expected_id52);
 
     // Test ID52 roundtrip
-    let parsed = kulfi_utils::PublicKey::from_id52(expected_id52).expect("Failed to parse ID52");
-    assert_eq!(parsed.to_id52(), expected_id52);
+    use std::str::FromStr;
+    let parsed = kulfi_utils::PublicKey::from_str(expected_id52).expect("Failed to parse ID52");
+    assert_eq!(parsed.to_string(), expected_id52);
 
     println!("✓ Public key derivation is consistent");
 }
