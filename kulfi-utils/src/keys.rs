@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::str::FromStr;
 
@@ -30,6 +31,23 @@ use std::str::FromStr;
 ///
 /// // Verify with the public key
 /// public_key.verify(message, &signature).expect("Valid signature");
+/// ```
+/// 
+/// ## Serialization/Deserialization
+/// 
+/// ```
+/// use kulfi_utils::PublicKey;
+/// 
+/// let id52 = "i66fo538lfl5ombdf6tcdbrabp4hmp9asv7nrffuc2im13ct4q60";
+/// let public_key = PublicKey::from_id52(id52).unwrap();
+/// 
+/// // Serialize to JSON (uses ID52 format)
+/// let json = serde_json::to_string(&public_key).unwrap();
+/// assert_eq!(json, format!("\"{}\"", id52));
+/// 
+/// // Deserialize from JSON
+/// let deserialized: PublicKey = serde_json::from_str(&json).unwrap();
+/// assert_eq!(deserialized, public_key);
 /// ```
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct PublicKey(InnerPublicKey);
@@ -82,6 +100,21 @@ pub struct PublicKey(InnerPublicKey);
 /// // Import from bytes
 /// let secret_key2 = SecretKey::from_bytes(&bytes);
 /// assert_eq!(secret_key.id52(), secret_key2.id52());
+/// ```
+/// 
+/// ## Serialization/Deserialization
+/// 
+/// ```
+/// use kulfi_utils::SecretKey;
+/// 
+/// let secret_key = SecretKey::generate();
+/// 
+/// // Serialize to JSON (uses hex format)
+/// let json = serde_json::to_string(&secret_key).unwrap();
+/// 
+/// // Deserialize from JSON
+/// let deserialized: SecretKey = serde_json::from_str(&json).unwrap();
+/// assert_eq!(deserialized.id52(), secret_key.id52());
 /// ```
 pub struct SecretKey(InnerSecretKey);
 
@@ -234,6 +267,27 @@ impl FromStr for PublicKey {
     }
 }
 
+// Serialize as ID52 string
+impl Serialize for PublicKey {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.to_id52())
+    }
+}
+
+// Deserialize from ID52 string
+impl<'de> Deserialize<'de> for PublicKey {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        PublicKey::from_id52(&s).map_err(serde::de::Error::custom)
+    }
+}
+
 // ============== SecretKey Implementation ==============
 
 impl SecretKey {
@@ -348,6 +402,27 @@ impl FromStr for SecretKey {
     }
 }
 
+// Serialize as hex string
+impl Serialize for SecretKey {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&format!("{}", self))
+    }
+}
+
+// Deserialize from hex or base32 string
+impl<'de> Deserialize<'de> for SecretKey {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        SecretKey::from_str(&s).map_err(serde::de::Error::custom)
+    }
+}
+
 // ============== Signature Implementation ==============
 
 impl Signature {
@@ -384,6 +459,54 @@ impl From<Signature> for [u8; 64] {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_public_key_serialization() {
+        // Test PublicKey serialization/deserialization
+        let secret_key = SecretKey::generate();
+        let public_key = secret_key.public_key();
+        let id52 = public_key.to_id52();
+        
+        // Serialize to JSON
+        let json = serde_json::to_string(&public_key).unwrap();
+        assert_eq!(json, format!("\"{}\"", id52));
+        
+        // Deserialize from JSON
+        let deserialized: PublicKey = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized, public_key);
+        
+        // Test in a struct
+        #[derive(Serialize, Deserialize, PartialEq, Debug)]
+        struct TestStruct {
+            key: PublicKey,
+            name: String,
+        }
+        
+        let test = TestStruct {
+            key: public_key,
+            name: "test".to_string(),
+        };
+        
+        let json = serde_json::to_string(&test).unwrap();
+        let deserialized: TestStruct = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized, test);
+    }
+
+    #[test]
+    fn test_secret_key_serialization() {
+        // Test SecretKey serialization/deserialization
+        let secret_key = SecretKey::generate();
+        let hex = format!("{}", secret_key);
+        
+        // Serialize to JSON
+        let json = serde_json::to_string(&secret_key).unwrap();
+        assert_eq!(json, format!("\"{}\"", hex));
+        
+        // Deserialize from JSON
+        let deserialized: SecretKey = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.id52(), secret_key.id52());
+        assert_eq!(deserialized.to_bytes(), secret_key.to_bytes());
+    }
 
     #[test]
     fn test_signature_bytes_conversion() {
