@@ -42,7 +42,7 @@ fn test_baseline_keys_load_correctly() {
         );
 
         // Load with current version
-        let secret = kulfi_utils::SecretKey::from_str(key_hex)
+        let secret = kulfi_id52::SecretKey::from_str(key_hex)
             .unwrap_or_else(|_| panic!("Failed to parse key from {}", file_path));
 
         // Verify ID52 matches
@@ -73,7 +73,7 @@ fn test_signature_with_baseline_key() {
         .trim()
         .to_string();
 
-    let secret = kulfi_utils::SecretKey::from_str(&key_hex).expect("Failed to parse baseline key");
+    let secret = kulfi_id52::SecretKey::from_str(&key_hex).expect("Failed to parse baseline key");
 
     let public_key = secret.public_key();
 
@@ -107,8 +107,8 @@ fn test_public_key_derivation() {
     let expected_id52 = "i66fo538lfl5ombdf6tcdbrabp4hmp9asv7nrffuc2im13ct4q60";
 
     // Load key multiple times
-    let secret1 = kulfi_utils::SecretKey::from_str(&key_hex).unwrap();
-    let secret2 = kulfi_utils::SecretKey::from_str(&key_hex).unwrap();
+    let secret1 = kulfi_id52::SecretKey::from_str(&key_hex).unwrap();
+    let secret2 = kulfi_id52::SecretKey::from_str(&key_hex).unwrap();
 
     // Public keys should be identical
     let pub1 = secret1.public_key();
@@ -119,7 +119,7 @@ fn test_public_key_derivation() {
 
     // Test ID52 roundtrip
     use std::str::FromStr;
-    let parsed = kulfi_utils::PublicKey::from_str(expected_id52).expect("Failed to parse ID52");
+    let parsed = kulfi_id52::PublicKey::from_str(expected_id52).expect("Failed to parse ID52");
     assert_eq!(parsed.to_string(), expected_id52);
 
     println!("✓ Public key derivation is consistent");
@@ -132,13 +132,13 @@ fn test_bytes_encoding() {
         .trim()
         .to_string();
 
-    let secret = kulfi_utils::SecretKey::from_str(&key_hex).unwrap();
+    let secret = kulfi_id52::SecretKey::from_str(&key_hex).unwrap();
 
     // to_bytes and from_bytes
     let bytes = secret.to_bytes();
     assert_eq!(bytes.len(), 32);
 
-    let secret2 = kulfi_utils::SecretKey::from_bytes(&bytes);
+    let secret2 = kulfi_id52::SecretKey::from_bytes(&bytes);
     assert_eq!(secret2.to_string(), key_hex);
     assert_eq!(secret2.id52(), secret.id52());
 

@@ -11,7 +11,7 @@ type ReplyChannel = tokio::sync::oneshot::Sender<StreamResult>;
 type RemoteID52 = String;
 type SelfID52 = String;
 
-type StreamRequest = (kulfi_utils::ProtocolHeader, ReplyChannel);
+type StreamRequest = (crate::ProtocolHeader, ReplyChannel);
 
 type StreamRequestSender = tokio::sync::mpsc::Sender<StreamRequest>;
 type StreamRequestReceiver = tokio::sync::mpsc::Receiver<StreamRequest>;
@@ -28,10 +28,10 @@ type StreamRequestReceiver = tokio::sync::mpsc::Receiver<StreamRequest>;
 #[tracing::instrument(skip_all)]
 pub async fn get_stream(
     self_endpoint: iroh::Endpoint,
-    header: kulfi_utils::ProtocolHeader,
+    header: crate::ProtocolHeader,
     remote_node_id52: RemoteID52,
     peer_stream_senders: PeerStreamSenders,
-    graceful: kulfi_utils::Graceful,
+    graceful: crate::Graceful,
 ) -> eyre::Result<(iroh::endpoint::SendStream, iroh::endpoint::RecvStream)> {
     use eyre::WrapErr;
 
@@ -64,9 +64,10 @@ async fn get_stream_request_sender(
     self_endpoint: iroh::Endpoint,
     remote_node_id52: RemoteID52,
     peer_stream_senders: PeerStreamSenders,
-    graceful: kulfi_utils::Graceful,
+    graceful: crate::Graceful,
 ) -> StreamRequestSender {
-    let self_id52 = kulfi_utils::PublicKey::from_iroh(self_endpoint.node_id()).to_string();
+    // Convert iroh::PublicKey to ID52 string
+    let self_id52 = data_encoding::BASE32_DNSSEC.encode(self_endpoint.node_id().as_bytes());
     let mut senders = peer_stream_senders.lock().await;
 
     if let Some(sender) = senders.get(&(self_id52.clone(), remote_node_id52.clone())) {
@@ -103,7 +104,7 @@ async fn connection_manager(
     mut receiver: StreamRequestReceiver,
     self_endpoint: iroh::Endpoint,
     remote_node_id52: RemoteID52,
-    graceful: kulfi_utils::Graceful,
+    graceful: crate::Graceful,
 ) {
     let e = match connection_manager_(
         &mut receiver,
@@ -156,12 +157,18 @@ async fn connection_manager_(
     receiver: &mut StreamRequestReceiver,
     self_endpoint: iroh::Endpoint,
     remote_node_id52: RemoteID52,
-    graceful: kulfi_utils::Graceful,
+    graceful: crate::Graceful,
 ) -> eyre::Result<()> {
     let conn = match self_endpoint
         .connect(
-            kulfi_utils::id52_to_public_key(&remote_node_id52)?.into_inner(),
-            kulfi_utils::APNS_IDENTITY,
+            {
+                // Convert ID52 to iroh::NodeId
+                use std::str::FromStr;
+                let public_key = kulfi_id52::PublicKey::from_str(&remote_node_id52)
+                    .map_err(|e| eyre::anyhow!("{}", e))?;
+                iroh::NodeId::from(iroh::PublicKey::from_bytes(&public_key.to_bytes())?)
+            },
+            crate::APNS_IDENTITY,
         )
         .await
     {
@@ -191,7 +198,7 @@ async fn connection_manager_(
             },
             _ = tokio::time::sleep(timeout) => {
                 tracing::info!("woken up");
-                if let Err(e) = kulfi_iroh_utils::ping(&conn).await {
+                if let Err(e) = crate::ping(&conn).await {
                     tracing::error!("pinging failed: {e:?}");
                     break;
                 }
@@ -254,7 +261,7 @@ async fn connection_manager_(
 
 async fn handle_request(
     conn: &iroh::endpoint::Connection,
-    header: kulfi_utils::ProtocolHeader,
+    header: crate::ProtocolHeader,
     reply_channel: ReplyChannel,
 ) -> eyre::Result<()> {
     use eyre::WrapErr;
@@ -294,9 +301,9 @@ async fn handle_request(
             .wrap_err_with(|| "failed to write newline")?;
     }
 
-    let msg = kulfi_iroh_utils::next_string(&mut recv).await?;
+    let msg = crate::next_string(&mut recv).await?;
 
-    if msg != kulfi_iroh_utils::ACK {
+    if msg != crate::ACK {
         tracing::error!("failed to read ack: {msg:?}");
         return Err(eyre::anyhow!("failed to read ack: {msg:?}"));
     }

@@ -68,9 +68,9 @@ pub async fn start(
     control_port: u16,
     id: String,
     graceful: kulfi_utils::Graceful,
-    id_map: kulfi_iroh_utils::IDMap,
+    id_map: kulfi_utils::IDMap,
     client_pools: kulfi_utils::HttpConnectionPools,
-    peer_connections: kulfi_iroh_utils::PeerStreamSenders,
+    peer_connections: kulfi_utils::PeerStreamSenders,
 ) -> eyre::Result<()> {
     use eyre::WrapErr;
 

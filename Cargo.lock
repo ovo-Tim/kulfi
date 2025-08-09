@@ -2957,7 +2957,7 @@ dependencies = [
  "hyper",
  "hyper-util",
  "iroh",
- "kulfi-iroh-utils",
+ "kulfi-id52",
  "kulfi-utils",
  "reqwest",
  "serde",
@@ -2973,25 +2973,15 @@ dependencies = [
 ]
 
 [[package]]
-name = "kulfi-iroh-utils"
+name = "kulfi-id52"
 version = "0.1.0"
 dependencies = [
- "bb8",
- "bytes",
- "colored",
- "eyre",
- "futures-util",
- "http-body-util",
- "hyper",
- "hyper-util",
- "iroh",
- "kulfi-utils",
+ "data-encoding",
+ "ed25519-dalek",
+ "hex",
+ "rand 0.8.5",
  "serde",
  "serde_json",
- "tokio",
- "tokio-stream",
- "tokio-util",
- "tracing",
 ]
 
 [[package]]
@@ -3002,7 +2992,6 @@ dependencies = [
  "bytes",
  "colored",
  "data-encoding",
- "ed25519-dalek",
  "eyre",
  "file-guard",
  "futures-util",
@@ -3012,6 +3001,7 @@ dependencies = [
  "hyper-util",
  "iroh",
  "keyring",
+ "kulfi-id52",
  "rand 0.8.5",
  "serde",
  "serde_json",
@@ -3184,7 +3174,6 @@ dependencies = [
  "hyper",
  "hyper-util",
  "iroh",
- "kulfi-iroh-utils",
  "kulfi-utils",
  "mime_guess",
  "percent-encoding",

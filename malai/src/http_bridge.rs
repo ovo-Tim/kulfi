@@ -31,7 +31,7 @@ pub async fn http_bridge(
 
     println!("Listening on http://127.0.0.1:{port}");
 
-    let peer_connections = kulfi_iroh_utils::PeerStreamSenders::default();
+    let peer_connections = kulfi_utils::PeerStreamSenders::default();
 
     let mut graceful_mut = graceful.clone();
     loop {
@@ -59,7 +59,7 @@ pub async fn http_bridge(
                         let peer_connections = peer_connections.clone();
                         let proxy_target = proxy_target.clone();
                         graceful.spawn(async move {
-                            let self_endpoint = kulfi_iroh_utils::global_iroh_endpoint().await;
+                            let self_endpoint = kulfi_utils::global_iroh_endpoint().await;
                             handle_connection(
                                 self_endpoint,
                                 stream,
@@ -85,7 +85,7 @@ pub async fn handle_connection(
     self_endpoint: iroh::Endpoint,
     stream: tokio::net::TcpStream,
     graceful: kulfi_utils::Graceful,
-    peer_connections: kulfi_iroh_utils::PeerStreamSenders,
+    peer_connections: kulfi_utils::PeerStreamSenders,
     proxy_target: Option<String>,
 ) {
     let io = hyper_util::rt::TokioIo::new(stream);
@@ -118,7 +118,7 @@ pub async fn handle_connection(
 async fn handle_request(
     r: hyper::Request<hyper::body::Incoming>,
     self_endpoint: iroh::Endpoint,
-    peer_connections: kulfi_iroh_utils::PeerStreamSenders,
+    peer_connections: kulfi_utils::PeerStreamSenders,
     proxy_target: Option<String>,
     graceful: kulfi_utils::Graceful,
 ) -> kulfi_utils::http::ProxyResult<eyre::Error> {
@@ -137,7 +137,7 @@ async fn handle_request(
 
     tracing::info!("got request for {peer_id}");
 
-    kulfi_iroh_utils::http_to_peer(
+    kulfi_utils::http_to_peer(
         kulfi_utils::Protocol::Http.into(),
         r,
         self_endpoint,

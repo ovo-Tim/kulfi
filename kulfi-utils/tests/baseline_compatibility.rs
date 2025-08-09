@@ -26,7 +26,7 @@ fn test_baseline_keys_compatibility() {
         println!("\n  Testing key: {}...", &key_hex[..16]);
 
         // Parse the baseline key with current version
-        let secret_key = kulfi_utils::SecretKey::from_str(key_hex)
+        let secret_key = kulfi_id52::SecretKey::from_str(key_hex)
             .unwrap_or_else(|_| panic!("Failed to parse baseline key: {}", key_hex));
 
         // Get ID52 from current version
@@ -62,7 +62,7 @@ fn test_public_key_from_baseline() {
     let baseline_secret_hex = "100d7e23f222267ba0be43855a262461b8a7718572edf58c56db912156d2bc25";
     let expected_id52 = "i66fo538lfl5ombdf6tcdbrabp4hmp9asv7nrffuc2im13ct4q60";
 
-    let secret = kulfi_utils::SecretKey::from_str(baseline_secret_hex)
+    let secret = kulfi_id52::SecretKey::from_str(baseline_secret_hex)
         .expect("Failed to parse baseline secret");
 
     let public_key = secret.public_key();
@@ -75,7 +75,7 @@ fn test_public_key_from_baseline() {
 
     // Test parsing the ID52
     use std::str::FromStr;
-    let parsed_public = kulfi_utils::PublicKey::from_str(&id52).expect("Failed to parse ID52");
+    let parsed_public = kulfi_id52::PublicKey::from_str(&id52).expect("Failed to parse ID52");
     let id52_roundtrip = parsed_public.to_string();
 
     assert_eq!(id52, id52_roundtrip, "ID52 roundtrip failed");
@@ -86,7 +86,7 @@ fn test_bytes_representation() {
     // Verify that to_bytes and from_bytes work correctly
     let baseline_secret_hex = "100d7e23f222267ba0be43855a262461b8a7718572edf58c56db912156d2bc25";
 
-    let secret = kulfi_utils::SecretKey::from_str(baseline_secret_hex)
+    let secret = kulfi_id52::SecretKey::from_str(baseline_secret_hex)
         .expect("Failed to parse baseline secret");
 
     let bytes = secret.to_bytes();
@@ -97,7 +97,7 @@ fn test_bytes_representation() {
     assert_eq!(bytes.to_vec(), expected_bytes, "Bytes don't match hex");
 
     // Test from_bytes
-    let secret2 = kulfi_utils::SecretKey::from_bytes(&bytes);
+    let secret2 = kulfi_id52::SecretKey::from_bytes(&bytes);
     let hex2 = secret2.to_string();
     assert_eq!(baseline_secret_hex, hex2, "from_bytes roundtrip failed");
 }
@@ -112,7 +112,7 @@ fn test_generate_and_parse() {
     assert_eq!(hex.len(), 64, "Generated key should be 64 hex chars");
 
     // Parse it back
-    let secret2 = kulfi_utils::SecretKey::from_str(&hex).expect("Failed to parse generated key");
+    let secret2 = kulfi_id52::SecretKey::from_str(&hex).expect("Failed to parse generated key");
 
     let hex2 = secret2.to_string();
     assert_eq!(hex, hex2, "Generated key roundtrip failed");

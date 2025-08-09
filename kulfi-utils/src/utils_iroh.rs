@@ -1,3 +1,5 @@
+// Functions that work with iroh types
+
 pub async fn get_remote_id52(conn: &iroh::endpoint::Connection) -> eyre::Result<String> {
     let remote_node_id = match conn.remote_node_id() {
         Ok(id) => id,
@@ -13,12 +15,14 @@ pub async fn get_remote_id52(conn: &iroh::endpoint::Connection) -> eyre::Result<
         }
     };
 
-    Ok(kulfi_utils::PublicKey::from_iroh(remote_node_id).to_string())
+    // Convert iroh::PublicKey to ID52 string
+    let bytes = remote_node_id.as_bytes();
+    Ok(data_encoding::BASE32_DNSSEC.encode(bytes))
 }
 
 async fn ack(send: &mut iroh::endpoint::SendStream) -> eyre::Result<()> {
     tracing::trace!("sending ack");
-    send.write_all(format!("{}\n", kulfi_iroh_utils::ACK).as_bytes())
+    send.write_all(format!("{}\n", crate::ACK).as_bytes())
         .await?;
     tracing::trace!("sent ack");
     Ok(())
@@ -26,15 +30,15 @@ async fn ack(send: &mut iroh::endpoint::SendStream) -> eyre::Result<()> {
 
 pub async fn accept_bi(
     conn: &iroh::endpoint::Connection,
-    expected: kulfi_utils::Protocol,
+    expected: crate::Protocol,
 ) -> eyre::Result<(iroh::endpoint::SendStream, iroh::endpoint::RecvStream)> {
     loop {
         tracing::trace!("accepting bidirectional stream");
         match accept_bi_(conn).await? {
-            (mut send, _recv, kulfi_utils::Protocol::Ping) => {
+            (mut send, _recv, crate::Protocol::Ping) => {
                 tracing::trace!("got ping");
                 tracing::trace!("sending PONG");
-                send.write_all(kulfi_iroh_utils::PONG)
+                send.write_all(crate::PONG)
                     .await
                     .inspect_err(|e| tracing::error!("failed to write PONG: {e:?}"))?;
                 tracing::trace!("sent PONG");
@@ -52,7 +56,7 @@ pub async fn accept_bi(
 
 pub async fn accept_bi_with<T: serde::de::DeserializeOwned>(
     conn: &iroh::endpoint::Connection,
-    expected: kulfi_utils::Protocol,
+    expected: crate::Protocol,
 ) -> eyre::Result<(T, iroh::endpoint::SendStream, iroh::endpoint::RecvStream)> {
     let (send, mut recv) = accept_bi(conn, expected).await?;
     let next = next_json(&mut recv)
@@ -67,13 +71,13 @@ async fn accept_bi_(
 ) -> eyre::Result<(
     iroh::endpoint::SendStream,
     iroh::endpoint::RecvStream,
-    kulfi_utils::Protocol,
+    crate::Protocol,
 )> {
     tracing::trace!("accept_bi_ called");
     let (mut send, mut recv) = conn.accept_bi().await?;
     tracing::trace!("accept_bi_ got send and recv");
 
-    let msg: kulfi_utils::Protocol = next_json(&mut recv)
+    let msg: crate::Protocol = next_json(&mut recv)
         .await
         .inspect_err(|e| tracing::error!("failed to read next message: {e}"))?;
 
@@ -143,7 +147,7 @@ pub async fn global_iroh_endpoint() -> iroh::Endpoint {
         iroh::Endpoint::builder()
             .discovery_n0()
             .discovery_local_network()
-            .alpns(vec![kulfi_utils::APNS_IDENTITY.into()])
+            .alpns(vec![crate::APNS_IDENTITY.into()])
             .bind()
             .await
             .expect("failed to create iroh Endpoint")

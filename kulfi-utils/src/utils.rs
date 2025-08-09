@@ -7,13 +7,14 @@ pub fn mkdir(parent: &std::path::Path, name: &str) -> eyre::Result<std::path::Pa
     Ok(path)
 }
 
-// Deprecated: Use PublicKey::from_str instead
-pub fn id52_to_public_key(id: &str) -> eyre::Result<crate::PublicKey> {
+// Deprecated: Use kulfi_id52::PublicKey::from_str instead
+pub fn id52_to_public_key(id: &str) -> eyre::Result<kulfi_id52::PublicKey> {
     use std::str::FromStr;
-    crate::PublicKey::from_str(id)
+    kulfi_id52::PublicKey::from_str(id)
+        .map_err(|e| eyre::anyhow!("{}", e))
 }
 
-// Deprecated: Use PublicKey::to_string instead
-pub fn public_key_to_id52(key: &crate::PublicKey) -> String {
+// Deprecated: Use kulfi_id52::PublicKey::to_string instead
+pub fn public_key_to_id52(key: &kulfi_id52::PublicKey) -> String {
     key.to_string()
 }

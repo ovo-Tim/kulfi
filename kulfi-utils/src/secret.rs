@@ -4,13 +4,13 @@ pub const SECRET_KEY_ENV_VAR: &str = "KULFI_SECRET_KEY";
 pub const SECRET_KEY_FILE: &str = ".malai.secret-key";
 pub const ID52_FILE: &str = ".malai.id52";
 
-pub fn generate_secret_key() -> eyre::Result<(String, kulfi_utils::SecretKey)> {
-    let secret_key = kulfi_utils::SecretKey::generate();
+pub fn generate_secret_key() -> eyre::Result<(String, kulfi_id52::SecretKey)> {
+    let secret_key = kulfi_id52::SecretKey::generate();
     let id52 = secret_key.id52();
     Ok((id52, secret_key))
 }
 
-pub async fn generate_and_save_key() -> eyre::Result<(String, kulfi_utils::SecretKey)> {
+pub async fn generate_and_save_key() -> eyre::Result<(String, kulfi_id52::SecretKey)> {
     let (id52, secret_key) = generate_secret_key()?;
     let e = keyring_entry(&id52)?;
     e.set_secret(&secret_key.to_bytes())
@@ -24,21 +24,22 @@ fn keyring_entry(id52: &str) -> eyre::Result<keyring::Entry> {
         .wrap_err_with(|| format!("failed to create keyring Entry for {id52}"))
 }
 
-fn handle_secret(secret: &str) -> eyre::Result<(String, kulfi_utils::SecretKey)> {
+fn handle_secret(secret: &str) -> eyre::Result<(String, kulfi_id52::SecretKey)> {
     use std::str::FromStr;
-    let secret_key = kulfi_utils::SecretKey::from_str(secret)?;
+    let secret_key = kulfi_id52::SecretKey::from_str(secret)
+        .map_err(|e| eyre::anyhow!("{}", e))?;
     let id52 = secret_key.id52();
     Ok((id52, secret_key))
 }
 
-pub fn get_secret_key(_id52: &str, _path: &str) -> eyre::Result<kulfi_utils::SecretKey> {
+pub fn get_secret_key(_id52: &str, _path: &str) -> eyre::Result<kulfi_id52::SecretKey> {
     // intentionally left unimplemented as design is changing in kulfi
     // this is not used in malai
     todo!("implement for kulfi")
 }
 
 #[tracing::instrument]
-pub async fn read_or_create_key() -> eyre::Result<(String, kulfi_utils::SecretKey)> {
+pub async fn read_or_create_key() -> eyre::Result<(String, kulfi_id52::SecretKey)> {
     if let Ok(secret) = std::env::var(SECRET_KEY_ENV_VAR) {
         tracing::info!("Using secret key from environment variable {SECRET_KEY_ENV_VAR}");
         return handle_secret(&secret);
@@ -71,7 +72,7 @@ pub async fn read_or_create_key() -> eyre::Result<(String, kulfi_utils::SecretKe
                     }
 
                     let bytes: [u8; 32] = secret.try_into().expect("already checked for length");
-                    let secret_key = kulfi_utils::SecretKey::from_bytes(&bytes);
+                    let secret_key = kulfi_id52::SecretKey::from_bytes(&bytes);
                     let id52 = secret_key.id52();
                     Ok((id52, secret_key))
                 }

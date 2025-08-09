@@ -8,7 +8,7 @@ mod run;
 #[derive(Debug)]
 pub struct Identity {
     pub id52: String,
-    pub public_key: kulfi_utils::PublicKey,
+    pub public_key: kulfi_id52::PublicKey,
     pub client_pools: kulfi_utils::HttpConnectionPools,
 }
 
@@ -17,9 +17,10 @@ impl Identity {
         id: &str,
         client_pools: kulfi_utils::HttpConnectionPools,
     ) -> eyre::Result<Self> {
-        let public_key = kulfi_utils::id52_to_public_key(id)?;
+        use std::str::FromStr;
+        let public_key = kulfi_id52::PublicKey::from_str(id)?;
         Ok(Self {
-            id52: kulfi_utils::public_key_to_id52(&public_key),
+            id52: public_key.to_string(),
             public_key,
             client_pools,
         })
