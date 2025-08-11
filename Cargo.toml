@@ -12,7 +12,7 @@ license = "UPL-1.0"
 repository = "https://github.com/fastn-stack/kulfi"
 homepage = "https://kulfi.app"
 publish = true
-rust-version = "1.87"  # update this when you update rust-toolchain.toml
+rust-version = "1.89"  # update this when you update rust-toolchain.toml
 
 [profile.release]
 strip = true
