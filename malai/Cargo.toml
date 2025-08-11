@@ -1,6 +1,6 @@
 [package]
 name = "malai"
-version = "0.2.8"
+version = "0.2.9"
 authors.workspace = true
 edition.workspace = true
 description = "malai: Kulfi Network Toolkit"
