@@ -160,10 +160,10 @@ fn get_peer_id52_from_host(
         }
     };
 
-    if first == "127" {
-        if let Some(target) = proxy_target {
-            return Ok(target);
-        }
+    if first == "127"
+        && let Some(target) = proxy_target
+    {
+        return Ok(target);
     }
 
     if first.len() != 52 && proxy_target.is_none() {
@@ -171,11 +171,11 @@ fn get_peer_id52_from_host(
         return Err(eyre::anyhow!("got http request with invalid peer id"));
     }
 
-    if let Some(target) = proxy_target {
-        if first != target {
-            tracing::error!(peer_id = %first, proxy_target = %target, "request for peer_id is not allowed");
-            return Err(eyre::anyhow!("got http request with invalid peer id"));
-        }
+    if let Some(target) = proxy_target
+        && first != target
+    {
+        tracing::error!(peer_id = %first, proxy_target = %target, "request for peer_id is not allowed");
+        return Err(eyre::anyhow!("got http request with invalid peer id"));
     }
 
     Ok(first.to_string())

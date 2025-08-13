@@ -1,5 +1,11 @@
 # ChangeLog
 
+## 11 August 2025
+
+### malai 0.2.9
+
+- `malai` is now available on `aarch64_linux` target. Thanks @ovo-Tim!
+
 ## 22 July 2025
 
 ### malai 0.2.8

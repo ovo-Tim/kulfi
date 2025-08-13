@@ -33,6 +33,7 @@
                 darwin.apple_sdk.frameworks.WebKit
             ];
             buildInputs = with pkgs; [
+              git
               toolchain
               rust-analyzer-unwrapped
             ];
