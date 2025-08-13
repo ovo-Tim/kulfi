@@ -3,9 +3,11 @@ name = "kulfi-utils"
 version = "0.1.1"
 edition.workspace = true
 authors.workspace = true
-description = "ftnet utilities"
+description = "Kulfi utilities"
 homepage.workspace = true
 license.workspace = true
+repository.workspace = true
+readme.workspace = true
 
 [dependencies]
 bb8.workspace = true
