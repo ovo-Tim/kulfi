@@ -4,44 +4,12 @@ on:
   workflow_dispatch:
 
 jobs:
-    build-for-linux-windows:
-        name: Build for Linux(x86-64 and aarch64) and Windows
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v2
-            - name: Install Linux and Windows Cross Compilers
-              run: sudo apt-get install --yes --no-install-recommends musl-tools gcc-mingw-w64-x86-64-win32 gcc-aarch64-linux-gnu
-            - name: Install rustup targets
-              run: rustup target add x86_64-unknown-linux-musl x86_64-pc-windows-gnu aarch64-unknown-linux-gnu
-            - uses: Swatinem/rust-cache@v2
-              with:
-                key: " build-for-linux-windows"
-            - name: Build
-              run: cargo package --target x86_64-unknown-linux-musl --target x86_64-pc-windows-gnu --target aarch64-unknown-linux-gnu
-            - uses: actions/upload-artifact@v4
-              with:
-                path: target/package/*.crate
-            - name: publish to crates.io
-              run: |
-                  cargo login ${{ secrets.CARGO_REGISTRY_TOKEN }}
-                  cargo publish
-
-
-    build-for-macos:
-        name: Build for macOS
-        runs-on: macos-latest
-        steps:
-            - uses: actions/checkout@v4
-            - uses: dtolnay/rust-toolchain@stable
-            - uses: Swatinem/rust-cache@v2
-              with:
-                key: " build-for-macos"
-            - name: Build
-              run: cargo package
-            - uses: actions/upload-artifact@v4
-              with:
-                path: target/package/*.crate
-            - name: publish to crates.io
-              run: |
-                  cargo login ${{ secrets.CARGO_REGISTRY_TOKEN }}
-                  cargo publish
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Publish to crates.io
+        run: |
+          cd kulfi-utils
+          cargo login ${{ secrets.CARGO_REGISTRY_TOKEN }}
+          cargo publish
