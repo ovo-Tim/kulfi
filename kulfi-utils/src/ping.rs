@@ -6,7 +6,7 @@ pub async fn ping(conn: &iroh::endpoint::Connection) -> eyre::Result<()> {
     let (mut send_stream, mut recv_stream) = conn.open_bi().await?;
     tracing::info!("got bi, sending ping");
     send_stream
-        .write_all(&serde_json::to_vec(&kulfi_utils::Protocol::Ping)?)
+        .write_all(&serde_json::to_vec(&crate::Protocol::Ping)?)
         .await?;
     tracing::info!("sent ping, sending newline");
     send_stream.write_all("\n".as_bytes()).await?;

@@ -5,6 +5,7 @@
 //! the baseline version and future refactored versions.
 
 use std::fs;
+use std::str::FromStr;
 
 #[test]
 fn test_baseline_secret_keys_load_correctly() {
@@ -47,8 +48,9 @@ fn test_baseline_secret_keys_load_correctly() {
             .unwrap_or_else(|_| panic!("Failed to decode hex key from {}", file_path));
         assert_eq!(key_bytes.len(), 32, "Key should be 32 bytes");
 
-        // Create iroh::SecretKey from bytes (baseline approach)
-        let secret_key = iroh::SecretKey::from_bytes(&key_bytes.try_into().unwrap());
+        // Create kulfi_id52::SecretKey from hex string
+        let secret_key = kulfi_id52::SecretKey::from_str(key_hex)
+            .unwrap_or_else(|_| panic!("Failed to parse secret key from {}", file_path));
 
         // Test that Display produces the same hex
         let display_hex = format!("{}", secret_key);
@@ -59,8 +61,8 @@ fn test_baseline_secret_keys_load_correctly() {
         );
 
         // Test that ID52 matches what baseline produced
-        let public_key = secret_key.public();
-        let id52 = kulfi_utils::public_key_to_id52(&public_key);
+        let public_key = secret_key.public_key();
+        let id52 = public_key.to_string();
         assert_eq!(
             id52, expected_id52,
             "ID52 encoding changed for {}",
@@ -68,9 +70,9 @@ fn test_baseline_secret_keys_load_correctly() {
         );
 
         // Test that we can parse the ID52 back
-        let parsed_public = kulfi_utils::id52_to_public_key(&id52)
+        let parsed_public = kulfi_id52::PublicKey::from_str(&id52)
             .unwrap_or_else(|_| panic!("Failed to parse ID52: {}", id52));
-        let roundtrip_id52 = kulfi_utils::public_key_to_id52(&parsed_public);
+        let roundtrip_id52 = parsed_public.to_string();
         assert_eq!(
             id52, roundtrip_id52,
             "ID52 roundtrip failed for {}",
@@ -92,8 +94,8 @@ fn test_secret_key_hex_format() {
     let bytes = hex::decode(test_hex).expect("Should decode valid hex");
     assert_eq!(bytes.len(), 32, "Should be 32 bytes");
 
-    // Create secret key
-    let secret_key = iroh::SecretKey::from_bytes(&bytes.try_into().unwrap());
+    // Create secret key from hex string
+    let secret_key = kulfi_id52::SecretKey::from_str(test_hex).expect("Should parse valid hex");
 
     // Display should produce lowercase hex
     let display = format!("{}", secret_key);
@@ -144,8 +146,8 @@ fn test_generate_and_verify_new_key() {
     assert_eq!(id52.len(), 52, "ID52 should be 52 chars");
 
     // Test consistency
-    let public_key = secret_key.public();
-    let derived_id52 = kulfi_utils::public_key_to_id52(&public_key);
+    let public_key = secret_key.public_key();
+    let derived_id52 = public_key.to_string();
     assert_eq!(id52, derived_id52, "ID52 should be consistent");
 
     println!("✅ Key generation works correctly");

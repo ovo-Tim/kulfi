@@ -25,7 +25,8 @@ pub fn keygen(filename: Option<String>) {
                 }
             };
 
-            match writeln!(file, "{secret_key}") {
+            // Use Display implementation which outputs hex
+            match writeln!(file, "{}", secret_key) {
                 Ok(_) => {}
                 Err(e) => {
                     eprintln!("Failed to write secret key to file `{filename}`: {e}");
@@ -36,7 +37,8 @@ pub fn keygen(filename: Option<String>) {
             eprintln!("Private key saved to `{filename}`.");
         }
         None => {
-            println!("{secret_key}");
+            // Use Display implementation which outputs hex
+            println!("{}", secret_key);
         }
     }
 }

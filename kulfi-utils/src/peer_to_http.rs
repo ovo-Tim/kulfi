@@ -1,6 +1,6 @@
 pub async fn peer_to_http(
     addr: &str,
-    client_pools: kulfi_utils::HttpConnectionPools,
+    client_pools: crate::HttpConnectionPools,
     send: &mut iroh::endpoint::SendStream,
     mut recv: iroh::endpoint::RecvStream,
 ) -> eyre::Result<()> {
@@ -10,7 +10,7 @@ pub async fn peer_to_http(
     tracing::info!("http request with {addr}");
     let start = std::time::Instant::now();
 
-    let req: kulfi_utils::http::Request = kulfi_utils::next_json(&mut recv).await?;
+    let req: crate::http::Request = crate::next_json(&mut recv).await?;
 
     tracing::info!("got request: {req:?}");
 
@@ -56,7 +56,7 @@ pub async fn peer_to_http(
         .wrap_err_with(|| "failed to send request")?
         .into_parts();
 
-    let r = kulfi_utils::http::Response {
+    let r = crate::http::Response {
         status: resp.status.as_u16(),
         headers: resp
             .headers
@@ -112,8 +112,8 @@ pub async fn peer_to_http(
 
 async fn get_pool(
     addr: &str,
-    client_pools: kulfi_utils::HttpConnectionPools,
-) -> eyre::Result<bb8::Pool<kulfi_utils::HttpConnectionManager>> {
+    client_pools: crate::HttpConnectionPools,
+) -> eyre::Result<bb8::Pool<crate::HttpConnectionManager>> {
     tracing::trace!("get pool called");
     let mut pools = client_pools.lock().await;
 
@@ -126,7 +126,7 @@ async fn get_pool(
             tracing::debug!("creating new pool for {addr}");
 
             let pool = bb8::Pool::builder()
-                .build(kulfi_utils::HttpConnectionManager::new(addr.to_string()))
+                .build(crate::HttpConnectionManager::new(addr.to_string()))
                 .await?;
 
             pools.insert(addr.to_string(), pool.clone());

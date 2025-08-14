@@ -1,9 +1,12 @@
-pub async fn get_endpoint(secret_key: iroh::SecretKey) -> eyre::Result<iroh::Endpoint> {
+pub async fn get_endpoint(secret_key: kulfi_id52::SecretKey) -> eyre::Result<iroh::Endpoint> {
+    // Convert kulfi_id52::SecretKey to iroh::SecretKey
+    let iroh_secret_key = iroh::SecretKey::from_bytes(&secret_key.to_bytes());
+
     match iroh::Endpoint::builder()
         .discovery_n0()
         .discovery_local_network()
-        .alpns(vec![kulfi_utils::APNS_IDENTITY.into()])
-        .secret_key(secret_key)
+        .alpns(vec![crate::APNS_IDENTITY.into()])
+        .secret_key(iroh_secret_key)
         .bind()
         .await
     {

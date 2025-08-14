@@ -1,5 +1,5 @@
 [workspace]
-members = ["malai", "kulfi", "kulfi-utils"]
+members = ["malai", "kulfi", "kulfi-utils", "kulfi-id52"]
 resolver = "2"
 
 [workspace.package]
@@ -49,6 +49,7 @@ hyper-util = { version = "0.1.15", features = ["tokio", "server"] }
 iroh = { version = "0.35", features = ["discovery-local-network"] }
 keyring = { version = "3", features = ["apple-native", "windows-native", "linux-native", "vendored"] }
 kulfi-utils = { path = "kulfi-utils", version = "0.1.0" }
+kulfi-id52 = { path = "kulfi-id52", version = "0.1.0" }
 mime_guess = "2"
 percent-encoding = "2"
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
@@ -58,7 +59,7 @@ tauri-build = { version = "2", features = ["config-json5"] }
 tauri-plugin-opener = "2"
 tokio = { version = "1", features = ["full"] }
 tokio-stream = "0.1"
-tokio-util = "0.7"
+tokio-util = { version = "0.7", features = ["rt"] }
 thiserror = "2"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }

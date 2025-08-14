@@ -1,17 +1,17 @@
 #[tracing::instrument(skip_all)]
 pub async fn http_to_peer(
-    header: kulfi_utils::ProtocolHeader,
+    header: crate::ProtocolHeader,
     req: hyper::Request<hyper::body::Incoming>,
     self_endpoint: iroh::Endpoint,
     remote_node_id52: &str,
-    peer_connections: kulfi_utils::PeerStreamSenders,
-    graceful: kulfi_utils::Graceful,
-) -> kulfi_utils::http::ProxyResult<eyre::Error> {
+    peer_connections: crate::PeerStreamSenders,
+    graceful: crate::Graceful,
+) -> crate::http::ProxyResult<eyre::Error> {
     use http_body_util::BodyExt;
 
     tracing::info!("peer_proxy: {remote_node_id52}");
 
-    let (mut send, mut recv) = kulfi_utils::get_stream(
+    let (mut send, mut recv) = crate::get_stream(
         self_endpoint,
         header,
         remote_node_id52.to_string(),
@@ -47,7 +47,7 @@ pub async fn http_to_peer(
 
     tracing::info!("sent body");
 
-    let r: kulfi_utils::http::Response = kulfi_utils::next_json(&mut recv).await?;
+    let r: crate::http::Response = crate::next_json(&mut recv).await?;
 
     tracing::info!("got response header: {:?}", r);
 
@@ -86,18 +86,18 @@ pub async fn http_to_peer(
 
 /// Use http_to_peer unless you have a clear reason
 pub async fn http_to_peer_non_streaming(
-    header: kulfi_utils::ProtocolHeader,
+    header: crate::ProtocolHeader,
     req: hyper::Request<hyper::body::Bytes>,
     self_endpoint: iroh::Endpoint,
     remote_node_id52: &str,
-    peer_connections: kulfi_utils::PeerStreamSenders,
-    graceful: kulfi_utils::Graceful,
-) -> kulfi_utils::http::ProxyResult {
+    peer_connections: crate::PeerStreamSenders,
+    graceful: crate::Graceful,
+) -> crate::http::ProxyResult {
     use http_body_util::BodyExt;
 
     tracing::info!("peer_proxy: {remote_node_id52}");
 
-    let (mut send, mut recv) = kulfi_utils::get_stream(
+    let (mut send, mut recv) = crate::get_stream(
         self_endpoint,
         header,
         remote_node_id52.to_string(),
@@ -119,7 +119,7 @@ pub async fn http_to_peer_non_streaming(
 
     tracing::info!("sent body");
 
-    let r: kulfi_utils::http::Response = kulfi_utils::next_json(&mut recv).await?;
+    let r: crate::http::Response = crate::next_json(&mut recv).await?;
 
     tracing::info!("got response header: {r:?}");
 
