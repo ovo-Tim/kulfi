@@ -9,39 +9,67 @@ on:
       productionRelease:
         type: boolean
         description: Mark release as production ready
+
 jobs:
-  build-ubuntu:
-    name: Build for Linux
-    # using the oldest available ubuntu on github CI to provide maximum compatibility with glibc versions
-    # update MALAI_RELEASE_TEMPLATE with the glibc version
-    # on ubuntu-22.04, glibc version is 2.35
+  build-linux:
+    name: Build Linux (${{ matrix.target }})
     runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            name: linux_x86_64
+          - target: aarch64-unknown-linux-gnu
+            name: linux_aarch64
+            linker: aarch64-linux-gnu-gcc
     env:
       CARGO_TERM_COLOR: always
     steps:
       - uses: actions/checkout@v4
+
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
       - uses: actions/cache@v4
         with:
           path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}
+
       - name: print rustc version
         run: rustc --version
-      - name: cargo build (linux)
-        run: cargo build --release --bin malai
-      - name: print malai version
-        run: ./target/release/malai --version
-      - name: print file info
+
+      - name: Install aarch64 target
+        if: ${{ matrix.target == 'aarch64-unknown-linux-gnu' }}
         run: |
-          file ./target/release/malai
-          ldd ./target/release/malai
+          sudo apt update
+          sudo apt install gcc-aarch64-linux-gnu
+          rustup target add aarch64-unknown-linux-gnu
+
+      - name: Set linker env for ARM64
+        if: ${{ matrix.target == 'aarch64-unknown-linux-gnu' }}
+        run: |
+          echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=${{ matrix.linker }}" >> $GITHUB_ENV
+          echo "CC_aarch64_unknown_linux_gnu=${{ matrix.linker }}" >> $GITHUB_ENV
+
+      - name: Cargo build for ${{ matrix.target }}
+        run: cargo build --release --bin malai --target ${{ matrix.target }}
+
+      - name: Show build artifacts
+        run: |
+          file target/${{ matrix.target }}/release/malai
+          # LDD will only work for the native architecture (x86_64).
+          # On other architectures, this command will likely fail, so we allow it to.
+          ldd target/${{ matrix.target }}/release/malai || echo "ldd not available for this architecture."
       - uses: actions/upload-artifact@v4
         with:
-          name: linux_x86_64
-          path: target/release/malai
+          name: ${{ matrix.name }}
+          path: target/${{ matrix.target }}/release/malai
   build-macos:
     name: Build for MacOS
     runs-on: macos-latest
@@ -108,7 +136,7 @@ jobs:
   create-release:
     name: Create github tag and release
     runs-on: ubuntu-latest
-    needs: [ build-ubuntu, build-macos, build-windows ]
+    needs: [ build-linux, build-macos, build-windows ]
     permissions:
       contents: write
     steps:
@@ -123,12 +151,17 @@ jobs:
           path: ~/download/linux
       - uses: actions/download-artifact@v4
         with:
+          name: linux_aarch64
+          path: ~/download/linux_aarch64
+      - uses: actions/download-artifact@v4
+        with:
           name: windows_x64_latest
           path: ~/download/windows
       - name: Rename assets
         run: |
           mv ~/download/macos/malai ~/download/macos/malai_macos_x86_64
           mv ~/download/linux/malai ~/download/linux/malai_linux_x86_64
+          mv ~/download/linux_aarch64/malai ~/download/linux_aarch64/malai_linux_aarch64
           mv ~/download/windows/malai.zip ~/download/windows/malai_windows_x86_64.zip
       - name: Update .github/MALAI_RELEASE_TEMPLATE.md
         run: |
@@ -144,7 +177,7 @@ jobs:
           ' CHANGELOG.md | sed "1s/.*/# What's Changed/" >> .github/MALAI_RELEASE_TEMPLATE.md
       - uses: ncipollo/release-action@v1
         with:
-          artifacts: "~/download/macos/malai_macos_x86_64,~/download/linux/malai_linux_x86_64,~/download/windows/malai_windows_x86_64.zip"
+          artifacts: "~/download/macos/malai_macos_x86_64,~/download/linux/malai_linux_x86_64,~/download/linux_aarch64/malai_linux_aarch64,~/download/windows/malai_windows_x86_64.zip"
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: malai-${{ github.event.inputs.releaseTag }}
           prerelease: ${{ github.event.inputs.productionRelease && github.event.inputs.productionRelease == 'false' }}

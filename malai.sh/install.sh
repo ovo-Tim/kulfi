@@ -1,6 +1,6 @@
 #!/bin/sh
 
-MALAI_VERSION="0.2.8"
+MALAI_VERSION="0.2.9"
 
 # This script should be run via curl:
 # source < "$(curl -fsSL https://malai.sh/install.sh)"
@@ -141,7 +141,15 @@ setup() {
     if [ "$(uname)" = "Darwin" ]; then
         FILENAME="malai_macos_x86_64"
     else
-        FILENAME="malai_linux_x86_64"
+        # Check architecture for Linux
+        case $(uname -m) in
+            aarch64|arm64)
+                FILENAME="malai_linux_aarch64"
+                ;;
+            *)
+                FILENAME="malai_linux_x86_64"
+                ;;
+        esac
     fi
 
     # Download the binary directly using the URL
