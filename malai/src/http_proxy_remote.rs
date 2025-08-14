@@ -84,8 +84,7 @@ async fn handle_connection(
                     kulfi_utils::peer_to_tcp(&addr, send, recv).await
                 }
                 malai::ProxyData::Http { addr } => {
-                    kulfi_utils::peer_to_http(&addr, http_connection_pools, &mut send, recv)
-                        .await
+                    kulfi_utils::peer_to_http(&addr, http_connection_pools, &mut send, recv).await
                 }
             } {
                 tracing::error!("failed to proxy tcp: {e:?}");

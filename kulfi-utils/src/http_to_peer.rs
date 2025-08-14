@@ -23,10 +23,8 @@ pub async fn http_to_peer(
     tracing::info!("wrote protocol");
 
     let (head, mut body) = req.into_parts();
-    send.write_all(&serde_json::to_vec(&crate::http::Request::from(
-        head,
-    ))?)
-    .await?;
+    send.write_all(&serde_json::to_vec(&crate::http::Request::from(head))?)
+        .await?;
     send.write_all(b"\n").await?;
 
     tracing::info!("sent request header");
@@ -111,10 +109,8 @@ pub async fn http_to_peer_non_streaming(
     tracing::info!("wrote protocol");
 
     let (head, body) = req.into_parts();
-    send.write_all(&serde_json::to_vec(&crate::http::Request::from(
-        head,
-    ))?)
-    .await?;
+    send.write_all(&serde_json::to_vec(&crate::http::Request::from(head))?)
+        .await?;
     send.write_all(b"\n").await?;
 
     tracing::info!("sent request header");

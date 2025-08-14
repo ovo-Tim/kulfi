@@ -114,14 +114,14 @@ impl FromStr for PublicKey {
                 input: s.to_string(),
                 reason: format!("invalid BASE32_DNSSEC encoding: {}", e),
             })?;
-        
+
         if bytes.len() != 32 {
             return Err(ParseId52Error {
                 input: s.to_string(),
                 reason: format!("expected 32 bytes after decoding, got {}", bytes.len()),
             });
         }
-        
+
         let bytes: [u8; 32] = bytes.try_into().unwrap();
         Self::from_bytes(&bytes).map_err(|_| ParseId52Error {
             input: s.to_string(),

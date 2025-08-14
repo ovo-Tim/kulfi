@@ -26,8 +26,7 @@ fn keyring_entry(id52: &str) -> eyre::Result<keyring::Entry> {
 
 fn handle_secret(secret: &str) -> eyre::Result<(String, kulfi_id52::SecretKey)> {
     use std::str::FromStr;
-    let secret_key = kulfi_id52::SecretKey::from_str(secret)
-        .map_err(|e| eyre::anyhow!("{}", e))?;
+    let secret_key = kulfi_id52::SecretKey::from_str(secret).map_err(|e| eyre::anyhow!("{}", e))?;
     let id52 = secret_key.id52();
     Ok((id52, secret_key))
 }
