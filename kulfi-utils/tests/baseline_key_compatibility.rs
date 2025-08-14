@@ -95,8 +95,7 @@ fn test_secret_key_hex_format() {
     assert_eq!(bytes.len(), 32, "Should be 32 bytes");
 
     // Create secret key from hex string
-    let secret_key = kulfi_id52::SecretKey::from_str(test_hex)
-        .expect("Should parse valid hex");
+    let secret_key = kulfi_id52::SecretKey::from_str(test_hex).expect("Should parse valid hex");
 
     // Display should produce lowercase hex
     let display = format!("{}", secret_key);
