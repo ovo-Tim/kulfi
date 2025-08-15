@@ -69,9 +69,11 @@ impl kulfi::Identity {
         std::fs::rename(&tmp_dir, dir)
             .wrap_err_with(|| "failed to rename {tmp_dir:?} to {dir:?}")?;
 
+        let public_key = secret_key.public_key();
+
         Ok(Self {
             id52,
-            public_key: secret_key.public(),
+            public_key,
             client_pools,
         })
     }
