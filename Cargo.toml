@@ -12,7 +12,7 @@ license = "UPL-1.0"
 repository = "https://github.com/fastn-stack/kulfi"
 homepage = "https://kulfi.app"
 publish = true
-rust-version = "1.89"  # update this when you update rust-toolchain.toml
+rust-version = "1.89" # update this when you update rust-toolchain.toml
 
 [profile.release]
 strip = true
@@ -45,12 +45,19 @@ http-body-util = "0.1"
 hyper = { version = "1", features = ["full"] }
 hyper-util = { version = "0.1.15", features = ["tokio", "server"] }
 iroh = { version = "0.91", features = ["discovery-local-network"] }
-keyring = { version = "3", features = ["apple-native", "windows-native", "linux-native", "vendored"] }
-kulfi-utils = { path = "kulfi-utils", version = "0.1.0" }
-kulfi-id52 = { path = "kulfi-id52", version = "0.1.0" }
+keyring = { version = "3", features = [
+    "apple-native",
+    "windows-native",
+    "linux-native",
+    "vendored",
+] }
+kulfi-utils = { path = "kulfi-utils" }
+kulfi-id52 = { path = "kulfi-id52" }
 mime_guess = "2"
 percent-encoding = "2"
-reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
+reqwest = { version = "0.12", default-features = false, features = [
+    "rustls-tls",
+] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tauri-build = { version = "2", features = ["config-json5"] }
