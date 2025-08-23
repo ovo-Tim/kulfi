@@ -4,17 +4,39 @@
     windows_subsystem = "windows"
 )]
 
+use std::path::Path;
+
+use kulfi_utils::Graceful;
+
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
     use clap::Parser;
 
-    // run with RUST_LOG="malai=trace,kulfi_utils=trace" to see logs
-    tracing_subscriber::fmt::init();
-
     let cli = Cli::parse();
-
     let graceful = kulfi_utils::Graceful::default();
+    if let Some(Command::Run { home }) = cli.command {
+        let home = match &home {
+            Some(home) => Path::new(home),
+            None => &std::env::current_dir()?,
+        };
+        let conf_file = if home.is_file() {
+            home
+        } else {
+            &home.join("malai.toml")
+        };
+        if !conf_file.exists() {
+            eprintln!("Unable to find malai.toml in {}", conf_file.display());
+        }
+        malai::run(conf_file, graceful.clone()).await;
+    } else {
+        // run with RUST_LOG="malai=trace,kulfi_utils=trace" to see logs
+        tracing_subscriber::fmt::init();
+        let _ = match_cli(cli, graceful.clone());
+    }
+    graceful.shutdown().await
+}
 
+fn match_cli(cli: Cli, graceful: Graceful) -> eyre::Result<()> {
     match cli.command {
         Some(Command::Http {
             port,
@@ -35,7 +57,22 @@ async fn main() -> eyre::Result<()> {
             tracing::info!(port, host, verbose = ?cli.verbose, "Exposing HTTP service on kulfi.");
             let graceful_for_export_http = graceful.clone();
             graceful.spawn(async move {
-                malai::expose_http(host, port, bridge, graceful_for_export_http).await
+                let (id52, secret_key) = match kulfi_utils::read_or_create_key().await {
+                    Ok(v) => v,
+                    Err(e) => {
+                        malai::identity_read_err_msg(e);
+                        std::process::exit(1);
+                    }
+                };
+                malai::expose_http(
+                    host,
+                    port,
+                    bridge,
+                    id52,
+                    secret_key,
+                    graceful_for_export_http,
+                )
+                .await
             });
         }
         Some(Command::HttpBridge { proxy_target, port }) => {
@@ -84,10 +121,9 @@ async fn main() -> eyre::Result<()> {
             let graceful_for_folder = graceful.clone();
             graceful.spawn(async move { malai::folder(path, bridge, graceful_for_folder).await });
         }
-        Some(Command::Run { home }) => {
-            tracing::info!(verbose = ?cli.verbose, "Running all services.");
-            let graceful_for_run = graceful.clone();
-            graceful.spawn(async move { malai::run(home, graceful_for_run).await });
+        Some(Command::Run { home: _ }) => {
+            // Handled brfore
+            return Ok(());
         }
         Some(Command::HttpProxyRemote { public }) => {
             if !malai::public_check(
@@ -126,8 +162,7 @@ async fn main() -> eyre::Result<()> {
             return Ok(());
         }
     };
-
-    graceful.shutdown().await
+    return Ok(());
 }
 
 #[derive(clap::Parser, Debug)]
@@ -250,7 +285,11 @@ pub enum Command {
     },
     #[clap(about = "Run all the services")]
     Run {
-        #[arg(long, help = "Malai Home", env = "MALAI_HOME")]
+        #[arg(
+            long,
+            help = "Malai Home directory or the config file",
+            env = "MALAI_HOME"
+        )]
         home: Option<String>,
     },
     #[clap(about = "Run an iroh remote server that handles requests from http-proxy.")]

@@ -37,50 +37,51 @@ pub fn get_secret_key(_id52: &str, _path: &str) -> eyre::Result<kulfi_id52::Secr
     todo!("implement for kulfi")
 }
 
+pub fn handle_identity(id52: String) -> eyre::Result<(String, kulfi_id52::SecretKey)> {
+    let e = kulfi_utils::secret::keyring_entry(&id52)?;
+    match e.get_secret() {
+        Ok(secret) => {
+            if secret.len() != 32 {
+                return Err(eyre::anyhow!(
+                    "keyring: secret for {id52} has invalid length: {}",
+                    secret.len()
+                ));
+            }
+
+            let bytes: [u8; 32] = secret.try_into().expect("already checked for length");
+            let secret_key = kulfi_id52::SecretKey::from_bytes(&bytes);
+            let id52 = secret_key.id52();
+            Ok((id52, secret_key))
+        }
+        Err(e) => {
+            tracing::error!("failed to read secret for {id52} from keyring: {e}");
+            Err(e.into())
+        }
+    }
+}
+
 #[tracing::instrument]
 pub async fn read_or_create_key() -> eyre::Result<(String, kulfi_id52::SecretKey)> {
     if let Ok(secret) = std::env::var(SECRET_KEY_ENV_VAR) {
         tracing::info!("Using secret key from environment variable {SECRET_KEY_ENV_VAR}");
         return handle_secret(&secret);
-    } else {
-        match tokio::fs::read_to_string(SECRET_KEY_FILE).await {
-            Ok(secret) => {
-                tracing::info!("Using secret key from file {SECRET_KEY_FILE}");
-                let secret = secret.trim_end();
-                return handle_secret(secret);
-            }
-            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
-            Err(e) => {
-                tracing::error!("failed to read {SECRET_KEY_FILE}: {e}");
-                return Err(e.into());
-            }
+    }
+    match tokio::fs::read_to_string(SECRET_KEY_FILE).await {
+        Ok(secret) => {
+            tracing::info!("Using secret key from file {SECRET_KEY_FILE}");
+            let secret = secret.trim_end();
+            return handle_secret(secret);
+        }
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+        Err(e) => {
+            tracing::error!("failed to read {SECRET_KEY_FILE}: {e}");
+            return Err(e.into());
         }
     }
 
     tracing::info!("No secret key found in environment or file, trying {ID52_FILE}");
     match tokio::fs::read_to_string(ID52_FILE).await {
-        Ok(id52) => {
-            let e = keyring_entry(&id52)?;
-            match e.get_secret() {
-                Ok(secret) => {
-                    if secret.len() != 32 {
-                        return Err(eyre::anyhow!(
-                            "keyring: secret for {id52} has invalid length: {}",
-                            secret.len()
-                        ));
-                    }
-
-                    let bytes: [u8; 32] = secret.try_into().expect("already checked for length");
-                    let secret_key = kulfi_id52::SecretKey::from_bytes(&bytes);
-                    let id52 = secret_key.id52();
-                    Ok((id52, secret_key))
-                }
-                Err(e) => {
-                    tracing::error!("failed to read secret for {id52} from keyring: {e}");
-                    Err(e.into())
-                }
-            }
-        }
+        Ok(id52) => handle_identity(id52),
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => generate_and_save_key().await,
         Err(e) => {
             tracing::error!("failed to read {ID52_FILE}: {e}");

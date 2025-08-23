@@ -10,7 +10,7 @@ mod http_to_peer;
 mod peer_to_http;
 mod ping;
 pub mod protocol;
-mod secret;
+pub mod secret;
 mod tcp;
 mod utils;
 mod utils_iroh;
