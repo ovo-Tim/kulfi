@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use eyre::WrapErr;
 
 pub const SECRET_KEY_ENV_VAR: &str = "KULFI_SECRET_KEY";
@@ -10,13 +12,25 @@ pub fn generate_secret_key() -> eyre::Result<(String, kulfi_id52::SecretKey)> {
     Ok((id52, secret_key))
 }
 
-pub async fn generate_and_save_key() -> eyre::Result<(String, kulfi_id52::SecretKey)> {
+pub fn generate_and_save_key(
+    file: Option<PathBuf>,
+) -> eyre::Result<(String, kulfi_id52::SecretKey)> {
     let (id52, secret_key) = generate_secret_key()?;
     let e = keyring_entry(&id52)?;
     e.set_secret(&secret_key.to_bytes())
         .wrap_err_with(|| format!("failed to save secret key for {id52}"))?;
-    tokio::fs::write(ID52_FILE, &id52).await?;
+    if let Some(file) = &file {
+        std::fs::write(file, &id52)
+            .wrap_err_with(|| format!("failed to save secret key to {}", &file.display()))?;
+        println!("Secret key saved to {}", file.display());
+    }
     Ok((id52, secret_key))
+}
+
+pub fn delete_identity(id52: &str) -> eyre::Result<()> {
+    let e = keyring_entry(id52)?;
+    e.delete_credential()?;
+    Ok(())
 }
 
 fn keyring_entry(id52: &str) -> eyre::Result<keyring::Entry> {
@@ -82,7 +96,9 @@ pub async fn read_or_create_key() -> eyre::Result<(String, kulfi_id52::SecretKey
     tracing::info!("No secret key found in environment or file, trying {ID52_FILE}");
     match tokio::fs::read_to_string(ID52_FILE).await {
         Ok(id52) => handle_identity(id52),
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => generate_and_save_key().await,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+            generate_and_save_key(Some(PathBuf::from(ID52_FILE)))
+        }
         Err(e) => {
             tracing::error!("failed to read {ID52_FILE}: {e}");
             Err(e.into())

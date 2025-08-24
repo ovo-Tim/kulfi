@@ -28,15 +28,15 @@ async fn main() -> eyre::Result<()> {
             eprintln!("Unable to find malai.toml in {}", conf_file.display());
         }
         malai::run(conf_file, graceful.clone()).await;
+        Ok(())
     } else {
         // run with RUST_LOG="malai=trace,kulfi_utils=trace" to see logs
         tracing_subscriber::fmt::init();
-        let _ = match_cli(cli, graceful.clone());
+        match_cli(cli, graceful.clone()).await
     }
-    graceful.shutdown().await
 }
 
-fn match_cli(cli: Cli, graceful: Graceful) -> eyre::Result<()> {
+async fn match_cli(cli: Cli, graceful: Graceful) -> eyre::Result<()> {
     match cli.command {
         Some(Command::Http {
             port,
@@ -149,6 +149,21 @@ fn match_cli(cli: Cli, graceful: Graceful) -> eyre::Result<()> {
             malai::keygen(file);
             return Ok(());
         }
+        Some(Command::Identity { cmd }) => {
+            match cmd {
+                IdentityCmd::Create { file } => {
+                    if let Err(e) = malai::create_identity(file) {
+                        tracing::error!(error = ?e, "Error creating identity.");
+                    }
+                }
+                IdentityCmd::Delete { id52, file } => {
+                    if let Err(e) = malai::delete_identity(id52, file) {
+                        tracing::error!(error = ?e, "Error deleting identity.");
+                    }
+                }
+            }
+            return Ok(());
+        }
         #[cfg(feature = "ui")]
         None => {
             tracing::info!(verbose = ?cli.verbose, "Starting UI.");
@@ -162,7 +177,7 @@ fn match_cli(cli: Cli, graceful: Graceful) -> eyre::Result<()> {
             return Ok(());
         }
     };
-    return Ok(());
+    graceful.shutdown().await
 }
 
 #[derive(clap::Parser, Debug)]
@@ -315,6 +330,44 @@ pub enum Command {
             num_args=0..=1,
             default_missing_value=kulfi_utils::SECRET_KEY_FILE,
             help = "The file where the private key of the identity will be stored. If not provided, the private key will be printed to stdout."
+        )]
+        file: Option<String>,
+    },
+    #[clap(about = "Create or delete ID52s in the system keyring")]
+    Identity {
+        #[clap(subcommand)]
+        cmd: IdentityCmd,
+    },
+}
+
+#[derive(clap::Subcommand, Debug)]
+pub enum IdentityCmd {
+    #[clap(about = "Create a new identity and store the private key to system keyring.")]
+    Create {
+        #[arg(
+            long,
+            short,
+            num_args=0..=1,
+            default_missing_value=kulfi_utils::ID52_FILE,
+            help = "The file or the folder to store the private key."
+        )]
+        file: Option<String>,
+    },
+    #[clap(about = "Delete the identity from system keyring.")]
+    Delete {
+        #[arg(
+            long,
+            short,
+            num_args = 1,
+            help = "Delete the ID52 from system keyring."
+        )]
+        id52: Option<String>,
+        #[arg(
+            long,
+            short,
+            num_args=0..=1,
+            default_missing_value=kulfi_utils::ID52_FILE,
+            help = "Delete the ID52 in the file from system keyring."
         )]
         file: Option<String>,
     },
