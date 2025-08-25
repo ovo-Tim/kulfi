@@ -1,10 +1,11 @@
+use eyre::Context;
 use eyre::eyre;
-use eyre::{Context, ContextCompat};
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::env;
 use std::fs;
 use std::path::Path;
+use tracing_appender::non_blocking::WorkerGuard;
 use tracing_appender::rolling;
 
 #[allow(dead_code)]
@@ -82,25 +83,28 @@ fn parse_config(path: &Path) -> eyre::Result<Config> {
     Ok(conf)
 }
 
-fn set_up_logging(conf: &Config) -> eyre::Result<()> {
+fn set_up_logging(conf: &Config) -> eyre::Result<Option<WorkerGuard>> {
     match &conf.malai.log {
         Some(log_dir) => {
             let log_dir = Path::new(&log_dir);
             let file_appender = rolling::daily(
                 log_dir.parent().unwrap_or(Path::new("./")),
-                log_dir.file_name().context("Invalid log path.")?,
+                log_dir
+                    .file_name()
+                    .unwrap_or_else(|| std::ffi::OsStr::new("malai.log")),
             );
-            let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
+            let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
             tracing_subscriber::fmt()
                 .with_writer(non_blocking)
                 .with_ansi(false)
                 .init();
+            return Ok(Some(guard));
         }
         None => {
             tracing_subscriber::fmt::init();
         }
     }
-    Ok(())
+    Ok(None)
 }
 
 async fn load_identity(identity: &Option<String>) -> eyre::Result<(String, kulfi_id52::SecretKey)> {
@@ -199,19 +203,26 @@ async fn set_up_tcp_services(conf: &Config, graceful: kulfi_utils::Graceful) {
     }
 }
 
-pub async fn run(conf_path: &Path, graceful: kulfi_utils::Graceful) {
+pub async fn run(conf_path: &Path, graceful: kulfi_utils::Graceful) -> Option<WorkerGuard> {
     let conf = match parse_config(conf_path) {
         Ok(conf) => conf,
         Err(e) => {
             eprintln!("Failed to parse config: {}", e);
-            return;
+            return None;
         }
     };
-    if let Err(e) = set_up_logging(&conf) {
-        eprintln!("Failed to set up logging: {}. Skipping.", e);
-    }
+
+    let guard = match set_up_logging(&conf) {
+        Ok(guard) => guard,
+        Err(e) => {
+            eprintln!("Failed to set up logging: {}. Skipping.", e);
+            None
+        }
+    };
+
     set_up_http_services(&conf, graceful.clone()).await;
     set_up_tcp_services(&conf, graceful.clone()).await;
+    guard
 }
 
 #[test]
