@@ -1,3 +1,4 @@
+use eyre::eyre;
 use eyre::{Context, ContextCompat};
 use serde::Deserialize;
 use std::collections::HashMap;
@@ -12,6 +13,7 @@ pub struct Config {
     #[serde(default = "default_malai_conf")]
     malai: MalaiConf,
     http: Option<HttpServices>,
+    tcp: Option<TcpServices>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -37,12 +39,24 @@ struct HttpServiceConf {
     host: String,
     #[serde(default = "default_bridge")]
     bridge: String,
-    // #[serde(rename = "access-log")]
-    // access_log: String,
-    // #[serde(rename = "debug-log")]
-    // debug_log: String,
-    // #[serde(rename = "error-log")]
-    // error_log: String,
+}
+
+#[derive(Deserialize, Debug)]
+struct TcpServices {
+    #[allow(dead_code)]
+    #[serde(flatten)]
+    services: HashMap<String, TcpServiceConf>,
+}
+
+#[allow(dead_code)]
+#[derive(Deserialize, Debug)]
+struct TcpServiceConf {
+    identity: Option<String>, // Leave None to read from env, .malai.secret-key file or .malai.id52 file and system keyring
+    port: u16,
+    public: bool,
+    active: bool,
+    #[serde(default = "default_host")]
+    host: String,
 }
 
 fn default_host() -> String {
@@ -89,6 +103,25 @@ fn set_up_logging(conf: &Config) -> eyre::Result<()> {
     Ok(())
 }
 
+async fn load_identity(identity: &Option<String>) -> eyre::Result<(String, kulfi_id52::SecretKey)> {
+    match identity {
+        Some(id52) => match kulfi_utils::secret::handle_identity(id52.to_string()) {
+            Ok(v) => Ok(v),
+            Err(_e) => Err(eyre!(
+                "Failed to load identity {} from system keyring.",
+                id52
+            )),
+        },
+        None => match kulfi_utils::read_or_create_key().await {
+            Ok(v) => Ok(v),
+            Err(e) => {
+                malai::identity_read_err_msg(e);
+                Err(eyre!("Failed to load/create identity from/to file."))
+            }
+        },
+    }
+}
+
 async fn set_up_http_services(conf: &Config, graceful: kulfi_utils::Graceful) {
     if let Some(http_conf) = &conf.http {
         for (name, service_conf) in &http_conf.services {
@@ -109,30 +142,58 @@ async fn set_up_http_services(conf: &Config, graceful: kulfi_utils::Graceful) {
             let bridge = service_conf.bridge.clone();
             let graceful_clone = graceful.clone();
 
-            let (id52, secret_key) = match &service_conf.identity {
-                Some(id52) => match kulfi_utils::secret::handle_identity(id52.to_string()) {
-                    Ok(v) => v,
-                    Err(_e) => {
-                        // The error message has been printed by tracing::error!
-                        eprintln!("Failed to load identity for service: {}. Skipping.", name);
-                        continue;
-                    }
-                },
-                None => match kulfi_utils::read_or_create_key().await {
-                    Ok(v) => v,
-                    Err(e) => {
-                        eprintln!(
-                            "Failed to load or create identity for service: {}. Skipping.",
-                            name
-                        );
-                        malai::identity_read_err_msg(e);
-                        continue;
-                    }
-                },
+            let (id52, secret_key) = match load_identity(&service_conf.identity).await {
+                Ok(v) => v,
+                Err(e) => {
+                    // The error message has been printed by tracing::error!
+                    eprintln!(
+                        "Failed to load identity for service {}: {} Skipping.",
+                        name, e
+                    );
+                    continue;
+                }
             };
 
             graceful.spawn(async move {
                 malai::expose_http(host, port, bridge, id52, secret_key, graceful_clone).await
+            });
+        }
+    }
+}
+
+async fn set_up_tcp_services(conf: &Config, graceful: kulfi_utils::Graceful) {
+    if let Some(tcp_conf) = &conf.tcp {
+        for (name, service_conf) in &tcp_conf.services {
+            println!("Starting TCP services: {}", name);
+            // Check
+            if !service_conf.active {
+                continue;
+            }
+            if !service_conf.public {
+                tracing::warn!(
+                    "You have to set public to true for service {}. Skipping.",
+                    name
+                );
+                continue;
+            }
+            let host = service_conf.host.clone();
+            let port = service_conf.port;
+            let graceful_clone = graceful.clone();
+
+            let (id52, secret_key) = match load_identity(&service_conf.identity).await {
+                Ok(v) => v,
+                Err(e) => {
+                    // The error message has been printed by tracing::error!
+                    eprintln!(
+                        "Failed to load identity for service {}: {} Skipping.",
+                        name, e
+                    );
+                    continue;
+                }
+            };
+
+            graceful.spawn(async move {
+                malai::expose_tcp(host, port, id52, secret_key, graceful_clone).await
             });
         }
     }
@@ -150,6 +211,7 @@ pub async fn run(conf_path: &Path, graceful: kulfi_utils::Graceful) {
         eprintln!("Failed to set up logging: {}. Skipping.", e);
     }
     set_up_http_services(&conf, graceful.clone()).await;
+    set_up_tcp_services(&conf, graceful.clone()).await;
 }
 
 #[test]
@@ -160,4 +222,8 @@ fn parse_config_test() {
     let http = conf.http.as_ref().expect("HTTP services should be present");
     assert!(http.services.get("service1").is_some());
     assert!(http.services.get("service2").is_some());
+
+    assert!(conf.tcp.is_some());
+    let tcp = conf.tcp.as_ref().expect("TCP services should be present");
+    assert!(tcp.services.get("service3").is_some());
 }

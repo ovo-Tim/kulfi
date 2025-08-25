@@ -26,9 +26,10 @@ async fn main() -> eyre::Result<()> {
         };
         if !conf_file.exists() {
             eprintln!("Unable to find malai.toml in {}", conf_file.display());
+            return Ok(());
         }
         malai::run(conf_file, graceful.clone()).await;
-        Ok(())
+        graceful.shutdown().await
     } else {
         // run with RUST_LOG="malai=trace,kulfi_utils=trace" to see logs
         tracing_subscriber::fmt::init();
@@ -93,8 +94,16 @@ async fn match_cli(cli: Cli, graceful: Graceful) -> eyre::Result<()> {
 
             tracing::info!(port, host, verbose = ?cli.verbose, "Exposing TCP service on kulfi.");
             let graceful_for_expose_tcp = graceful.clone();
-            graceful
-                .spawn(async move { malai::expose_tcp(host, port, graceful_for_expose_tcp).await });
+            graceful.spawn(async move {
+                let (id52, secret_key) = match kulfi_utils::read_or_create_key().await {
+                    Ok(v) => v,
+                    Err(e) => {
+                        malai::identity_read_err_msg(e);
+                        std::process::exit(1);
+                    }
+                };
+                malai::expose_tcp(host, port, id52, secret_key, graceful_for_expose_tcp).await;
+            });
         }
         Some(Command::TcpBridge { proxy_target, port }) => {
             tracing::info!(port, proxy_target, verbose = ?cli.verbose, "Starting TCP bridge.");

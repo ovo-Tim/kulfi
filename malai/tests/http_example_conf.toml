@@ -12,3 +12,9 @@ identity = "<another-id52>"
 port = 3001
 public = true
 active = true
+
+[tcp.service3]
+identity = "<another-id52>"
+port = 3002
+public = true
+active = true
