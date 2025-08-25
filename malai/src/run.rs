@@ -5,8 +5,10 @@ use std::collections::HashMap;
 use std::env;
 use std::fs;
 use std::path::Path;
+use tracing::{error, info};
 use tracing_appender::non_blocking::WorkerGuard;
 use tracing_appender::rolling;
+use tracing_subscriber::{fmt, prelude::*};
 
 #[allow(dead_code)]
 #[derive(Deserialize, Debug)]
@@ -94,10 +96,21 @@ fn set_up_logging(conf: &Config) -> eyre::Result<Option<WorkerGuard>> {
                     .unwrap_or_else(|| std::ffi::OsStr::new("malai.log")),
             );
             let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
-            tracing_subscriber::fmt()
-                .with_writer(non_blocking)
-                .with_ansi(false)
-                .init();
+            // tracing_subscriber::fmt()
+            //     .with_writer(non_blocking)
+            //     .with_ansi(false)
+            //     .init();
+            let subscriber = fmt::Subscriber::builder().finish().with(
+                fmt::Layer::new()
+                    .with_writer(non_blocking)
+                    .with_ansi(false)
+                    .with_target(true)
+                    .with_file(true)
+                    .with_line_number(true),
+            );
+
+            tracing::subscriber::set_global_default(subscriber)
+                .expect("Failed to set tracing subscriber");
             return Ok(Some(guard));
         }
         None => {
@@ -129,7 +142,7 @@ async fn load_identity(identity: &Option<String>) -> eyre::Result<(String, kulfi
 async fn set_up_http_services(conf: &Config, graceful: kulfi_utils::Graceful) {
     if let Some(http_conf) = &conf.http {
         for (name, service_conf) in &http_conf.services {
-            println!("Starting HTTP services: {}", name);
+            info!("Starting HTTP services: {}", name);
             // Check
             if !service_conf.active {
                 continue;
@@ -150,7 +163,7 @@ async fn set_up_http_services(conf: &Config, graceful: kulfi_utils::Graceful) {
                 Ok(v) => v,
                 Err(e) => {
                     // The error message has been printed by tracing::error!
-                    eprintln!(
+                    error!(
                         "Failed to load identity for service {}: {} Skipping.",
                         name, e
                     );
@@ -168,7 +181,7 @@ async fn set_up_http_services(conf: &Config, graceful: kulfi_utils::Graceful) {
 async fn set_up_tcp_services(conf: &Config, graceful: kulfi_utils::Graceful) {
     if let Some(tcp_conf) = &conf.tcp {
         for (name, service_conf) in &tcp_conf.services {
-            println!("Starting TCP services: {}", name);
+            info!("Starting TCP services: {}", name);
             // Check
             if !service_conf.active {
                 continue;
@@ -188,7 +201,7 @@ async fn set_up_tcp_services(conf: &Config, graceful: kulfi_utils::Graceful) {
                 Ok(v) => v,
                 Err(e) => {
                     // The error message has been printed by tracing::error!
-                    eprintln!(
+                    error!(
                         "Failed to load identity for service {}: {} Skipping.",
                         name, e
                     );
@@ -207,7 +220,7 @@ pub async fn run(conf_path: &Path, graceful: kulfi_utils::Graceful) -> Option<Wo
     let conf = match parse_config(conf_path) {
         Ok(conf) => conf,
         Err(e) => {
-            eprintln!("Failed to parse config: {}", e);
+            error!("Failed to parse config: {}", e);
             return None;
         }
     };
@@ -215,7 +228,7 @@ pub async fn run(conf_path: &Path, graceful: kulfi_utils::Graceful) -> Option<Wo
     let guard = match set_up_logging(&conf) {
         Ok(guard) => guard,
         Err(e) => {
-            eprintln!("Failed to set up logging: {}. Skipping.", e);
+            error!("Failed to set up logging: {}. Skipping.", e);
             None
         }
     };
