@@ -2,6 +2,7 @@ use eyre::Context;
 use eyre::eyre;
 use serde::Deserialize;
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::env;
 use std::fs;
 use std::path::Path;
@@ -120,8 +121,11 @@ fn set_up_logging(conf: &Config) -> eyre::Result<Option<WorkerGuard>> {
     Ok(None)
 }
 
-async fn load_identity(identity: &Option<String>) -> eyre::Result<(String, kulfi_id52::SecretKey)> {
-    match identity {
+async fn load_identity(
+    identity: &Option<String>,
+    used_id52: &mut HashSet<String>,
+) -> eyre::Result<(String, kulfi_id52::SecretKey)> {
+    let (id52, secret_key) = match identity {
         Some(id52) => match kulfi_utils::secret::handle_identity(id52.to_string()) {
             Ok(v) => Ok(v),
             Err(_e) => Err(eyre!(
@@ -136,10 +140,20 @@ async fn load_identity(identity: &Option<String>) -> eyre::Result<(String, kulfi
                 Err(eyre!("Failed to load/create identity from/to file."))
             }
         },
+    }?;
+    if used_id52.contains(&id52) {
+        Err(eyre!("Identity already used."))
+    } else {
+        used_id52.insert(id52.clone());
+        Ok((id52, secret_key))
     }
 }
 
-async fn set_up_http_services(conf: &Config, graceful: kulfi_utils::Graceful) {
+async fn set_up_http_services(
+    conf: &Config,
+    used_id52: &mut HashSet<String>,
+    graceful: kulfi_utils::Graceful,
+) {
     if let Some(http_conf) = &conf.http {
         for (name, service_conf) in &http_conf.services {
             info!("Starting HTTP services: {}", name);
@@ -159,7 +173,7 @@ async fn set_up_http_services(conf: &Config, graceful: kulfi_utils::Graceful) {
             let bridge = service_conf.bridge.clone();
             let graceful_clone = graceful.clone();
 
-            let (id52, secret_key) = match load_identity(&service_conf.identity).await {
+            let (id52, secret_key) = match load_identity(&service_conf.identity, used_id52).await {
                 Ok(v) => v,
                 Err(e) => {
                     // The error message has been printed by tracing::error!
@@ -178,7 +192,11 @@ async fn set_up_http_services(conf: &Config, graceful: kulfi_utils::Graceful) {
     }
 }
 
-async fn set_up_tcp_services(conf: &Config, graceful: kulfi_utils::Graceful) {
+async fn set_up_tcp_services(
+    conf: &Config,
+    used_id52: &mut HashSet<String>,
+    graceful: kulfi_utils::Graceful,
+) {
     if let Some(tcp_conf) = &conf.tcp {
         for (name, service_conf) in &tcp_conf.services {
             info!("Starting TCP services: {}", name);
@@ -197,7 +215,7 @@ async fn set_up_tcp_services(conf: &Config, graceful: kulfi_utils::Graceful) {
             let port = service_conf.port;
             let graceful_clone = graceful.clone();
 
-            let (id52, secret_key) = match load_identity(&service_conf.identity).await {
+            let (id52, secret_key) = match load_identity(&service_conf.identity, used_id52).await {
                 Ok(v) => v,
                 Err(e) => {
                     // The error message has been printed by tracing::error!
@@ -233,8 +251,10 @@ pub async fn run(conf_path: &Path, graceful: kulfi_utils::Graceful) -> Option<Wo
         }
     };
 
-    set_up_http_services(&conf, graceful.clone()).await;
-    set_up_tcp_services(&conf, graceful.clone()).await;
+    let mut used_id52: HashSet<String> = HashSet::new();
+
+    set_up_http_services(&conf, &mut used_id52, graceful.clone()).await;
+    set_up_tcp_services(&conf, &mut used_id52, graceful.clone()).await;
     guard
 }
 
