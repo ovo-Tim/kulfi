@@ -22,7 +22,7 @@ pub fn generate_and_save_key(
     if let Some(file) = &file {
         std::fs::write(file, &id52)
             .wrap_err_with(|| format!("failed to save secret key to {}", &file.display()))?;
-        println!("Secret key saved to {}", file.display());
+        println!("ID52 saved to {}", file.display());
     }
     Ok((id52, secret_key))
 }
@@ -38,7 +38,7 @@ fn keyring_entry(id52: &str) -> eyre::Result<keyring::Entry> {
         .wrap_err_with(|| format!("failed to create keyring Entry for {id52}"))
 }
 
-fn handle_secret(secret: &str) -> eyre::Result<(String, kulfi_id52::SecretKey)> {
+pub fn handle_secret(secret: &str) -> eyre::Result<(String, kulfi_id52::SecretKey)> {
     use std::str::FromStr;
     let secret_key = kulfi_id52::SecretKey::from_str(secret).map_err(|e| eyre::anyhow!("{}", e))?;
     let id52 = secret_key.id52();
