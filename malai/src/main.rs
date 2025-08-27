@@ -28,8 +28,7 @@ async fn main() -> eyre::Result<()> {
             eprintln!("Unable to find malai.toml in {}", conf_file.display());
             return Ok(());
         }
-        // Dropping this when main is ended makes sure the log will be written.
-        let _logging_guard = malai::run(conf_file, graceful.clone()).await;
+        malai::run(conf_file, graceful.clone()).await;
         graceful.shutdown().await
     } else {
         // run with RUST_LOG="malai=trace,kulfi_utils=trace" to see logs

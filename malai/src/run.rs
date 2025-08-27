@@ -7,10 +7,13 @@ use std::collections::HashSet;
 use std::env;
 use std::fs;
 use std::path::Path;
+use std::sync::OnceLock;
 use tracing::{error, info};
 use tracing_appender::non_blocking::WorkerGuard;
 use tracing_appender::rolling;
 use tracing_subscriber::{fmt, prelude::*};
+
+static LOG_GUARD: OnceLock<WorkerGuard> = OnceLock::new();
 
 #[allow(dead_code)]
 #[derive(Deserialize, Debug)]
@@ -96,7 +99,7 @@ fn parse_config(path: &Path) -> eyre::Result<Config> {
     Ok(conf)
 }
 
-fn set_up_logging(conf: &Config) -> eyre::Result<Option<WorkerGuard>> {
+fn set_up_logging(conf: &Config) -> eyre::Result<()> {
     match &conf.malai.log {
         Some(log_dir) => {
             let log_dir = Path::new(&log_dir);
@@ -107,6 +110,7 @@ fn set_up_logging(conf: &Config) -> eyre::Result<Option<WorkerGuard>> {
                     .unwrap_or_else(|| std::ffi::OsStr::new("malai.log")),
             );
             let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
+            LOG_GUARD.get_or_init(|| guard);
             // tracing_subscriber::fmt()
             //     .with_writer(non_blocking)
             //     .with_ansi(false)
@@ -120,15 +124,13 @@ fn set_up_logging(conf: &Config) -> eyre::Result<Option<WorkerGuard>> {
                     .with_line_number(true),
             );
 
-            tracing::subscriber::set_global_default(subscriber)
-                .expect("Failed to set tracing subscriber");
-            return Ok(Some(guard));
+            tracing::subscriber::set_global_default(subscriber)?;
         }
         None => {
             tracing_subscriber::fmt::init();
         }
     }
-    Ok(None)
+    Ok(())
 }
 
 fn load_secret_from_file(path: &Path) -> eyre::Result<(String, kulfi_id52::SecretKey)> {
@@ -252,20 +254,19 @@ async fn set_up_tcp_services(
     }
 }
 
-pub async fn run(conf_path: &Path, graceful: kulfi_utils::Graceful) -> Option<WorkerGuard> {
+pub async fn run(conf_path: &Path, graceful: kulfi_utils::Graceful) {
     let conf = match parse_config(conf_path) {
         Ok(conf) => conf,
         Err(e) => {
             error!("Failed to parse config: {}", e);
-            return None;
+            return;
         }
     };
 
-    let guard = match set_up_logging(&conf) {
+    match set_up_logging(&conf) {
         Ok(guard) => guard,
         Err(e) => {
             error!("Failed to set up logging: {}. Skipping.", e);
-            None
         }
     };
 
@@ -273,7 +274,6 @@ pub async fn run(conf_path: &Path, graceful: kulfi_utils::Graceful) -> Option<Wo
 
     set_up_http_services(&conf, &mut used_id52, graceful.clone()).await;
     set_up_tcp_services(&conf, &mut used_id52, graceful.clone()).await;
-    guard
 }
 
 #[test]
