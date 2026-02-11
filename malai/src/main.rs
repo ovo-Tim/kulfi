@@ -1,9 +1,3 @@
-// prevents an additional console window on Windows in release, DO NOT REMOVE!
-#![cfg_attr(
-    not(debug_assertions),
-    windows_subsystem = "windows"
-)]
-
 use std::path::Path;
 
 use kulfi_utils::Graceful;
@@ -191,13 +185,6 @@ pub struct Cli {
 
     #[command(subcommand)]
     pub command: Option<Command>,
-
-    // adding these two because when we run `cargo tauri dev,` it automatically passes these
-    // arguments. need to figure out why and how to disable that, till then this is a workaround
-    #[arg(default_value = "true", long, hide = true)]
-    no_default_features: bool,
-    #[arg(default_value = "auto", long, hide = true)]
-    color: String,
 }
 
 #[derive(clap::Subcommand, Debug)]
