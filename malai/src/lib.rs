@@ -25,23 +25,12 @@ pub use expose_http::expose_http;
 pub use expose_tcp::expose_tcp;
 pub use folder::folder;
 pub use http_bridge::http_bridge;
-pub use http_proxy::{ProxyData, http_proxy};
+pub use http_proxy::{http_proxy, ProxyData};
 pub use http_proxy_remote::http_proxy_remote;
 pub use identity::{create_identity, delete_identity};
 pub use keygen::keygen;
 pub use run::run;
 pub use tcp_bridge::tcp_bridge;
-
-#[cfg(feature = "ui")]
-#[cfg_attr(mobile, tauri::mobile_entry_point)]
-pub fn ui() -> eyre::Result<()> {
-    tauri::Builder::default()
-        .plugin(tauri_plugin_opener::init())
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
-
-    Ok(())
-}
 
 pub fn public_check(public: bool, service: &str, cmd: &str) -> bool {
     use colored::Colorize;

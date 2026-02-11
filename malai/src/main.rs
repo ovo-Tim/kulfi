@@ -1,6 +1,6 @@
 // prevents an additional console window on Windows in release, DO NOT REMOVE!
 #![cfg_attr(
-    all(not(debug_assertions), feature = "ui"),
+    not(debug_assertions),
     windows_subsystem = "windows"
 )]
 
@@ -173,12 +173,6 @@ async fn match_cli(cli: Cli, graceful: Graceful) -> eyre::Result<()> {
             }
             return Ok(());
         }
-        #[cfg(feature = "ui")]
-        None => {
-            tracing::info!(verbose = ?cli.verbose, "Starting UI.");
-            let _ = malai::ui();
-        }
-        #[cfg(not(feature = "ui"))]
         None => {
             use clap::CommandFactory;
 
