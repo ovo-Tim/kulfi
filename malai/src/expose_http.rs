@@ -102,8 +102,8 @@ impl InfoMode {
         use colored::Colorize;
 
         // Malai: Sharing http://127.0.0.1:3000 at
-        // https://68tr15k68lu9f05tk03j9nnjcn1n0fqb5vdb1c3205nj8nv974ng.kulfi.site/
-        // To avoid the public proxy, run your own with: malai http-bridge
+        // https://68tr15k68lu9f05tk03j9nnjcn1n0fqb5vdb1c3205nj8nv974ng.bridge.example.com/
+        // To access via web browser, run your own bridge with: malai http-bridge
         // Or use: malai browse kulfi://68tr15k68lu9f05tk03j9nnjcn1n0fqb5vdb1c3205nj8nv974ng
 
         if self == &InfoMode::OnExit {
@@ -116,10 +116,16 @@ impl InfoMode {
             format!("http://{host}:{port}").yellow()
         );
 
-        println!("{}", format!("https://{id52}.{bridge}").yellow(),);
+        if !bridge.is_empty() {
+            println!("{}", format!("https://{id52}.{bridge}").yellow(),);
+        } else {
+            println!("{}", format!("kulfi://{id52}").yellow(),);
+        }
 
-        if self != &InfoMode::OnExit {
-            println!("To avoid the public proxy, run your own with: malai http-bridge");
+        if self != &InfoMode::OnExit && !bridge.is_empty() {
+            println!("To access via web browser, run your own bridge with: malai http-bridge");
+        } else if self != &InfoMode::OnExit {
+            println!("To access via web browser, set up an HTTP bridge. See documentation for details.");
         }
 
         println!(

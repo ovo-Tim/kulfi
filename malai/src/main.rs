@@ -62,7 +62,7 @@ async fn match_cli(cli: Cli, graceful: Graceful) -> eyre::Result<()> {
                 malai::expose_http(
                     host,
                     port,
-                    bridge,
+                    bridge.unwrap_or_default(),
                     id52,
                     secret_key,
                     graceful_for_export_http,
@@ -122,7 +122,7 @@ async fn match_cli(cli: Cli, graceful: Graceful) -> eyre::Result<()> {
 
             tracing::info!(path, verbose = ?cli.verbose, "Exposing folder to kulfi network.");
             let graceful_for_folder = graceful.clone();
-            graceful.spawn(async move { malai::folder(path, bridge, graceful_for_folder).await });
+            graceful.spawn(async move { malai::folder(path, bridge.unwrap_or_default(), graceful_for_folder).await });
         }
         Some(Command::Run { home: _ }) => {
             // Handled brfore
@@ -203,11 +203,10 @@ pub enum Command {
         host: String,
         #[arg(
             long,
-            default_value = "kulfi.site",
-            help = "Use this for the HTTP bridge. To run an HTTP bridge, use `malai http-bridge`",
+            help = "HTTP bridge domain to use. You must host your own bridge with `malai http-bridge`. Can be set via MALAI_HTTP_BRIDGE env var.",
             env = "MALAI_HTTP_BRIDGE"
         )]
-        bridge: String,
+        bridge: Option<String>,
         #[arg(
             long,
             help = "Make the exposed service public. Anyone will be able to access."
@@ -280,11 +279,10 @@ pub enum Command {
         path: String,
         #[arg(
             long,
-            default_value = "kulfi.site",
-            help = "Use this for the HTTP bridge. To run an HTTP bridge, use `malai http-bridge`",
+            help = "HTTP bridge domain to use. You must host your own bridge with `malai http-bridge`. Can be set via MALAI_HTTP_BRIDGE env var.",
             env = "MALAI_HTTP_BRIDGE"
         )]
-        bridge: String,
+        bridge: Option<String>,
         #[arg(long, help = "Make the folder public. Anyone will be able to access.")]
         public: bool,
     },

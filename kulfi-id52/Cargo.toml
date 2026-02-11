@@ -4,7 +4,6 @@ version = "0.1.0"
 edition.workspace = true
 authors.workspace = true
 description = "ID52 identity and cryptographic key management"
-homepage.workspace = true
 license.workspace = true
 
 [dependencies]

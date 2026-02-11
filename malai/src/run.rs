@@ -83,7 +83,7 @@ fn default_host() -> String {
 fn default_bridge() -> String {
     match env::var("MALAI_HTTP_BRIDGE") {
         Ok(value) => value,
-        Err(_) => "kulfi.site".to_string(),
+        Err(_) => String::new(), // No default bridge - users must provide their own
     }
 }
 
