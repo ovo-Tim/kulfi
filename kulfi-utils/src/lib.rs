@@ -12,6 +12,7 @@ mod ping;
 pub mod protocol;
 pub mod secret;
 mod tcp;
+mod udp;
 mod utils;
 mod utils_iroh;
 
@@ -29,9 +30,11 @@ pub use secret::{
     read_or_create_key,
 };
 pub use tcp::{peer_to_tcp, pipe_tcp_stream_over_iroh, tcp_to_peer};
+pub use udp::{peer_to_udp, read_framed_datagram, udp_to_peer, write_framed_datagram};
 pub use utils::mkdir;
 pub use utils_iroh::{
-    accept_bi, accept_bi_with, get_remote_id52, global_iroh_endpoint, next_json, next_string,
+    accept_bi, accept_bi_any, accept_bi_with, get_remote_id52, global_iroh_endpoint, next_json,
+    next_string,
 };
 
 // Deprecated helper functions - use kulfi_id52 directly

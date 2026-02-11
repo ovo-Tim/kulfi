@@ -11,6 +11,8 @@ use tracing_subscriber as _;
 mod browse;
 mod expose_http;
 mod expose_tcp;
+mod expose_tcp_udp;
+mod expose_udp;
 mod folder;
 mod http_bridge;
 mod http_proxy;
@@ -19,10 +21,13 @@ mod identity;
 mod keygen;
 mod run;
 mod tcp_bridge;
+mod udp_bridge;
 
 pub use browse::browse;
 pub use expose_http::expose_http;
 pub use expose_tcp::expose_tcp;
+pub use expose_tcp_udp::expose_tcp_udp;
+pub use expose_udp::expose_udp;
 pub use folder::folder;
 pub use http_bridge::http_bridge;
 pub use http_proxy::{http_proxy, ProxyData};
@@ -31,6 +36,7 @@ pub use identity::{create_identity, delete_identity};
 pub use keygen::keygen;
 pub use run::run;
 pub use tcp_bridge::tcp_bridge;
+pub use udp_bridge::udp_bridge;
 
 pub fn public_check(public: bool, service: &str, cmd: &str) -> bool {
     use colored::Colorize;

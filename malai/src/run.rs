@@ -22,6 +22,8 @@ pub struct Config {
     malai: MalaiConf,
     http: Option<HttpServices>,
     tcp: Option<TcpServices>,
+    udp: Option<UdpServices>,
+    tcp_udp: Option<TcpUdpServices>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -69,6 +71,44 @@ struct TcpServices {
 struct TcpServiceConf {
     #[serde(flatten)]
     identity_conf: IdentityConf, // Leave None to read from env, .malai.secret-key file or .malai.id52 file and system keyring
+    port: u16,
+    public: bool,
+    active: bool,
+    #[serde(default = "default_host")]
+    host: String,
+}
+
+#[derive(Deserialize, Debug)]
+struct UdpServices {
+    #[allow(dead_code)]
+    #[serde(flatten)]
+    services: HashMap<String, UdpServiceConf>,
+}
+
+#[allow(dead_code)]
+#[derive(Deserialize, Debug)]
+struct UdpServiceConf {
+    #[serde(flatten)]
+    identity_conf: IdentityConf,
+    port: u16,
+    public: bool,
+    active: bool,
+    #[serde(default = "default_host")]
+    host: String,
+}
+
+#[derive(Deserialize, Debug)]
+struct TcpUdpServices {
+    #[allow(dead_code)]
+    #[serde(flatten)]
+    services: HashMap<String, TcpUdpServiceConf>,
+}
+
+#[allow(dead_code)]
+#[derive(Deserialize, Debug)]
+struct TcpUdpServiceConf {
+    #[serde(flatten)]
+    identity_conf: IdentityConf,
     port: u16,
     public: bool,
     active: bool,
@@ -254,6 +294,88 @@ async fn set_up_tcp_services(
     }
 }
 
+async fn set_up_udp_services(
+    conf: &Config,
+    used_id52: &mut HashSet<String>,
+    graceful: kulfi_utils::Graceful,
+) {
+    if let Some(udp_conf) = &conf.udp {
+        for (name, service_conf) in &udp_conf.services {
+            info!("Starting UDP services: {}", name);
+            if !service_conf.active {
+                continue;
+            }
+            if !service_conf.public {
+                tracing::warn!(
+                    "You have to set public to true for service {}. Skipping.",
+                    name
+                );
+                continue;
+            }
+            let host = service_conf.host.clone();
+            let port = service_conf.port;
+            let graceful_clone = graceful.clone();
+
+            let (id52, secret_key) =
+                match load_identity(&service_conf.identity_conf, used_id52).await {
+                    Ok(v) => v,
+                    Err(e) => {
+                        error!(
+                            "Failed to load identity for service {}: {} Skipping.",
+                            name, e
+                        );
+                        continue;
+                    }
+                };
+
+            graceful.spawn(async move {
+                malai::expose_udp(host, port, id52, secret_key, graceful_clone).await
+            });
+        }
+    }
+}
+
+async fn set_up_tcp_udp_services(
+    conf: &Config,
+    used_id52: &mut HashSet<String>,
+    graceful: kulfi_utils::Graceful,
+) {
+    if let Some(tcp_udp_conf) = &conf.tcp_udp {
+        for (name, service_conf) in &tcp_udp_conf.services {
+            info!("Starting TCP+UDP services: {}", name);
+            if !service_conf.active {
+                continue;
+            }
+            if !service_conf.public {
+                tracing::warn!(
+                    "You have to set public to true for service {}. Skipping.",
+                    name
+                );
+                continue;
+            }
+            let host = service_conf.host.clone();
+            let port = service_conf.port;
+            let graceful_clone = graceful.clone();
+
+            let (id52, secret_key) =
+                match load_identity(&service_conf.identity_conf, used_id52).await {
+                    Ok(v) => v,
+                    Err(e) => {
+                        error!(
+                            "Failed to load identity for service {}: {} Skipping.",
+                            name, e
+                        );
+                        continue;
+                    }
+                };
+
+            graceful.spawn(async move {
+                malai::expose_tcp_udp(host, port, id52, secret_key, graceful_clone).await
+            });
+        }
+    }
+}
+
 pub async fn run(conf_path: &Path, graceful: kulfi_utils::Graceful) {
     let conf = match parse_config(conf_path) {
         Ok(conf) => conf,
@@ -274,6 +396,8 @@ pub async fn run(conf_path: &Path, graceful: kulfi_utils::Graceful) {
 
     set_up_http_services(&conf, &mut used_id52, graceful.clone()).await;
     set_up_tcp_services(&conf, &mut used_id52, graceful.clone()).await;
+    set_up_udp_services(&conf, &mut used_id52, graceful.clone()).await;
+    set_up_tcp_udp_services(&conf, &mut used_id52, graceful.clone()).await;
 }
 
 #[test]
@@ -289,11 +413,15 @@ fn parse_config_test() {
             .get("service2")
             .unwrap()
             .identity_conf
-            .identity
+            .secret_file
             .is_some()
     );
 
     assert!(conf.tcp.is_some());
     let tcp = conf.tcp.as_ref().expect("TCP services should be present");
     assert!(tcp.services.get("service3").is_some());
+
+    assert!(conf.udp.is_some());
+    let udp = conf.udp.as_ref().expect("UDP services should be present");
+    assert!(udp.services.get("service4").is_some());
 }

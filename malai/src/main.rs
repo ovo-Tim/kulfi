@@ -106,6 +106,57 @@ async fn match_cli(cli: Cli, graceful: Graceful) -> eyre::Result<()> {
                 malai::tcp_bridge(port, proxy_target, graceful_for_tcp_bridge).await
             });
         }
+        Some(Command::Udp { port, host, public }) => {
+            if !malai::public_check(
+                public,
+                "UDP service",
+                &format!("malai udp {port} --public"),
+            ) {
+                return Ok(());
+            }
+
+            tracing::info!(port, host, verbose = ?cli.verbose, "Exposing UDP service on kulfi.");
+            let graceful_for_expose_udp = graceful.clone();
+            graceful.spawn(async move {
+                let (id52, secret_key) = match kulfi_utils::read_or_create_key().await {
+                    Ok(v) => v,
+                    Err(e) => {
+                        malai::identity_read_err_msg(e);
+                        std::process::exit(1);
+                    }
+                };
+                malai::expose_udp(host, port, id52, secret_key, graceful_for_expose_udp).await;
+            });
+        }
+        Some(Command::UdpBridge { proxy_target, port }) => {
+            tracing::info!(port, proxy_target, verbose = ?cli.verbose, "Starting UDP bridge.");
+            let graceful_for_udp_bridge = graceful.clone();
+            graceful.spawn(async move {
+                malai::udp_bridge(port, proxy_target, graceful_for_udp_bridge).await
+            });
+        }
+        Some(Command::TcpUdp { port, host, public }) => {
+            if !malai::public_check(
+                public,
+                "TCP+UDP service",
+                &format!("malai tcp-udp {port} --public"),
+            ) {
+                return Ok(());
+            }
+
+            tracing::info!(port, host, verbose = ?cli.verbose, "Exposing TCP+UDP service on kulfi.");
+            let graceful_for_expose = graceful.clone();
+            graceful.spawn(async move {
+                let (id52, secret_key) = match kulfi_utils::read_or_create_key().await {
+                    Ok(v) => v,
+                    Err(e) => {
+                        malai::identity_read_err_msg(e);
+                        std::process::exit(1);
+                    }
+                };
+                malai::expose_tcp_udp(host, port, id52, secret_key, graceful_for_expose).await;
+            });
+        }
         Some(Command::Browse { url }) => {
             tracing::info!(url, verbose = ?cli.verbose, "Opening browser.");
             let graceful_for_browse = graceful.clone();
@@ -263,6 +314,21 @@ pub enum Command {
         )]
         port: u16,
     },
+    #[clap(about = "Expose UDP Service on kulfi.")]
+    Udp {
+        port: u16,
+        #[arg(
+            long,
+            default_value = "127.0.0.1",
+            help = "Host serving the UDP service."
+        )]
+        host: String,
+        #[arg(
+            long,
+            help = "Make the exposed service public. Anyone will be able to access."
+        )]
+        public: bool,
+    },
     #[clap(about = "Run a TCP server that forwards incoming requests to the given id52.")]
     TcpBridge {
         #[arg(help = "The id52 to which this bridge will forward incoming TCP request.")]
@@ -272,6 +338,31 @@ pub enum Command {
             default_value = "0"
         )]
         port: u16,
+    },
+    #[clap(about = "Run a UDP server that forwards incoming datagrams to the given id52.")]
+    UdpBridge {
+        #[arg(help = "The id52 to which this bridge will forward incoming UDP datagrams.")]
+        proxy_target: String,
+        #[arg(
+            help = "The port on which this bridge will listen for incoming UDP datagrams. If you pass 0, it will bind to a random port.",
+            default_value = "0"
+        )]
+        port: u16,
+    },
+    #[clap(about = "Expose both TCP and UDP on the same port on kulfi.")]
+    TcpUdp {
+        port: u16,
+        #[arg(
+            long,
+            default_value = "127.0.0.1",
+            help = "Host serving the TCP+UDP service."
+        )]
+        host: String,
+        #[arg(
+            long,
+            help = "Make the exposed service public. Anyone will be able to access."
+        )]
+        public: bool,
     },
     #[clap(about = "Expose a folder to kulfi network")]
     Folder {

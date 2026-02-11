@@ -18,3 +18,9 @@ identity = "<another-id52>"
 port = 3002
 public = true
 active = true
+
+[udp.service4]
+identity = "<udp-id52>"
+port = 3003
+public = true
+active = true

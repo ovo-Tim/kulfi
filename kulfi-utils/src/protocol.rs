@@ -97,6 +97,7 @@ pub enum Protocol {
     /// to access it.
     Socks5,
     Tcp,
+    Udp,
     // TODO: RTP/"RTCP" for audio video streaming
 }
 

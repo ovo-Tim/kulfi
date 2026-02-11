@@ -54,6 +54,33 @@ pub async fn accept_bi(
     }
 }
 
+pub async fn accept_bi_any(
+    conn: &iroh::endpoint::Connection,
+    expected: &[crate::Protocol],
+) -> eyre::Result<(iroh::endpoint::SendStream, iroh::endpoint::RecvStream, crate::Protocol)> {
+    loop {
+        tracing::trace!("accepting bidirectional stream (any)");
+        match accept_bi_(conn).await? {
+            (mut send, _recv, crate::Protocol::Ping) => {
+                tracing::trace!("got ping");
+                send.write_all(crate::PONG)
+                    .await
+                    .inspect_err(|e| tracing::error!("failed to write PONG: {e:?}"))?;
+                tracing::trace!("sent PONG");
+            }
+            (s, r, found) => {
+                tracing::trace!("got bidirectional stream: {found:?}");
+                if !expected.contains(&found) {
+                    return Err(eyre::anyhow!(
+                        "expected one of {expected:?}, got {found:?}"
+                    ));
+                }
+                return Ok((s, r, found));
+            }
+        }
+    }
+}
+
 pub async fn accept_bi_with<T: serde::de::DeserializeOwned>(
     conn: &iroh::endpoint::Connection,
     expected: crate::Protocol,
