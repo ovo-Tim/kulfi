@@ -1,6 +1,0 @@
-{
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "sh -c \"$(curl -fsSL https://fastn.com/install.sh)\"",
-  "buildCommand": "fastn build",
-  "outputDirectory": ".build"
-}
