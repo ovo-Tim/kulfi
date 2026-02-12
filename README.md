@@ -235,6 +235,12 @@ port = 22
 host = "127.0.0.1"
 public = true
 active = true
+
+# Multiple ports for a single service (same identity)
+[tcp.multi_port_app]
+port = [4000, 4001, 4002]  # Can also use "ports" instead of "port"
+public = true
+active = true
 ```
 
 Run all services from config:
@@ -372,12 +378,23 @@ active = true
 port = 25565
 public = true
 active = true
+
+# Expose multiple ports with one identity
+[tcp.microservices]
+port = [8001, 8002, 8003]
+public = true
+active = true
 ```
 
 Run all active services:
 ```bash
 malai run
 ```
+
+**Multi-port services**: When you specify multiple ports (e.g., `port = [8001, 8002, 8003]`), all ports share the same identity and are exposed under the same `id52`. This is useful for:
+- Microservices running on different ports
+- Game servers with multiple service ports
+- Applications with separate API and admin ports
 
 ## Kulfi
 

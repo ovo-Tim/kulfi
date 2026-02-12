@@ -42,6 +42,7 @@ pub struct PublicKey(InnerPublicKey);
 /// let public_key = secret_key.public_key();
 /// let id52 = secret_key.id52();
 /// ```
+#[derive(Clone)]
 pub struct SecretKey(InnerSecretKey);
 
 /// Ed25519 signature (always 64 bytes)

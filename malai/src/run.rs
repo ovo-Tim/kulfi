@@ -2,9 +2,11 @@ use eyre::Context;
 use eyre::ContextCompat;
 use eyre::eyre;
 use serde::Deserialize;
+use serde::de;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::env;
+use std::fmt as stdfmt;
 use std::fs;
 use std::path::Path;
 use std::sync::OnceLock;
@@ -50,7 +52,8 @@ struct HttpServices {
 struct HttpServiceConf {
     #[serde(flatten)]
     identity_conf: IdentityConf, // Leave None to read from env, .malai.secret-key file or .malai.id52 file and system keyring
-    port: u16,
+    #[serde(alias = "ports", deserialize_with = "deserialize_ports")]
+    port: Vec<u16>,
     public: bool,
     active: bool,
     #[serde(default = "default_host")]
@@ -71,7 +74,8 @@ struct TcpServices {
 struct TcpServiceConf {
     #[serde(flatten)]
     identity_conf: IdentityConf, // Leave None to read from env, .malai.secret-key file or .malai.id52 file and system keyring
-    port: u16,
+    #[serde(alias = "ports", deserialize_with = "deserialize_ports")]
+    port: Vec<u16>,
     public: bool,
     active: bool,
     #[serde(default = "default_host")]
@@ -90,7 +94,8 @@ struct UdpServices {
 struct UdpServiceConf {
     #[serde(flatten)]
     identity_conf: IdentityConf,
-    port: u16,
+    #[serde(alias = "ports", deserialize_with = "deserialize_ports")]
+    port: Vec<u16>,
     public: bool,
     active: bool,
     #[serde(default = "default_host")]
@@ -109,7 +114,8 @@ struct TcpUdpServices {
 struct TcpUdpServiceConf {
     #[serde(flatten)]
     identity_conf: IdentityConf,
-    port: u16,
+    #[serde(alias = "ports", deserialize_with = "deserialize_ports")]
+    port: Vec<u16>,
     public: bool,
     active: bool,
     #[serde(default = "default_host")]
@@ -129,6 +135,58 @@ fn default_bridge() -> String {
 
 fn default_malai_conf() -> MalaiConf {
     MalaiConf { log: None }
+}
+
+/// Deserializes either a single port (`port = 3000`) or a list of ports (`port = [3000, 3001]`).
+fn deserialize_ports<'de, D>(deserializer: D) -> Result<Vec<u16>, D::Error>
+where
+    D: de::Deserializer<'de>,
+{
+    struct PortsVisitor;
+
+    impl<'de> de::Visitor<'de> for PortsVisitor {
+        type Value = Vec<u16>;
+
+        fn expecting(&self, formatter: &mut stdfmt::Formatter) -> stdfmt::Result {
+            formatter.write_str("a port number or a list of port numbers")
+        }
+
+        fn visit_u64<E>(self, value: u64) -> Result<Vec<u16>, E>
+        where
+            E: de::Error,
+        {
+            if value > u16::MAX as u64 {
+                return Err(E::custom(format!("port {} is out of range", value)));
+            }
+            Ok(vec![value as u16])
+        }
+
+        fn visit_i64<E>(self, value: i64) -> Result<Vec<u16>, E>
+        where
+            E: de::Error,
+        {
+            if value < 0 || value > u16::MAX as i64 {
+                return Err(E::custom(format!("port {} is out of range", value)));
+            }
+            Ok(vec![value as u16])
+        }
+
+        fn visit_seq<A>(self, mut seq: A) -> Result<Vec<u16>, A::Error>
+        where
+            A: de::SeqAccess<'de>,
+        {
+            let mut ports = Vec::new();
+            while let Some(port) = seq.next_element::<u16>()? {
+                ports.push(port);
+            }
+            if ports.is_empty() {
+                return Err(de::Error::custom("port list cannot be empty"));
+            }
+            Ok(ports)
+        }
+    }
+
+    deserializer.deserialize_any(PortsVisitor)
 }
 
 fn parse_config(path: &Path) -> eyre::Result<Config> {
@@ -226,16 +284,11 @@ async fn set_up_http_services(
                 );
                 continue;
             }
-            let host = service_conf.host.clone();
-            let port = service_conf.port;
-            let bridge = service_conf.bridge.clone();
-            let graceful_clone = graceful.clone();
 
             let (id52, secret_key) =
                 match load_identity(&service_conf.identity_conf, used_id52).await {
                     Ok(v) => v,
                     Err(e) => {
-                        // The error message has been printed by tracing::error!
                         error!(
                             "Failed to load identity for service {}: {} Skipping.",
                             name, e
@@ -244,9 +297,17 @@ async fn set_up_http_services(
                     }
                 };
 
-            graceful.spawn(async move {
-                malai::expose_http(host, port, bridge, id52, secret_key, graceful_clone).await
-            });
+            for &port in &service_conf.port {
+                let host = service_conf.host.clone();
+                let bridge = service_conf.bridge.clone();
+                let graceful_clone = graceful.clone();
+                let id52 = id52.clone();
+                let secret_key = secret_key.clone();
+
+                graceful.spawn(async move {
+                    malai::expose_http(host, port, bridge, id52, secret_key, graceful_clone).await
+                });
+            }
         }
     }
 }
@@ -270,15 +331,11 @@ async fn set_up_tcp_services(
                 );
                 continue;
             }
-            let host = service_conf.host.clone();
-            let port = service_conf.port;
-            let graceful_clone = graceful.clone();
 
             let (id52, secret_key) =
                 match load_identity(&service_conf.identity_conf, used_id52).await {
                     Ok(v) => v,
                     Err(e) => {
-                        // The error message has been printed by tracing::error!
                         error!(
                             "Failed to load identity for service {}: {} Skipping.",
                             name, e
@@ -287,9 +344,16 @@ async fn set_up_tcp_services(
                     }
                 };
 
-            graceful.spawn(async move {
-                malai::expose_tcp(host, port, id52, secret_key, graceful_clone).await
-            });
+            for &port in &service_conf.port {
+                let host = service_conf.host.clone();
+                let graceful_clone = graceful.clone();
+                let id52 = id52.clone();
+                let secret_key = secret_key.clone();
+
+                graceful.spawn(async move {
+                    malai::expose_tcp(host, port, id52, secret_key, graceful_clone).await
+                });
+            }
         }
     }
 }
@@ -312,9 +376,6 @@ async fn set_up_udp_services(
                 );
                 continue;
             }
-            let host = service_conf.host.clone();
-            let port = service_conf.port;
-            let graceful_clone = graceful.clone();
 
             let (id52, secret_key) =
                 match load_identity(&service_conf.identity_conf, used_id52).await {
@@ -328,9 +389,16 @@ async fn set_up_udp_services(
                     }
                 };
 
-            graceful.spawn(async move {
-                malai::expose_udp(host, port, id52, secret_key, graceful_clone).await
-            });
+            for &port in &service_conf.port {
+                let host = service_conf.host.clone();
+                let graceful_clone = graceful.clone();
+                let id52 = id52.clone();
+                let secret_key = secret_key.clone();
+
+                graceful.spawn(async move {
+                    malai::expose_udp(host, port, id52, secret_key, graceful_clone).await
+                });
+            }
         }
     }
 }
@@ -353,9 +421,6 @@ async fn set_up_tcp_udp_services(
                 );
                 continue;
             }
-            let host = service_conf.host.clone();
-            let port = service_conf.port;
-            let graceful_clone = graceful.clone();
 
             let (id52, secret_key) =
                 match load_identity(&service_conf.identity_conf, used_id52).await {
@@ -369,9 +434,16 @@ async fn set_up_tcp_udp_services(
                     }
                 };
 
-            graceful.spawn(async move {
-                malai::expose_tcp_udp(host, port, id52, secret_key, graceful_clone).await
-            });
+            for &port in &service_conf.port {
+                let host = service_conf.host.clone();
+                let graceful_clone = graceful.clone();
+                let id52 = id52.clone();
+                let secret_key = secret_key.clone();
+
+                graceful.spawn(async move {
+                    malai::expose_tcp_udp(host, port, id52, secret_key, graceful_clone).await
+                });
+            }
         }
     }
 }
@@ -420,6 +492,14 @@ fn parse_config_test() {
     assert!(conf.tcp.is_some());
     let tcp = conf.tcp.as_ref().expect("TCP services should be present");
     assert!(tcp.services.get("service3").is_some());
+    assert_eq!(tcp.services.get("service3").unwrap().port, vec![3002]);
+
+    // Multi-port service
+    let service5 = tcp
+        .services
+        .get("service5")
+        .expect("service5 should be present");
+    assert_eq!(service5.port, vec![4000, 4001, 4002]);
 
     assert!(conf.udp.is_some());
     let udp = conf.udp.as_ref().expect("UDP services should be present");

@@ -19,6 +19,12 @@ port = 3002
 public = true
 active = true
 
+[tcp.service5]
+identity = "<multi-port-id52>"
+port = [4000, 4001, 4002]
+public = true
+active = true
+
 [udp.service4]
 identity = "<udp-id52>"
 port = 3003
