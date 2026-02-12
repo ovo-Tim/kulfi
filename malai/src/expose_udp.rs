@@ -65,9 +65,7 @@ async fn handle_connection(
     port: u16,
     graceful: kulfi_utils::Graceful,
 ) -> eyre::Result<()> {
-    let remote_id52 = kulfi_utils::get_remote_id52(&conn)
-        .await
-        .inspect_err(|e| tracing::error!("failed to get remote id: {e:?}"))?;
+    let remote_id52 = kulfi_utils::get_remote_id52(&conn);
 
     tracing::info!("new UDP client: {remote_id52}, waiting for bidirectional stream");
     loop {

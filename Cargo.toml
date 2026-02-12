@@ -47,7 +47,7 @@ futures-util = "0.3"
 http-body-util = "0.1"
 hyper = { version = "1", features = ["full"] }
 hyper-util = { version = "0.1.15", features = ["tokio", "server"] }
-iroh = { version = "0.91", features = ["discovery-local-network"] }
+iroh = { version = "0.95", features = ["discovery-local-network"] }
 keyring = { version = "3", features = [
     "apple-native",
     "windows-native",
