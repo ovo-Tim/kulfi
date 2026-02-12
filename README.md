@@ -236,8 +236,9 @@ host = "127.0.0.1"
 public = true
 active = true
 
-# Multiple ports for a single service (same identity)
+# Multiple ports with per-port identities (required for multi-port)
 [tcp.multi_port_app]
+identity = ["id52_port1...", "id52_port2...", "id52_port3..."]
 port = [4000, 4001, 4002]  # Can also use "ports" instead of "port"
 public = true
 active = true
@@ -379,8 +380,9 @@ port = 25565
 public = true
 active = true
 
-# Expose multiple ports with one identity
+# Expose multiple ports with per-port identities
 [tcp.microservices]
+identity = ["id52_service1...", "id52_service2...", "id52_service3..."]
 port = [8001, 8002, 8003]
 public = true
 active = true
@@ -391,8 +393,28 @@ Run all active services:
 malai run
 ```
 
-**Multi-port services**: When you specify multiple ports (e.g., `port = [8001, 8002, 8003]`), all ports share the same identity and are exposed under the same `id52`. This is useful for:
-- Microservices running on different ports
+**Multi-port services**: When you specify multiple ports (e.g., `port = [8001, 8002, 8003]`), you **must** provide a matching array of identities or secret files, one per port:
+
+```toml
+# Per-port identities
+[tcp.microservices]
+identity = ["id52_service1...", "id52_service2...", "id52_service3..."]
+port = [8001, 8002, 8003]
+public = true
+active = true
+
+# Or per-port secret files
+[tcp.microservices]
+secret_file = ["/path/to/key1", "/path/to/key2", "/path/to/key3"]
+port = [8001, 8002, 8003]
+public = true
+active = true
+```
+
+Each port gets its own identity so clients can distinguish which port to connect to. The array length must match the number of ports, or malai will fail to start the service.
+
+This is useful for:
+- Microservices running on different ports that need separate identities
 - Game servers with multiple service ports
 - Applications with separate API and admin ports
 

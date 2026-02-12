@@ -33,11 +33,36 @@ struct MalaiConf {
     log: Option<String>,
 }
 
+#[derive(Deserialize, Debug, Clone)]
+#[serde(untagged)]
+enum StringOrVec {
+    Single(String),
+    Multiple(Vec<String>),
+}
+
+impl StringOrVec {
+    #[allow(dead_code)]
+    fn len(&self) -> usize {
+        match self {
+            StringOrVec::Single(_) => 1,
+            StringOrVec::Multiple(v) => v.len(),
+        }
+    }
+
+    fn get(&self, index: usize) -> Option<&str> {
+        match self {
+            StringOrVec::Single(s) if index == 0 => Some(s.as_str()),
+            StringOrVec::Multiple(v) => v.get(index).map(|s| s.as_str()),
+            _ => None,
+        }
+    }
+}
+
 #[allow(dead_code)]
 #[derive(Deserialize, Debug)]
 struct IdentityConf {
-    identity: Option<String>,
-    secret_file: Option<String>,
+    identity: Option<StringOrVec>,
+    secret_file: Option<StringOrVec>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -245,20 +270,85 @@ fn check_used(used_id52: &mut HashSet<String>, id52: &str) -> eyre::Result<()> {
     }
 }
 
+fn validate_identity_conf(
+    identity_conf: &IdentityConf,
+    port_count: usize,
+    service_name: &str,
+) -> eyre::Result<()> {
+    if port_count <= 1 {
+        return Ok(());
+    }
+
+    if let Some(ref secret_file) = identity_conf.secret_file {
+        match secret_file {
+            StringOrVec::Single(_) => {
+                return Err(eyre!(
+                    "Service '{}' has {} ports but only a single secret_file. \
+                     Provide an array of {} secret_file entries, one per port.",
+                    service_name,
+                    port_count,
+                    port_count
+                ));
+            }
+            StringOrVec::Multiple(v) if v.len() != port_count => {
+                return Err(eyre!(
+                    "Service '{}' has {} ports but {} secret_file entries. \
+                     The counts must match.",
+                    service_name,
+                    port_count,
+                    v.len()
+                ));
+            }
+            _ => {}
+        }
+    } else if let Some(ref identity) = identity_conf.identity {
+        match identity {
+            StringOrVec::Single(_) => {
+                return Err(eyre!(
+                    "Service '{}' has {} ports but only a single identity. \
+                     Provide an array of {} identity entries, one per port.",
+                    service_name,
+                    port_count,
+                    port_count
+                ));
+            }
+            StringOrVec::Multiple(v) if v.len() != port_count => {
+                return Err(eyre!(
+                    "Service '{}' has {} ports but {} identity entries. \
+                     The counts must match.",
+                    service_name,
+                    port_count,
+                    v.len()
+                ));
+            }
+            _ => {}
+        }
+    }
+
+    Ok(())
+}
+
 async fn load_identity(
     identity_conf: &IdentityConf,
+    port_index: usize,
     used_id52: &mut HashSet<String>,
 ) -> eyre::Result<(String, kulfi_id52::SecretKey)> {
-    let (id52, secret_key) = if let Some(secret_path) = identity_conf.secret_file.as_ref() {
-        load_secret_from_file(Path::new(&secret_path))?
+    let (id52, secret_key) = if let Some(ref secret_file) = identity_conf.secret_file {
+        let secret_path = secret_file
+            .get(port_index)
+            .context("secret_file index out of bounds")?;
+        load_secret_from_file(Path::new(secret_path))?
     } else {
-        let id52 = identity_conf
+        let identity = identity_conf
             .identity
             .as_ref()
             .context("No identity specified. Please specify an identity or a secret key file.")?;
-        kulfi_utils::secret::handle_identity(id52.to_string()).context(format!(
+        let id52_str = identity
+            .get(port_index)
+            .context("identity index out of bounds")?;
+        kulfi_utils::secret::handle_identity(id52_str.to_string()).context(format!(
             "Failed to load identity {} from system keyring.",
-            id52
+            id52_str
         ))?
     };
     check_used(used_id52, &id52)?;
@@ -285,24 +375,29 @@ async fn set_up_http_services(
                 continue;
             }
 
-            let (id52, secret_key) =
-                match load_identity(&service_conf.identity_conf, used_id52).await {
-                    Ok(v) => v,
-                    Err(e) => {
-                        error!(
-                            "Failed to load identity for service {}: {} Skipping.",
-                            name, e
-                        );
-                        continue;
-                    }
-                };
+            if let Err(e) =
+                validate_identity_conf(&service_conf.identity_conf, service_conf.port.len(), name)
+            {
+                error!("{} Skipping.", e);
+                continue;
+            }
 
-            for &port in &service_conf.port {
+            for (i, &port) in service_conf.port.iter().enumerate() {
+                let (id52, secret_key) =
+                    match load_identity(&service_conf.identity_conf, i, used_id52).await {
+                        Ok(v) => v,
+                        Err(e) => {
+                            error!(
+                                "Failed to load identity for service {} port {}: {} Skipping.",
+                                name, port, e
+                            );
+                            continue;
+                        }
+                    };
+
                 let host = service_conf.host.clone();
                 let bridge = service_conf.bridge.clone();
                 let graceful_clone = graceful.clone();
-                let id52 = id52.clone();
-                let secret_key = secret_key.clone();
 
                 graceful.spawn(async move {
                     malai::expose_http(host, port, bridge, id52, secret_key, graceful_clone).await
@@ -332,23 +427,28 @@ async fn set_up_tcp_services(
                 continue;
             }
 
-            let (id52, secret_key) =
-                match load_identity(&service_conf.identity_conf, used_id52).await {
-                    Ok(v) => v,
-                    Err(e) => {
-                        error!(
-                            "Failed to load identity for service {}: {} Skipping.",
-                            name, e
-                        );
-                        continue;
-                    }
-                };
+            if let Err(e) =
+                validate_identity_conf(&service_conf.identity_conf, service_conf.port.len(), name)
+            {
+                error!("{} Skipping.", e);
+                continue;
+            }
 
-            for &port in &service_conf.port {
+            for (i, &port) in service_conf.port.iter().enumerate() {
+                let (id52, secret_key) =
+                    match load_identity(&service_conf.identity_conf, i, used_id52).await {
+                        Ok(v) => v,
+                        Err(e) => {
+                            error!(
+                                "Failed to load identity for service {} port {}: {} Skipping.",
+                                name, port, e
+                            );
+                            continue;
+                        }
+                    };
+
                 let host = service_conf.host.clone();
                 let graceful_clone = graceful.clone();
-                let id52 = id52.clone();
-                let secret_key = secret_key.clone();
 
                 graceful.spawn(async move {
                     malai::expose_tcp(host, port, id52, secret_key, graceful_clone).await
@@ -377,23 +477,28 @@ async fn set_up_udp_services(
                 continue;
             }
 
-            let (id52, secret_key) =
-                match load_identity(&service_conf.identity_conf, used_id52).await {
-                    Ok(v) => v,
-                    Err(e) => {
-                        error!(
-                            "Failed to load identity for service {}: {} Skipping.",
-                            name, e
-                        );
-                        continue;
-                    }
-                };
+            if let Err(e) =
+                validate_identity_conf(&service_conf.identity_conf, service_conf.port.len(), name)
+            {
+                error!("{} Skipping.", e);
+                continue;
+            }
 
-            for &port in &service_conf.port {
+            for (i, &port) in service_conf.port.iter().enumerate() {
+                let (id52, secret_key) =
+                    match load_identity(&service_conf.identity_conf, i, used_id52).await {
+                        Ok(v) => v,
+                        Err(e) => {
+                            error!(
+                                "Failed to load identity for service {} port {}: {} Skipping.",
+                                name, port, e
+                            );
+                            continue;
+                        }
+                    };
+
                 let host = service_conf.host.clone();
                 let graceful_clone = graceful.clone();
-                let id52 = id52.clone();
-                let secret_key = secret_key.clone();
 
                 graceful.spawn(async move {
                     malai::expose_udp(host, port, id52, secret_key, graceful_clone).await
@@ -422,23 +527,28 @@ async fn set_up_tcp_udp_services(
                 continue;
             }
 
-            let (id52, secret_key) =
-                match load_identity(&service_conf.identity_conf, used_id52).await {
-                    Ok(v) => v,
-                    Err(e) => {
-                        error!(
-                            "Failed to load identity for service {}: {} Skipping.",
-                            name, e
-                        );
-                        continue;
-                    }
-                };
+            if let Err(e) =
+                validate_identity_conf(&service_conf.identity_conf, service_conf.port.len(), name)
+            {
+                error!("{} Skipping.", e);
+                continue;
+            }
 
-            for &port in &service_conf.port {
+            for (i, &port) in service_conf.port.iter().enumerate() {
+                let (id52, secret_key) =
+                    match load_identity(&service_conf.identity_conf, i, used_id52).await {
+                        Ok(v) => v,
+                        Err(e) => {
+                            error!(
+                                "Failed to load identity for service {} port {}: {} Skipping.",
+                                name, port, e
+                            );
+                            continue;
+                        }
+                    };
+
                 let host = service_conf.host.clone();
                 let graceful_clone = graceful.clone();
-                let id52 = id52.clone();
-                let secret_key = secret_key.clone();
 
                 graceful.spawn(async move {
                     malai::expose_tcp_udp(host, port, id52, secret_key, graceful_clone).await
@@ -494,14 +604,50 @@ fn parse_config_test() {
     assert!(tcp.services.get("service3").is_some());
     assert_eq!(tcp.services.get("service3").unwrap().port, vec![3002]);
 
-    // Multi-port service
+    // Multi-port service with per-port identities
     let service5 = tcp
         .services
         .get("service5")
         .expect("service5 should be present");
     assert_eq!(service5.port, vec![4000, 4001, 4002]);
+    let identity = service5
+        .identity_conf
+        .identity
+        .as_ref()
+        .expect("service5 should have identity");
+    assert_eq!(identity.len(), 3);
+    assert_eq!(identity.get(0), Some("<multi-port-id52-a>"));
+    assert_eq!(identity.get(1), Some("<multi-port-id52-b>"));
+    assert_eq!(identity.get(2), Some("<multi-port-id52-c>"));
 
     assert!(conf.udp.is_some());
     let udp = conf.udp.as_ref().expect("UDP services should be present");
     assert!(udp.services.get("service4").is_some());
+}
+
+#[test]
+fn validate_identity_conf_mismatched_count() {
+    let conf = IdentityConf {
+        identity: Some(StringOrVec::Multiple(vec![
+            "id1".to_string(),
+            "id2".to_string(),
+            "id3".to_string(),
+            "id4".to_string(),
+        ])),
+        secret_file: None,
+    };
+
+    let result = validate_identity_conf(&conf, 5, "test_service");
+    assert!(result.is_err());
+    let err_msg = result.unwrap_err().to_string();
+    assert!(
+        err_msg.contains("5 ports"),
+        "Error should mention 5 ports: {}",
+        err_msg
+    );
+    assert!(
+        err_msg.contains("4 identity entries"),
+        "Error should mention 4 identity entries: {}",
+        err_msg
+    );
 }

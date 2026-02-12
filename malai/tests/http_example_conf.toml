@@ -20,7 +20,7 @@ public = true
 active = true
 
 [tcp.service5]
-identity = "<multi-port-id52>"
+identity = ["<multi-port-id52-a>", "<multi-port-id52-b>", "<multi-port-id52-c>"]
 port = [4000, 4001, 4002]
 public = true
 active = true
