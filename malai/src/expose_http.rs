@@ -125,7 +125,9 @@ impl InfoMode {
         if self != &InfoMode::OnExit && !bridge.is_empty() {
             println!("To access via web browser, run your own bridge with: malai http-bridge");
         } else if self != &InfoMode::OnExit {
-            println!("To access via web browser, set up an HTTP bridge. See documentation for details.");
+            println!(
+                "To access via web browser, set up an HTTP bridge. See documentation for details."
+            );
         }
 
         println!(

@@ -57,7 +57,11 @@ pub async fn accept_bi(
 pub async fn accept_bi_any(
     conn: &iroh::endpoint::Connection,
     expected: &[crate::Protocol],
-) -> eyre::Result<(iroh::endpoint::SendStream, iroh::endpoint::RecvStream, crate::Protocol)> {
+) -> eyre::Result<(
+    iroh::endpoint::SendStream,
+    iroh::endpoint::RecvStream,
+    crate::Protocol,
+)> {
     loop {
         tracing::trace!("accepting bidirectional stream (any)");
         match accept_bi_(conn).await? {
@@ -71,9 +75,7 @@ pub async fn accept_bi_any(
             (s, r, found) => {
                 tracing::trace!("got bidirectional stream: {found:?}");
                 if !expected.contains(&found) {
-                    return Err(eyre::anyhow!(
-                        "expected one of {expected:?}, got {found:?}"
-                    ));
+                    return Err(eyre::anyhow!("expected one of {expected:?}, got {found:?}"));
                 }
                 return Ok((s, r, found));
             }

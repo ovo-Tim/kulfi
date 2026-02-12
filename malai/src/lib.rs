@@ -30,7 +30,7 @@ pub use expose_tcp_udp::expose_tcp_udp;
 pub use expose_udp::expose_udp;
 pub use folder::folder;
 pub use http_bridge::http_bridge;
-pub use http_proxy::{http_proxy, ProxyData};
+pub use http_proxy::{ProxyData, http_proxy};
 pub use http_proxy_remote::http_proxy_remote;
 pub use identity::{create_identity, delete_identity};
 pub use keygen::keygen;

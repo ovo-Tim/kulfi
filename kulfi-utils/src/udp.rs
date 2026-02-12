@@ -134,9 +134,7 @@ pub async fn write_framed_datagram(
 }
 
 /// Read a length-prefixed datagram from the iroh recv stream.
-pub async fn read_framed_datagram(
-    recv: &mut iroh::endpoint::RecvStream,
-) -> eyre::Result<Vec<u8>> {
+pub async fn read_framed_datagram(recv: &mut iroh::endpoint::RecvStream) -> eyre::Result<Vec<u8>> {
     let mut len_buf = [0u8; 2];
     recv.read_exact(&mut len_buf)
         .await

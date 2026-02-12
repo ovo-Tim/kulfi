@@ -107,11 +107,7 @@ async fn match_cli(cli: Cli, graceful: Graceful) -> eyre::Result<()> {
             });
         }
         Some(Command::Udp { port, host, public }) => {
-            if !malai::public_check(
-                public,
-                "UDP service",
-                &format!("malai udp {port} --public"),
-            ) {
+            if !malai::public_check(public, "UDP service", &format!("malai udp {port} --public")) {
                 return Ok(());
             }
 
@@ -173,7 +169,9 @@ async fn match_cli(cli: Cli, graceful: Graceful) -> eyre::Result<()> {
 
             tracing::info!(path, verbose = ?cli.verbose, "Exposing folder to kulfi network.");
             let graceful_for_folder = graceful.clone();
-            graceful.spawn(async move { malai::folder(path, bridge.unwrap_or_default(), graceful_for_folder).await });
+            graceful.spawn(async move {
+                malai::folder(path, bridge.unwrap_or_default(), graceful_for_folder).await
+            });
         }
         Some(Command::Run { home: _ }) => {
             // Handled brfore
