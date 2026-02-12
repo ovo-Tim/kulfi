@@ -78,8 +78,9 @@ async fn test_tcp_echo_connection_inner() {
     let bridge_handle = tokio::spawn(async move {
         if let Ok((local_stream, _)) = bridge_listener.accept().await {
             let endpoint = iroh::Endpoint::builder()
-                .discovery_n0()
-                .discovery_local_network()
+                .discovery(iroh::discovery::pkarr::PkarrPublisher::n0_dns())
+                .discovery(iroh::discovery::dns::DnsDiscovery::n0_dns())
+                .discovery(iroh::discovery::mdns::MdnsDiscovery::builder())
                 .alpns(vec![kulfi_utils::APNS_IDENTITY.into()])
                 .bind()
                 .await
@@ -191,8 +192,9 @@ async fn test_udp_echo_connection_inner() {
         let mut buf = vec![0u8; 65535];
         if let Ok((n, client_addr)) = bridge_socket_clone.recv_from(&mut buf).await {
             let endpoint = iroh::Endpoint::builder()
-                .discovery_n0()
-                .discovery_local_network()
+                .discovery(iroh::discovery::pkarr::PkarrPublisher::n0_dns())
+                .discovery(iroh::discovery::dns::DnsDiscovery::n0_dns())
+                .discovery(iroh::discovery::mdns::MdnsDiscovery::builder())
                 .alpns(vec![kulfi_utils::APNS_IDENTITY.into()])
                 .bind()
                 .await
