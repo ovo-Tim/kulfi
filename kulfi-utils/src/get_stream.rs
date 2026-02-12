@@ -115,7 +115,7 @@ async fn connection_manager(
     .await
     {
         Ok(()) => {
-            tracing::info!("connection manager closed");
+            tracing::debug!("connection manager closed");
             return;
         }
         Err(e) => e,
@@ -159,17 +159,16 @@ async fn connection_manager_(
     remote_node_id52: RemoteID52,
     graceful: crate::Graceful,
 ) -> eyre::Result<()> {
+    // Convert ID52 to iroh::EndpointId
+    let remote_endpoint_id = {
+        use std::str::FromStr;
+        let public_key = kulfi_id52::PublicKey::from_str(&remote_node_id52)
+            .map_err(|e| eyre::anyhow!("{}", e))?;
+        iroh::EndpointId::from_bytes(&public_key.to_bytes())?
+    };
+
     let conn = match self_endpoint
-        .connect(
-            {
-                // Convert ID52 to iroh::NodeId
-                use std::str::FromStr;
-                let public_key = kulfi_id52::PublicKey::from_str(&remote_node_id52)
-                    .map_err(|e| eyre::anyhow!("{}", e))?;
-                iroh::EndpointId::from_bytes(&public_key.to_bytes())?
-            },
-            crate::APNS_IDENTITY,
-        )
+        .connect(remote_endpoint_id, crate::APNS_IDENTITY)
         .await
     {
         Ok(v) => v,
@@ -178,6 +177,39 @@ async fn connection_manager_(
             return Err(eyre::anyhow!("failed to create connection: {e:?}"));
         }
     };
+
+    // Spawn a task that watches and logs connection type changes (relay vs direct)
+    if let Some(mut conn_type_watcher) = self_endpoint.conn_type(remote_endpoint_id) {
+        use iroh::Watcher;
+        let remote = remote_node_id52.clone();
+        let graceful_clone = graceful.clone();
+        graceful.spawn(async move {
+            tracing::info!(
+                remote = %remote,
+                conn_type = ?conn_type_watcher.get(),
+                "initial connection type"
+            );
+            use futures_util::StreamExt;
+            let mut stream = conn_type_watcher.stream_updates_only();
+            loop {
+                tokio::select! {
+                    _ = graceful_clone.cancelled() => break,
+                    item = stream.next() => {
+                        match item {
+                            Some(conn_type) => {
+                                tracing::info!(
+                                    remote = %remote,
+                                    conn_type = ?conn_type,
+                                    "connection type changed"
+                                );
+                            }
+                            None => break,
+                        }
+                    }
+                }
+            }
+        });
+    }
 
     let timeout = std::time::Duration::from_secs(12);
     let mut idle_counter = 0;
@@ -205,7 +237,7 @@ async fn connection_manager_(
                 idle_counter += 1;
             },
             Some((header, reply_channel)) = receiver.recv() => {
-                tracing::info!("connection: {header:?}, idle counter: {idle_counter}");
+                tracing::debug!("connection: {header:?}, idle counter: {idle_counter}");
                 idle_counter = 0;
                 // is this a good idea to serialize this part? if 10 concurrent requests come in, we will
                 // handle each one sequentially. the other alternative is to spawn a task for each request.
@@ -247,7 +279,7 @@ async fn connection_manager_(
                     // on its own, maybe it will work, maybe it will not.
                     return Err(e);
                 }
-                tracing::info!("handled connection");
+                tracing::debug!("handled connection");
             }
             else => {
                 tracing::error!("failed to read from receiver");

@@ -9,7 +9,7 @@ pub async fn http_to_peer(
 ) -> crate::http::ProxyResult<eyre::Error> {
     use http_body_util::BodyExt;
 
-    tracing::info!("peer_proxy: {remote_node_id52}");
+    tracing::debug!("peer_proxy: {remote_node_id52}");
 
     let (mut send, mut recv) = crate::get_stream(
         self_endpoint,
@@ -20,14 +20,14 @@ pub async fn http_to_peer(
     )
     .await?;
 
-    tracing::info!("wrote protocol");
+    tracing::debug!("wrote protocol");
 
     let (head, mut body) = req.into_parts();
     send.write_all(&serde_json::to_vec(&crate::http::Request::from(head))?)
         .await?;
     send.write_all(b"\n").await?;
 
-    tracing::info!("sent request header");
+    tracing::debug!("sent request header");
 
     while let Some(chunk) = body.frame().await {
         match chunk {
@@ -45,11 +45,11 @@ pub async fn http_to_peer(
         }
     }
 
-    tracing::info!("sent body");
+    tracing::debug!("sent body");
 
     let r: crate::http::Response = crate::next_json(&mut recv).await?;
 
-    tracing::info!("got response header: {:?}", r);
+    tracing::debug!("got response header: {:?}", r);
 
     let stream = tokio_util::io::ReaderStream::new(recv);
 
@@ -80,7 +80,7 @@ pub async fn http_to_peer(
 
     let res = res.body(boxed_body)?;
 
-    tracing::info!("all done");
+    tracing::debug!("all done");
     Ok(res)
 }
 
@@ -106,22 +106,22 @@ pub async fn http_to_peer_non_streaming(
     )
     .await?;
 
-    tracing::info!("wrote protocol");
+    tracing::debug!("wrote protocol");
 
     let (head, body) = req.into_parts();
     send.write_all(&serde_json::to_vec(&crate::http::Request::from(head))?)
         .await?;
     send.write_all(b"\n").await?;
 
-    tracing::info!("sent request header");
+    tracing::debug!("sent request header");
 
     send.write_all(&body).await?;
 
-    tracing::info!("sent body");
+    tracing::debug!("sent body");
 
     let r: crate::http::Response = crate::next_json(&mut recv).await?;
 
-    tracing::info!("got response header: {r:?}");
+    tracing::debug!("got response header: {r:?}");
 
     let mut body = Vec::with_capacity(1024 * 4);
 
@@ -157,6 +157,6 @@ pub async fn http_to_peer_non_streaming(
         );
     }
 
-    tracing::info!("all done");
+    tracing::debug!("all done");
     Ok(res)
 }
