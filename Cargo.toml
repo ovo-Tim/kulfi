@@ -54,8 +54,8 @@ keyring = { version = "3", features = [
     "linux-native",
     "vendored",
 ] }
-kulfi-utils = { path = "kulfi-utils" }
-kulfi-id52 = { path = "kulfi-id52" }
+kulfi-utils = { path = "kulfi-utils", version = "0.1.3" }
+kulfi-id52 = { path = "kulfi-id52", version = "0.1.0" }
 mime_guess = "2"
 percent-encoding = "2"
 reqwest = { version = "0.12", default-features = false, features = [
