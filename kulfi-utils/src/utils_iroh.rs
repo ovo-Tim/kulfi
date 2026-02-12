@@ -171,18 +171,39 @@ pub async fn next_string(recv: &mut iroh::endpoint::RecvStream) -> eyre::Result<
 }
 
 pub async fn global_iroh_endpoint() -> iroh::Endpoint {
-    async fn new_iroh_endpoint() -> iroh::Endpoint {
+    fn new_iroh_endpoint() -> iroh::Endpoint {
         // TODO: read secret key from ENV VAR
-        iroh::Endpoint::builder()
-            .discovery_n0()
-            .discovery_local_network()
-            .alpns(vec![crate::APNS_IDENTITY.into()])
-            .bind()
-            .await
-            .expect("failed to create iroh Endpoint")
+        tokio::task::block_in_place(|| {
+            tokio::runtime::Handle::current().block_on(async {
+                iroh::Endpoint::builder()
+                    .discovery_n0()
+                    .discovery_local_network()
+                    .alpns(vec![crate::APNS_IDENTITY.into()])
+                    .bind()
+                    .await
+                    .expect("failed to create iroh Endpoint")
+            })
+        })
     }
 
-    static IROH_ENDPOINT: tokio::sync::OnceCell<iroh::Endpoint> =
-        tokio::sync::OnceCell::const_new();
-    IROH_ENDPOINT.get_or_init(new_iroh_endpoint).await.clone()
+    // We store the endpoint alongside a sentinel task. When the tokio runtime
+    // that created the endpoint shuts down, the sentinel task gets cancelled
+    // (is_finished() returns true), telling us to recreate the endpoint.
+    static IROH_ENDPOINT: std::sync::Mutex<Option<(iroh::Endpoint, tokio::task::JoinHandle<()>)>> =
+        std::sync::Mutex::new(None);
+
+    {
+        let guard = IROH_ENDPOINT.lock().unwrap();
+        if let Some((ep, sentinel)) = guard.as_ref()
+            && !sentinel.is_finished()
+        {
+            return ep.clone();
+        }
+    }
+
+    let ep = new_iroh_endpoint();
+    let sentinel = tokio::spawn(std::future::pending::<()>());
+    let mut guard = IROH_ENDPOINT.lock().unwrap();
+    *guard = Some((ep.clone(), sentinel));
+    ep
 }
