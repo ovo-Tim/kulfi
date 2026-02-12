@@ -83,6 +83,38 @@ Example:
 malai tcp 22 --public  # Expose SSH
 ```
 
+#### UDP Service Exposure
+
+Expose a local UDP service (DNS, game servers, VoIP, etc.):
+```bash
+malai udp <PORT> [OPTIONS]
+
+Options:
+  --host <HOST>  Host serving the UDP service [default: 127.0.0.1]
+  --public       Make the service public (required)
+```
+
+Example:
+```bash
+malai udp 53 --public  # Expose DNS
+```
+
+#### TCP+UDP Service Exposure
+
+Expose both TCP and UDP on the same port simultaneously:
+```bash
+malai tcp-udp <PORT> [OPTIONS]
+
+Options:
+  --host <HOST>  Host serving the TCP+UDP service [default: 127.0.0.1]
+  --public       Make the service public (required)
+```
+
+Example:
+```bash
+malai tcp-udp 25565 --public  # Expose Minecraft server (uses both protocols)
+```
+
 #### Folder Sharing
 
 Share a folder over HTTP:
@@ -129,9 +161,24 @@ Options:
 
 #### TCP Bridge
 
-Run a TCP bridge server:
+Run a TCP bridge server that forwards requests to a kulfi service:
 ```bash
 malai tcp-bridge <PROXY_TARGET> [PORT]
+
+Arguments:
+  <PROXY_TARGET>  The id52 to forward TCP requests to
+  [PORT]          Port to listen on [default: 0 for random]
+```
+
+#### UDP Bridge
+
+Run a UDP bridge server that forwards datagrams to a kulfi service:
+```bash
+malai udp-bridge <PROXY_TARGET> [PORT]
+
+Arguments:
+  <PROXY_TARGET>  The id52 to forward UDP datagrams to
+  [PORT]          Port to listen on [default: 0 for random]
 ```
 
 #### HTTP Proxy
@@ -274,6 +321,20 @@ malai tcp-bridge <your-id52> 2222
 ssh user@localhost -p 2222
 ```
 
+#### Expose a Game Server
+
+```bash
+# Expose a Minecraft server (uses both TCP and UDP)
+malai tcp-udp 25565 --public
+
+# On another machine, create bridges for both protocols
+malai tcp-bridge <your-id52> 25565
+# In another terminal:
+malai udp-bridge <your-id52> 25565
+
+# Players can now connect to localhost:25565
+```
+
 #### Share Files Quickly
 
 ```bash
@@ -301,6 +362,16 @@ active = true
 port = 5432
 public = true
 active = false  # Disabled for now
+
+[udp.dns]
+port = 53
+public = true
+active = true
+
+[tcp_udp.game_server]
+port = 25565
+public = true
+active = true
 ```
 
 Run all active services:
