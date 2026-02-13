@@ -363,55 +363,161 @@ async fn load_identity(
     Ok((id52, secret_key))
 }
 
+/// Generic trait for service configuration shared across HTTP, TCP, UDP, and TCP+UDP
+trait ServiceConfig {
+    fn port(&self) -> &Vec<u16>;
+    fn identity_conf(&self) -> &IdentityConf;
+    fn active(&self) -> bool;
+    fn public(&self) -> bool;
+    fn host(&self) -> &str;
+}
+
+impl ServiceConfig for HttpServiceConf {
+    fn port(&self) -> &Vec<u16> {
+        &self.port
+    }
+    fn identity_conf(&self) -> &IdentityConf {
+        &self.identity_conf
+    }
+    fn active(&self) -> bool {
+        self.active
+    }
+    fn public(&self) -> bool {
+        self.public
+    }
+    fn host(&self) -> &str {
+        &self.host
+    }
+}
+
+impl ServiceConfig for TcpServiceConf {
+    fn port(&self) -> &Vec<u16> {
+        &self.port
+    }
+    fn identity_conf(&self) -> &IdentityConf {
+        &self.identity_conf
+    }
+    fn active(&self) -> bool {
+        self.active
+    }
+    fn public(&self) -> bool {
+        self.public
+    }
+    fn host(&self) -> &str {
+        &self.host
+    }
+}
+
+impl ServiceConfig for UdpServiceConf {
+    fn port(&self) -> &Vec<u16> {
+        &self.port
+    }
+    fn identity_conf(&self) -> &IdentityConf {
+        &self.identity_conf
+    }
+    fn active(&self) -> bool {
+        self.active
+    }
+    fn public(&self) -> bool {
+        self.public
+    }
+    fn host(&self) -> &str {
+        &self.host
+    }
+}
+
+impl ServiceConfig for TcpUdpServiceConf {
+    fn port(&self) -> &Vec<u16> {
+        &self.port
+    }
+    fn identity_conf(&self) -> &IdentityConf {
+        &self.identity_conf
+    }
+    fn active(&self) -> bool {
+        self.active
+    }
+    fn public(&self) -> bool {
+        self.public
+    }
+    fn host(&self) -> &str {
+        &self.host
+    }
+}
+
+/// Generic service setup function that handles validation, identity loading, and spawning
+async fn process_services<C, F>(
+    services: &HashMap<String, C>,
+    service_type: &str,
+    used_id52: &mut HashSet<String>,
+    graceful: kulfi_utils::Graceful,
+    mut spawn_service: F,
+) where
+    C: ServiceConfig,
+    F: FnMut(&C, String, u16, String, kulfi_id52::SecretKey, kulfi_utils::Graceful),
+{
+    for (name, service_conf) in services {
+        info!("Starting {} services: {}", service_type, name);
+
+        if !service_conf.active() {
+            continue;
+        }
+        if !service_conf.public() {
+            tracing::warn!(
+                "You have to set public to true for service {}. Skipping.",
+                name
+            );
+            continue;
+        }
+
+        if let Err(e) = validate_identity_conf(
+            service_conf.identity_conf(),
+            service_conf.port().len(),
+            name,
+        ) {
+            error!("{} Skipping.", e);
+            continue;
+        }
+
+        for (i, &port) in service_conf.port().iter().enumerate() {
+            let (id52, secret_key) =
+                match load_identity(service_conf.identity_conf(), i, used_id52).await {
+                    Ok(v) => v,
+                    Err(e) => {
+                        error!(
+                            "Failed to load identity for service {} port {}: {} Skipping.",
+                            name, port, e
+                        );
+                        continue;
+                    }
+                };
+
+            let host = service_conf.host().to_string();
+            let graceful_clone = graceful.clone();
+
+            spawn_service(service_conf, host, port, id52, secret_key, graceful_clone);
+        }
+    }
+}
+
 async fn set_up_http_services(
     conf: &Config,
     used_id52: &mut HashSet<String>,
     graceful: kulfi_utils::Graceful,
 ) {
     if let Some(http_conf) = &conf.http {
-        for (name, service_conf) in &http_conf.services {
-            info!("Starting HTTP services: {}", name);
-            // Check
-            if !service_conf.active {
-                continue;
-            }
-            if !service_conf.public {
-                tracing::warn!(
-                    "You have to set public to true for service {}. Skipping.",
-                    name
-                );
-                continue;
-            }
-
-            if let Err(e) =
-                validate_identity_conf(&service_conf.identity_conf, service_conf.port.len(), name)
-            {
-                error!("{} Skipping.", e);
-                continue;
-            }
-
-            for (i, &port) in service_conf.port.iter().enumerate() {
-                let (id52, secret_key) =
-                    match load_identity(&service_conf.identity_conf, i, used_id52).await {
-                        Ok(v) => v,
-                        Err(e) => {
-                            error!(
-                                "Failed to load identity for service {} port {}: {} Skipping.",
-                                name, port, e
-                            );
-                            continue;
-                        }
-                    };
-
-                let host = service_conf.host.clone();
+        process_services(
+            &http_conf.services,
+            "HTTP",
+            used_id52,
+            graceful.clone(),
+            |service_conf, host, port, id52, secret_key, graceful_clone| {
                 let bridge = service_conf.bridge.clone();
-                let graceful_clone = graceful.clone();
-
                 graceful.spawn(async move {
                     malai::expose_http(host, port, bridge, id52, secret_key, graceful_clone).await
                 });
-            }
-        }
+            },
+        )
+        .await;
     }
 }
 
@@ -421,48 +527,18 @@ async fn set_up_tcp_services(
     graceful: kulfi_utils::Graceful,
 ) {
     if let Some(tcp_conf) = &conf.tcp {
-        for (name, service_conf) in &tcp_conf.services {
-            info!("Starting TCP services: {}", name);
-            // Check
-            if !service_conf.active {
-                continue;
-            }
-            if !service_conf.public {
-                tracing::warn!(
-                    "You have to set public to true for service {}. Skipping.",
-                    name
-                );
-                continue;
-            }
-
-            if let Err(e) =
-                validate_identity_conf(&service_conf.identity_conf, service_conf.port.len(), name)
-            {
-                error!("{} Skipping.", e);
-                continue;
-            }
-
-            for (i, &port) in service_conf.port.iter().enumerate() {
-                let (id52, secret_key) =
-                    match load_identity(&service_conf.identity_conf, i, used_id52).await {
-                        Ok(v) => v,
-                        Err(e) => {
-                            error!(
-                                "Failed to load identity for service {} port {}: {} Skipping.",
-                                name, port, e
-                            );
-                            continue;
-                        }
-                    };
-
-                let host = service_conf.host.clone();
-                let graceful_clone = graceful.clone();
-
+        process_services(
+            &tcp_conf.services,
+            "TCP",
+            used_id52,
+            graceful.clone(),
+            |_service_conf, host, port, id52, secret_key, graceful_clone| {
                 graceful.spawn(async move {
                     malai::expose_tcp(host, port, id52, secret_key, graceful_clone).await
                 });
-            }
-        }
+            },
+        )
+        .await;
     }
 }
 
@@ -472,47 +548,18 @@ async fn set_up_udp_services(
     graceful: kulfi_utils::Graceful,
 ) {
     if let Some(udp_conf) = &conf.udp {
-        for (name, service_conf) in &udp_conf.services {
-            info!("Starting UDP services: {}", name);
-            if !service_conf.active {
-                continue;
-            }
-            if !service_conf.public {
-                tracing::warn!(
-                    "You have to set public to true for service {}. Skipping.",
-                    name
-                );
-                continue;
-            }
-
-            if let Err(e) =
-                validate_identity_conf(&service_conf.identity_conf, service_conf.port.len(), name)
-            {
-                error!("{} Skipping.", e);
-                continue;
-            }
-
-            for (i, &port) in service_conf.port.iter().enumerate() {
-                let (id52, secret_key) =
-                    match load_identity(&service_conf.identity_conf, i, used_id52).await {
-                        Ok(v) => v,
-                        Err(e) => {
-                            error!(
-                                "Failed to load identity for service {} port {}: {} Skipping.",
-                                name, port, e
-                            );
-                            continue;
-                        }
-                    };
-
-                let host = service_conf.host.clone();
-                let graceful_clone = graceful.clone();
-
+        process_services(
+            &udp_conf.services,
+            "UDP",
+            used_id52,
+            graceful.clone(),
+            |_service_conf, host, port, id52, secret_key, graceful_clone| {
                 graceful.spawn(async move {
                     malai::expose_udp(host, port, id52, secret_key, graceful_clone).await
                 });
-            }
-        }
+            },
+        )
+        .await;
     }
 }
 
@@ -522,47 +569,18 @@ async fn set_up_tcp_udp_services(
     graceful: kulfi_utils::Graceful,
 ) {
     if let Some(tcp_udp_conf) = &conf.tcp_udp {
-        for (name, service_conf) in &tcp_udp_conf.services {
-            info!("Starting TCP+UDP services: {}", name);
-            if !service_conf.active {
-                continue;
-            }
-            if !service_conf.public {
-                tracing::warn!(
-                    "You have to set public to true for service {}. Skipping.",
-                    name
-                );
-                continue;
-            }
-
-            if let Err(e) =
-                validate_identity_conf(&service_conf.identity_conf, service_conf.port.len(), name)
-            {
-                error!("{} Skipping.", e);
-                continue;
-            }
-
-            for (i, &port) in service_conf.port.iter().enumerate() {
-                let (id52, secret_key) =
-                    match load_identity(&service_conf.identity_conf, i, used_id52).await {
-                        Ok(v) => v,
-                        Err(e) => {
-                            error!(
-                                "Failed to load identity for service {} port {}: {} Skipping.",
-                                name, port, e
-                            );
-                            continue;
-                        }
-                    };
-
-                let host = service_conf.host.clone();
-                let graceful_clone = graceful.clone();
-
+        process_services(
+            &tcp_udp_conf.services,
+            "TCP+UDP",
+            used_id52,
+            graceful.clone(),
+            |_service_conf, host, port, id52, secret_key, graceful_clone| {
                 graceful.spawn(async move {
                     malai::expose_tcp_udp(host, port, id52, secret_key, graceful_clone).await
                 });
-            }
-        }
+            },
+        )
+        .await;
     }
 }
 
