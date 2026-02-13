@@ -202,16 +202,16 @@ async fn test_udp_echo_connection_inner() {
             let peer_connections = kulfi_utils::PeerStreamSenders::default();
             let data = buf[..n].to_vec();
 
-            let _ = kulfi_utils::udp_to_peer(
-                kulfi_utils::Protocol::Udp.into(),
-                endpoint,
-                bridge_socket_arc.clone(),
+            let _ = kulfi_utils::udp_to_peer(kulfi_utils::UdpToPeerParams {
+                header: kulfi_utils::Protocol::Udp.into(),
+                self_endpoint: endpoint,
+                socket: bridge_socket_arc.clone(),
                 client_addr,
                 data,
-                &bridge_id52,
+                remote_node_id52: bridge_id52.clone(),
                 peer_connections,
-                bridge_graceful,
-            )
+                graceful: bridge_graceful,
+            })
             .await;
         }
     });

@@ -6,7 +6,6 @@
 ///   - N bytes: datagram payload
 ///
 /// The maximum UDP datagram size we support is 65535 bytes (u16::MAX).
-
 /// Receive a local UDP datagram and forward it over the iroh stream (framed with length prefix).
 pub async fn peer_to_udp(
     addr: &str,
@@ -63,35 +62,39 @@ pub async fn peer_to_udp(
     Ok(())
 }
 
+/// Parameters for `udp_to_peer` function.
+pub struct UdpToPeerParams {
+    pub header: crate::ProtocolHeader,
+    pub self_endpoint: iroh::Endpoint,
+    pub socket: std::sync::Arc<tokio::net::UdpSocket>,
+    pub client_addr: std::net::SocketAddr,
+    pub data: Vec<u8>,
+    pub remote_node_id52: String,
+    pub peer_connections: crate::PeerStreamSenders,
+    pub graceful: crate::Graceful,
+}
+
 /// Accept UDP datagrams on a local port and forward them over iroh to a remote peer.
-pub async fn udp_to_peer(
-    header: crate::ProtocolHeader,
-    self_endpoint: iroh::Endpoint,
-    socket: std::sync::Arc<tokio::net::UdpSocket>,
-    client_addr: std::net::SocketAddr,
-    data: Vec<u8>,
-    remote_node_id52: &str,
-    peer_connections: crate::PeerStreamSenders,
-    graceful: crate::Graceful,
-) -> eyre::Result<()> {
-    tracing::info!("udp_to_peer: {remote_node_id52}");
+pub async fn udp_to_peer(params: UdpToPeerParams) -> eyre::Result<()> {
+    tracing::info!("udp_to_peer: {}", params.remote_node_id52);
 
     let (mut send, mut recv) = crate::get_stream(
-        self_endpoint,
-        header,
-        remote_node_id52.to_string(),
-        peer_connections,
-        graceful,
+        params.self_endpoint,
+        params.header,
+        params.remote_node_id52,
+        params.peer_connections,
+        params.graceful,
     )
     .await?;
 
     tracing::info!("got stream for UDP");
 
     // Send the initial datagram
-    write_framed_datagram(&mut send, &data).await?;
+    write_framed_datagram(&mut send, &params.data).await?;
 
     // iroh stream -> local UDP socket (responses back to client)
-    let socket_for_recv = socket.clone();
+    let socket_for_recv = params.socket.clone();
+    let client_addr = params.client_addr;
     let recv_task = tokio::spawn(async move {
         loop {
             match read_framed_datagram(&mut recv).await {

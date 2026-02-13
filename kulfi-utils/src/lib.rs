@@ -30,7 +30,7 @@ pub use secret::{
     read_or_create_key,
 };
 pub use tcp::{peer_to_tcp, pipe_tcp_stream_over_iroh, tcp_to_peer};
-pub use udp::{peer_to_udp, read_framed_datagram, udp_to_peer, write_framed_datagram};
+pub use udp::{UdpToPeerParams, peer_to_udp, read_framed_datagram, udp_to_peer, write_framed_datagram};
 pub use utils::mkdir;
 pub use utils_iroh::{
     accept_bi, accept_bi_any, accept_bi_with, get_remote_id52, global_iroh_endpoint, next_json,

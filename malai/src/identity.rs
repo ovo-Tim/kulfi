@@ -1,10 +1,7 @@
 use std::path::{Path, PathBuf};
 
 fn get_identity_path(path: Option<String>) -> Option<PathBuf> {
-    let path = match path {
-        Some(path) => path,
-        None => return None,
-    };
+    let path = path?;
     let path = Path::new(&path).to_path_buf();
     if path.is_dir() {
         Some(path.join(kulfi_utils::secret::ID52_FILE))

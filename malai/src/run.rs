@@ -152,10 +152,7 @@ fn default_host() -> String {
 }
 
 fn default_bridge() -> String {
-    match env::var("MALAI_HTTP_BRIDGE") {
-        Ok(value) => value,
-        Err(_) => String::new(), // No default bridge - users must provide their own
-    }
+    env::var("MALAI_HTTP_BRIDGE").unwrap_or_default()
 }
 
 fn default_malai_conf() -> MalaiConf {
@@ -215,7 +212,7 @@ where
 }
 
 fn parse_config(path: &Path) -> eyre::Result<Config> {
-    let conf_str = fs::read_to_string(&path)
+    let conf_str = fs::read_to_string(path)
         .with_context(|| format!("Failed to read config file at {}", path.display()))?;
 
     let conf = toml::from_str(&conf_str).context("Failed to parse config file")?;
