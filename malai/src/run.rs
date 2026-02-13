@@ -13,7 +13,7 @@ use std::sync::OnceLock;
 use tracing::{error, info};
 use tracing_appender::non_blocking::WorkerGuard;
 use tracing_appender::rolling;
-use tracing_subscriber::{fmt, prelude::*};
+use tracing_subscriber::{fmt, prelude::*, EnvFilter};
 
 static LOG_GUARD: OnceLock<WorkerGuard> = OnceLock::new();
 
@@ -223,6 +223,9 @@ fn parse_config(path: &Path) -> eyre::Result<Config> {
 }
 
 fn set_up_logging(conf: &Config) -> eyre::Result<()> {
+    let env_filter = EnvFilter::try_from_default_env()
+        .unwrap_or_else(|_| EnvFilter::new("info"));
+
     match &conf.malai.log {
         Some(log_dir) => {
             let log_dir = Path::new(&log_dir);
@@ -238,19 +241,24 @@ fn set_up_logging(conf: &Config) -> eyre::Result<()> {
             //     .with_writer(non_blocking)
             //     .with_ansi(false)
             //     .init();
-            let subscriber = fmt::Subscriber::builder().finish().with(
-                fmt::Layer::new()
-                    .with_writer(non_blocking)
-                    .with_ansi(false)
-                    .with_target(true)
-                    .with_file(true)
-                    .with_line_number(true),
-            );
+            let subscriber = fmt::Subscriber::builder()
+                .with_env_filter(env_filter)
+                .finish()
+                .with(
+                    fmt::Layer::new()
+                        .with_writer(non_blocking)
+                        .with_ansi(false)
+                        .with_target(true)
+                        .with_file(true)
+                        .with_line_number(true),
+                );
 
             tracing::subscriber::set_global_default(subscriber)?;
         }
         None => {
-            tracing_subscriber::fmt::init();
+            tracing_subscriber::fmt()
+                .with_env_filter(env_filter)
+                .init();
         }
     }
     Ok(())
