@@ -570,7 +570,7 @@ pub async fn run(conf_path: &Path, graceful: kulfi_utils::Graceful) {
     let conf = match parse_config(conf_path) {
         Ok(conf) => conf,
         Err(e) => {
-            error!("Failed to parse config: {}", e);
+            eprintln!("Failed to parse config: {:#}", e);
             return;
         }
     };
@@ -578,7 +578,7 @@ pub async fn run(conf_path: &Path, graceful: kulfi_utils::Graceful) {
     match set_up_logging(&conf) {
         Ok(guard) => guard,
         Err(e) => {
-            error!("Failed to set up logging: {}. Skipping.", e);
+            eprintln!("Failed to set up logging: {}. Skipping.", e);
         }
     };
 
